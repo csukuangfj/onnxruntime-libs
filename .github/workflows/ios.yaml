@@ -92,14 +92,7 @@ jobs:
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
 
-          ls -lh $build_dir/onnxruntime-ios-arm64-$version
-
-          cd $build_dir
-          tree ./onnxruntime-ios-arm64-$version
-
-          zip -r onnxruntime-ios-arm64-${version}.zip ./onnxruntime-ios-arm64-$version/
-
-          mv *.zip ../
+          zip -r onnxruntime-ios-arm64-${version}.zip ./build-ios
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -172,14 +165,7 @@ jobs:
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
 
-          ls -lh $build_dir/onnxruntime-ios-simulator-$arch-$version
-
-          cd $build_dir
-          tree ./onnxruntime-ios-simulator-$arch-$version
-
-          zip -r onnxruntime-ios-simulator-$arch-${version}.zip ./onnxruntime-ios-simulator-$arch-$version/
-
-          mv *.zip ../
+          zip -r onnxruntime-ios-simulator-$arch-${version}.zip ./build-ios
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
