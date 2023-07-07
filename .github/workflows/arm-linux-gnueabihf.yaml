@@ -40,6 +40,11 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+
       - name: cache-toolchain
         id: cache-toolchain
         uses: actions/cache@v3
@@ -103,6 +108,8 @@ jobs:
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_SYSTEM_NAME=Linux \
             --cmake_extra_defines CMAKE_SYSTEM_PROCESSOR=armv7l \
+            --cmake_extra_defines CMAKE_C_COMPILER_LAUNCHER=ccache \
+            --cmake_extra_defines CMAKE_CXX_COMPILER_LAUNCHER=ccache \
             --target install \
             --parallel \
             --skip_tests
