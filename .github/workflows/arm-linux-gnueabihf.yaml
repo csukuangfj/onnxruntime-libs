@@ -62,11 +62,18 @@ jobs:
           mkdir $GITHUB_WORKSPACE/toolchain
           tar xvf ./arm-linux-gcc/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
 
+      - name: Download protoc
+        shell: bash
+        run: |
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+          unzip protoc-21.12-linux-x86_64.zip
+          ./bin/protoc --version
 
       - name: Set environment variable
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
           ls -lh "$GITHUB_WORKSPACE/toolchain/bin"
 
           echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
@@ -76,6 +83,11 @@ jobs:
         shell: bash
         run: |
           arm-linux-gnueabihf-gcc --version
+
+      - name: Display protoc info
+        shell: bash
+        run: |
+          protoc --version
 
       - name: Show current directory
         shell: bash
@@ -87,7 +99,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install python3
+          sudo apt-get install python3 git-lfs
           python3 -m pip install cmake
           cmake --version
 
@@ -103,6 +115,7 @@ jobs:
             --build_shared_lib \
             --arm \
             --update \
+            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_SYSTEM_NAME=Linux \
@@ -155,8 +168,8 @@ jobs:
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
-          git pull
-          cp -v ../onnxruntime-linux-arm-*.zip ./huggingface
+          git lfs pull
+          cp -v ../onnxruntime-linux-arm-*.zip ./
           git status
           git lfs track "*.zip"
 
