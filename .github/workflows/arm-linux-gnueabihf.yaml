@@ -68,14 +68,13 @@ jobs:
         run: |
           wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protoc-3.20.2-linux-x86_64.zip
           unzip protoc-3.20.2-linux-x86_64.zip
-          tree protoc-3.20.2-linux-x86_64
           ./bin/protoc --version
 
       - name: Set environment variable
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/protoc-3.20.2-linux-x86_64/bin"  >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
           ls -lh "$GITHUB_WORKSPACE/toolchain/bin"
 
           echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
@@ -117,7 +116,7 @@ jobs:
             --build_shared_lib \
             --arm \
             --update \
-            --path_to_protoc_exe $GITHUB_WORKSPACE/protoc-3.20.2-linux-x86_64/bin/protoc \
+            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_SYSTEM_NAME=Linux \
