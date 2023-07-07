@@ -79,6 +79,14 @@ jobs:
           ls -lh
           echo $PWD
 
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3
+          python3 -m pip install cmake
+          cmake --version
+
       - name: Build onnxruntime for 32-bit ARM
         shell: bash
         run: |
