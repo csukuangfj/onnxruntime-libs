@@ -63,28 +63,19 @@ jobs:
           mkdir $GITHUB_WORKSPACE/toolchain
           tar xvf ./arm-linux-gcc/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
 
-      - name: cache-protobuf
-        id: cache-protobuf
-        uses: actions/cache@v3
-        with:
-          path: protobuf-3.20.2
-          key: protobuf-3.20.2
-
-      - name: Install protobuf
-        if: steps.cache-protobuf.outputs.cache-hit != 'true'
+      - name: Download protoc
         shell: bash
         run: |
-          wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protobuf-all-3.20.2.tar.gz
-          tar xvf protobuf-all-3.20.2.tar.gz
-          cd protobuf-3.20.2/
-          ./configure --prefix=$GITHUB_WORKSPACE/protobuf-3.20.2
-          make -j2 install
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protoc-3.20.2-linux-x86_64.zip
+          unzip protoc-3.20.2-linux-x86_64.zip
+          tree protoc-3.20.2-linux-x86_64
+          ./bin/protoc --version
 
       - name: Set environment variable
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/protobuf-3.20.2/bin"  >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/protoc-3.20.2-linux-x86_64/bin"  >> "$GITHUB_PATH"
           ls -lh "$GITHUB_WORKSPACE/toolchain/bin"
 
           echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
@@ -98,9 +89,6 @@ jobs:
       - name: Display protoc info
         shell: bash
         run: |
-          ls -lh $GITHUB_WORKSPACE/protobuf-3.20.2/
-          tree $GITHUB_WORKSPACE/protobuf-3.20.2/
-          ls -lh $GITHUB_WORKSPACE/protobuf-3.20.2/bin
           protoc --version
 
       - name: Show current directory
@@ -129,7 +117,7 @@ jobs:
             --build_shared_lib \
             --arm \
             --update \
-            --path_to_protoc_exe $GITHUB_WORKSPACE/protobuf-3.20.2/bin/protoc \
+            --path_to_protoc_exe $GITHUB_WORKSPACE/protoc-3.20.2-linux-x86_64/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_SYSTEM_NAME=Linux \
