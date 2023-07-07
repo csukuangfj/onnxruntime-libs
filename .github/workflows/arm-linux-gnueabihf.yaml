@@ -1,0 +1,67 @@
+name: arm-linux-gnueabihf
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/arm-linux-gnueabihf.yaml'
+
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/arm-linux-gnueabihf.yaml'
+
+concurrency:
+  group: arm-linux-gnueabihf-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION: 1.15.1
+
+jobs:
+  arm_linux_gnueabihf:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: cache-toolchain
+        id: cache-toolchain
+        uses: actions/cache@v3
+        with:
+          path: toolchain
+          key: gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf
+
+      - name: Download toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git lfs install
+          git clone https://huggingface.co/csukuangfj/arm-linux-gcc
+          ls -lh arm-linux-gcc
+
+          mkdir $GITHUB_WORKSPACE/toolchain
+          tar xvf ./arm-linux-gcc/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+
+          echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
+          echo "CXX=arm-linux-gnueabihf-g++" >> "$GITHUB_ENV"
+
+      - name: Display toolchain info
+        shell: bash
+        run: |
+          # export PATH=$GITHUB_WORKSPACE/toolchain/bin:$PATH
+
+          arm-linux-gnueabihf-gcc --version
