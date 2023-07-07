@@ -60,10 +60,9 @@ jobs:
 
           echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
           echo "CXX=arm-linux-gnueabihf-g++" >> "$GITHUB_ENV"
-          echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
 
       - name: Display toolchain info
         shell: bash
         run: |
-
+          echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
           arm-linux-gnueabihf-gcc --version
