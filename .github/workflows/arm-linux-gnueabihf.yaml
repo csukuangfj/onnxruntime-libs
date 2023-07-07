@@ -78,3 +78,28 @@ jobs:
         run: |
           ls -lh
           echo $PWD
+
+      - name: Build onnxruntime for 32-bit ARM
+        shell: bash
+        run: |
+          wget https://raw.githubusercontent.com/k2-fsa/sherpa-ncnn/master/toolchains/arm-linux-gnueabihf.toolchain.cmake
+          build_dir=./build-arm
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --build_shared_lib \
+            --arm \
+            --update \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=./arm-linux-gnueabihf.toolchain.cmake \
+            --target install \
+            --parallel \
+            --skip_tests
+
+      - name: Display build results
+        shell: bash
+        run: |
+          tree ./build-arm
+
