@@ -97,6 +97,7 @@ jobs:
           python3 ./tools/ci_build/build.py \
             --build_dir $build_dir \
             --config Release \
+            --build \
             --build_shared_lib \
             --arm \
             --update \
