@@ -138,3 +138,24 @@ jobs:
         with:
           name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-linux-arm-*.zip
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+          cd huggingface
+          git pull
+          cp -v ../onnxruntime-linux-arm-*.zip ./huggingface
+          git status
+
+          git add .
+
+          git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
