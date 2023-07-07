@@ -65,8 +65,14 @@ jobs:
       - name: Download protoc
         shell: bash
         run: |
-          wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
-          unzip protoc-21.12-linux-x86_64.zip
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} == "1.14.0" ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+            unzip protoc-3.20.3-linux-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} == "1.15.1" ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+            unzip protoc-21.12-linux-x86_64.zip
+          fi
+
           ./bin/protoc --version
 
       - name: Set environment variable
