@@ -38,7 +38,7 @@ jobs:
         os: [macos-latest]
 
     steps:
-      - name: Checkout
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         uses: actions/checkout@v2
         with:
           repository: microsoft/onnxruntime
@@ -51,3 +51,52 @@ jobs:
           brew install protobuf@21
           python3 -m pip install cmake
           cmake --version
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for 64-bit ARM
+        shell: bash
+        run: |
+          build_dir=./build-ios/arm64
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --update \
+            --build \
+            --use_xcode \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --ios \
+            --ios_sysroot iphoneos \
+            --osx_arch arm64 \
+            --target install \
+            --parallel \
+            --skip_tests \
+            --build_apple_framework \
+            --apple_deploy_target 13.0 \
+            --use_coreml \
+            --path_to_protoc_exe /usr/local/opt/protobuf@21/bin/protoc
+
+      - name: Display build results
+        shell: bash
+        run: |
+          build_dir=./build-ios/arm64
+          tree $build_dir
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a onnxruntime-ios-arm64-$version \
+            -c Release \
+            -l libonnxruntime.${version}.dylib \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          ls -lh $build_dir/onnxruntime-ios-arm64-$version
+
+          cd $build_dir
+          tree ./onnxruntime-ios-arm64-$version
+
+          zip -r onnxruntime-ios-arm64-${version}.zip ./onnxruntime-ios-arm64-$version/
+
+          mv *.zip ../
