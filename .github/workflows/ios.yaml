@@ -1,0 +1,53 @@
+name: ios
+
+on:
+  push:
+    branches:
+      - master
+      - ios
+    paths:
+      - '.github/workflows/ios.yaml'
+
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/ios.yaml'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.15.1）"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
+
+jobs:
+  ios:
+    name: Build onnxruntime lib for iOS on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Install dependencies on macos
+        run: |
+          # Workaround for protoc https://github.com/microsoft/onnxruntime/issues/16238#issuecomment-1590398821
+          brew install protobuf@21
+          python3 -m pip install cmake
+          cmake --version
