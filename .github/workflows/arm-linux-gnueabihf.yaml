@@ -72,3 +72,9 @@ jobs:
         shell: bash
         run: |
           arm-linux-gnueabihf-gcc --version
+
+      - name: Show current directory
+        shell: bash
+        run: |
+          ls -lh
+          echo $PWD
