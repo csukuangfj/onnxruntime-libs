@@ -66,8 +66,8 @@ jobs:
       - name: Download protoc
         shell: bash
         run: |
-          wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protoc-3.20.2-linux-x86_64.zip
-          unzip protoc-3.20.2-linux-x86_64.zip
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+          unzip protoc-21.12-linux-x86_64.zip
           ./bin/protoc --version
 
       - name: Set environment variable
