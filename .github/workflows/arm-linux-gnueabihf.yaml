@@ -13,6 +13,12 @@ on:
     paths:
       - '.github/workflows/arm-linux-gnueabihf.yaml'
 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.15.1）"
+        required: true
+
 concurrency:
   group: arm-linux-gnueabihf-${{ github.ref }}
   cancel-in-progress: true
@@ -21,7 +27,9 @@ permissions:
   contents: write
 
 env:
-  ONNXRUNTIME_VERSION: 1.15.1
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -161,6 +169,7 @@ jobs:
           git pull
           cp -v ../onnxruntime-linux-arm-*.zip ./huggingface
           git status
+          git lfs track "*.zip"
 
           git add .
 
