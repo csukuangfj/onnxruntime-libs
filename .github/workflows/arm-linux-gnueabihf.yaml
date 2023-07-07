@@ -1,0 +1,177 @@
+name: arm-linux-gnueabihf
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/arm-linux-gnueabihf.yaml'
+
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/arm-linux-gnueabihf.yaml'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.15.1）"
+        required: true
+
+concurrency:
+  group: arm-linux-gnueabihf-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
+
+jobs:
+  arm_linux_gnueabihf:
+    name: Build onnxruntime lib for arm32 on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: cache-toolchain
+        id: cache-toolchain
+        uses: actions/cache@v3
+        with:
+          path: toolchain
+          key: gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf
+
+      - name: Download toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git lfs install
+          git clone https://huggingface.co/csukuangfj/arm-linux-gcc
+          ls -lh arm-linux-gcc
+
+          mkdir $GITHUB_WORKSPACE/toolchain
+          tar xvf ./arm-linux-gcc/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+
+
+      - name: Set environment variable
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
+          ls -lh "$GITHUB_WORKSPACE/toolchain/bin"
+
+          echo "CC=arm-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
+          echo "CXX=arm-linux-gnueabihf-g++" >> "$GITHUB_ENV"
+
+      - name: Display toolchain info
+        shell: bash
+        run: |
+          arm-linux-gnueabihf-gcc --version
+
+      - name: Show current directory
+        shell: bash
+        run: |
+          ls -lh
+          echo $PWD
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3
+          python3 -m pip install cmake
+          cmake --version
+
+      - name: Build onnxruntime for 32-bit ARM
+        shell: bash
+        run: |
+          build_dir=./build-arm
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --build \
+            --build_shared_lib \
+            --arm \
+            --update \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_SYSTEM_NAME=Linux \
+            --cmake_extra_defines CMAKE_SYSTEM_PROCESSOR=armv7l \
+            --cmake_extra_defines CMAKE_C_COMPILER_LAUNCHER=ccache \
+            --cmake_extra_defines CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            --target install \
+            --parallel \
+            --skip_tests
+
+      - name: Display build results
+        shell: bash
+        run: |
+          tree ./build-arm
+
+      - name: Collect results
+        shell: bash
+        run: |
+          build_dir=./build-arm
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a onnxruntime-linux-arm-$version \
+            -c Release \
+            -l libonnxruntime.so.$version \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+          ls -lh $build_dir/onnxruntime-linux-arm-$version
+          cd $build_dir
+          tree ./onnxruntime-linux-arm-$version/
+
+          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+
+          mv *.zip ../
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-arm-*.zip
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+          cd huggingface
+          git pull
+          cp -v ../onnxruntime-linux-arm-*.zip ./huggingface
+          git status
+          git lfs track "*.zip"
+
+          git add .
+
+          git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
