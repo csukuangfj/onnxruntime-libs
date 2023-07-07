@@ -78,8 +78,7 @@ jobs:
           tar xvf protobuf-all-3.20.2.tar.gz
           cd protobuf-3.20.2/
           ./configure --prefix=$GITHUB_WORKSPACE/protobuf-3.20.2
-          make -j install
-
+          make -j2 install
 
       - name: Set environment variable
         shell: bash
