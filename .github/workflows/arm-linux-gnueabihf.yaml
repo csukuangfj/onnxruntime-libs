@@ -19,10 +19,6 @@ on:
         description: "Version information（e.g., 1.15.1）"
         required: true
 
-concurrency:
-  group: arm-linux-gnueabihf-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: write
 
