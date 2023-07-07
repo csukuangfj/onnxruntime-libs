@@ -25,6 +25,7 @@ env:
 
 jobs:
   arm_linux_gnueabihf:
+    name: Build onnxruntime lib for arm32 on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
