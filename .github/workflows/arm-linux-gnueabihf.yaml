@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - fix
     paths:
       - '.github/workflows/arm-linux-gnueabihf.yaml'
 
