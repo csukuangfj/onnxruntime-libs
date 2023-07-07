@@ -126,9 +126,12 @@ jobs:
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
           ls -lh $build_dir/onnxruntime-linux-arm-$version
-          tree $build_dir/onnxruntime-linux-arm-$version/
+          cd $build_dir
+          tree ./onnxruntime-linux-arm-$version/
 
-          zip -r onnxruntime-linux-arm-${version}.zip $build_dir/onnxruntime-linux-arm-$version/
+          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+
+          mv *.zip ../
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
