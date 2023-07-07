@@ -52,6 +52,9 @@ jobs:
           python3 -m pip install cmake
           cmake --version
 
+          brew install tree
+          tree --version
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for 64-bit ARM
         shell: bash
         run: |
@@ -80,19 +83,11 @@ jobs:
       - name: Display build results
         shell: bash
         run: |
-          build_dir=./build-ios/arm64
-          ls $build_dir
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a onnxruntime-ios-arm64-$version \
-            -c Release \
-            -l libonnxruntime.${version}.dylib \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
-
           zip -r onnxruntime-ios-arm64-${version}.zip ./build-ios
+
+          tree -L 2 ./build-ios/arm64
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -100,7 +95,7 @@ jobs:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-arm64-*.zip
 
-  ios_simulator_arm64:
+  ios_simulator:
     name: Build onnxruntime lib for iOS simulator arm64 on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -124,10 +119,13 @@ jobs:
           python3 -m pip install cmake
           cmake --version
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for 64-bit ARM
+          brew install tree
+          tree --version
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for simulator on ${{ matrix.arch }}
         shell: bash
         run: |
-          build_dir=./build-ios/simulator/arm64
+          build_dir=./build-ios/simulator/${{ matrix.arch }}
 
           python3 ./tools/ci_build/build.py \
             --build_dir $build_dir \
@@ -152,23 +150,48 @@ jobs:
       - name: Display build results
         shell: bash
         run: |
-          build_dir=./build-ios/simulator/${{ matrix.arch }}
-          ls $build_dir
           version=${{ env.ONNXRUNTIME_VERSION }}
-          arc=${{ matrix.arch }}
-
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a onnxruntime-ios-simulator-$arch-$version \
-            -c Release \
-            -l libonnxruntime.${version}.dylib \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
+          arch=${{ matrix.arch }}
 
           zip -r onnxruntime-ios-simulator-$arch-${version}.zip ./build-ios
+
+          tree -L 2 ./build-ios/simulator/${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: onnxruntime-ios-simulator-$arch-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-ios-simulator-$arch-*.zip
+          name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-simulator-${{ matrix.arch }}-*.zip
+
+  create_xcframework:
+    name: Create xcframework
+    runs-on: macos-latest
+    needs: [ios_arm64, ios_simulator]
+    steps:
+      - name: Retrieve artifact for ios_arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-arm64-*.zip
+
+      - name: Retrieve artifact for simulator arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-simulator-arm64-*.zip
+
+      - name: Retrieve artifact for simulator x86_64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-simulator-x86_64-*.zip
+
+      - name: Install utilities
+        shell: bash
+        run: |
+          brew install tree
+
+      - name: Display aritfact
+        shell: bash
+        run: |
+          tree -L 2 .
