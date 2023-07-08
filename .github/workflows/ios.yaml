@@ -246,19 +246,19 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./
+          path: ./onnxruntime-ios-arm64/
 
       - name: Retrieve artifact for simulator arm64
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./
+          path: ./onnxruntime-ios-simulator-arm64/
 
       - name: Retrieve artifact for simulator x86_64
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./
+          path: ./onnxruntime-ios-simulator-x86_64/
 
       - name: Install utilities
         shell: bash
@@ -269,28 +269,29 @@ jobs:
         shell: bash
         run: |
           ls -lh
-          ls -lh */*
+          ls -lh */
           tree -L 2 .
 
       - name: Create xcframework
         shell: bash
         run: |
           mkdir ./simulator
-          lipo -create onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
-                       onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
+          lipo -create onnxruntime-ios-simulator-x86_64/onnxruntime.a \
+                       onnxruntime-ios-simulator-arm64/onnxruntime.a \
                -output ./simulator/onnxruntime.a
 
           file ./simulator/onnxruntime.a
+
           ls -lh ./simulator/onnxruntime.a
 
           xcodebuild -create-xcframework \
-              -library onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
+              -library onnxruntime-ios-arm64/onnxruntime.a \
               -library ./simulator/onnxruntime.a \
               -output onnxruntime.xcframework
 
           mkdir -p onnxruntime.xcframework/Headers
 
-          cp -v onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}/*.h onnxruntime.xcframework/Headers
+          cp -v onnxruntime-ios-arm64/*.h onnxruntime.xcframework/Headers
 
           tree onnxruntime.xcframework
 
