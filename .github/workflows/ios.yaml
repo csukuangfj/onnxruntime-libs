@@ -1,0 +1,357 @@
+name: ios
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/ios.yaml'
+
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/ios.yaml'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.15.1）"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
+
+jobs:
+  ios_arm64:
+    name: Build onnxruntime lib for iOS arm64 on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+
+    steps:
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Install dependencies on macos
+        run: |
+          # Workaround for protoc https://github.com/microsoft/onnxruntime/issues/16238#issuecomment-1590398821
+          brew install protobuf@21
+          python3 -m pip install cmake
+          cmake --version
+
+          brew install tree
+          tree --version
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for arm64
+        shell: bash
+        run: |
+          build_dir=./build-ios/arm64
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --update \
+            --build \
+            --use_xcode \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --ios \
+            --ios_sysroot iphoneos \
+            --osx_arch arm64 \
+            --target install \
+            --parallel \
+            --skip_tests \
+            --build_apple_framework \
+            --apple_deploy_target 13.0 \
+            --use_coreml \
+            --path_to_protoc_exe /usr/local/opt/protobuf@21/bin/protoc
+
+      - name: Copy results
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          arch=arm64
+
+          ls -1 build-ios/$arch/Release/static_libraries
+
+          ls -lh build-ios/$arch/Release/static_libraries
+
+          libtool -static -o build-ios/$arch/onnxruntime.a \
+            build-ios/$arch/Release/static_libraries/libabsl_base.a \
+            build-ios/$arch/Release/static_libraries/libabsl_city.a \
+            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
+            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
+            build-ios/$arch/Release/static_libraries/libclog.a \
+            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
+            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
+            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
+            build-ios/$arch/Release/static_libraries/libonnx.a \
+            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_common.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_framework.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_graph.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_mlas.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_optimizer.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_providers.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_session.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a \
+            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
+            build-ios/$arch/Release/static_libraries/libre2.a
+
+          dst=onnxruntime-ios-$arch-${{ env.ONNXRUNTIME_VERSION }}
+
+          mkdir -p $dst
+
+          cp -v build-ios/$arch/onnxruntime.a $dst
+
+          cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/Headers/* $dst/
+
+          ls -lh $dst
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+
+  ios_simulator:
+    name: Build onnxruntime lib for iOS simulator on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        arch: [arm64, x86_64]
+
+    steps:
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Install dependencies on macos
+        run: |
+          # Workaround for protoc https://github.com/microsoft/onnxruntime/issues/16238#issuecomment-1590398821
+          brew install protobuf@21
+          python3 -m pip install cmake
+          cmake --version
+
+          brew install tree
+          tree --version
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for simulator ${{ matrix.arch }}
+        shell: bash
+        run: |
+          build_dir=./build-ios/simulator/${{ matrix.arch }}
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --update \
+            --build \
+            --use_xcode \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --ios \
+            --ios_sysroot iphonesimulator \
+            --osx_arch ${{ matrix.arch }} \
+            --target install \
+            --parallel \
+            --skip_tests \
+            --build_apple_framework \
+            --apple_deploy_target 13.0 \
+            --use_coreml \
+            --path_to_protoc_exe /usr/local/opt/protobuf@21/bin/protoc
+
+      - name: Copy results
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          arch=simulator/${{ matrix.arch }}
+
+          ls -1 build-ios/$arch/Release/static_libraries
+
+          ls -lh build-ios/$arch/Release/static_libraries
+
+          libtool -static -o build-ios/$arch/onnxruntime.a \
+            build-ios/$arch/Release/static_libraries/libabsl_base.a \
+            build-ios/$arch/Release/static_libraries/libabsl_city.a \
+            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
+            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
+            build-ios/$arch/Release/static_libraries/libclog.a \
+            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
+            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
+            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
+            build-ios/$arch/Release/static_libraries/libonnx.a \
+            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_common.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_framework.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_graph.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_mlas.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_optimizer.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_providers.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_session.a \
+            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a \
+            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
+            build-ios/$arch/Release/static_libraries/libre2.a
+
+          dst=onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          mkdir -p $dst
+
+          cp build-ios/$arch/onnxruntime.a $dst
+
+          ls -lh $dst
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+
+  create_xcframework:
+    name: Create xcframework
+    runs-on: macos-latest
+    needs: [ios_arm64, ios_simulator]
+    steps:
+      - name: Retrieve artifact for ios_arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime-ios-arm64/
+
+      - name: Retrieve artifact for simulator arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime-ios-simulator-arm64/
+
+      - name: Retrieve artifact for simulator x86_64
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime-ios-simulator-x86_64/
+
+      - name: Install utilities
+        shell: bash
+        run: |
+          brew install tree
+
+      - name: Display artifact
+        shell: bash
+        run: |
+          ls -lh
+          ls -lh */
+          tree -L 2 .
+
+      - name: Create xcframework
+        shell: bash
+        run: |
+          mkdir ./simulator
+          lipo -create onnxruntime-ios-simulator-x86_64/onnxruntime.a \
+                       onnxruntime-ios-simulator-arm64/onnxruntime.a \
+               -output ./simulator/onnxruntime.a
+
+          file ./simulator/onnxruntime.a
+
+          ls -lh ./simulator/onnxruntime.a
+
+          xcodebuild -create-xcframework \
+              -library onnxruntime-ios-arm64/onnxruntime.a \
+              -library ./simulator/onnxruntime.a \
+              -output onnxruntime.xcframework
+
+          mkdir -p onnxruntime.xcframework/Headers
+
+          cp -v onnxruntime-ios-arm64/*.h onnxruntime.xcframework/Headers
+
+          tree onnxruntime.xcframework
+
+          tar cjvf onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 ./onnxruntime.xcframework
+
+          ls -lh onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime.xcframework
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface (onnxruntime-libs)
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+          cd huggingface
+          git lfs pull
+          cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./
+          git status
+          git lfs track "*.bz2"
+
+          git add .
+
+          git commit -m "upload onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+          cd ..
+          rm -rf huggingface
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface (ios-onnxruntime)
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/ios-onnxruntime huggingface
+
+          cd huggingface
+          git lfs pull
+
+          rm -rfv onnxruntime.xcframework
+
+          mv -v ../onnxruntime.xcframework .
+
+          git status
+          git lfs track "*.a"
+
+          git add .
+
+          git commit -m "Add onnxruntime.xcframework ${{ env.ONNXRUNTIME_VERSION}}"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime main
+          cd ..
+          rm -rf huggingface
