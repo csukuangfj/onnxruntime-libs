@@ -215,7 +215,7 @@ jobs:
 
           if [[ ${{ matrix.arch }} == "arm64" ]]; then
             # cp -v ./build-ios/simulator/arm64/install/bin/onnxruntime.framework/Headers/*.h $dst
-            cp -v ./build-ios/simulator/arm64/Release/Release-iphonesimulator/onnxruntime.framework/Headers $dst
+            cp -v ./build-ios/simulator/arm64/Release/Release-iphonesimulator/onnxruntime.framework/Headers/*.h $dst
           fi
 
           ls -lh $dst
