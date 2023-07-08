@@ -84,39 +84,17 @@ jobs:
         shell: bash
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
-          arch=arm64
 
-          libtool -static -o build-ios/$arch/onnxruntime.a \
-            build-ios/$arch/Release/static_libraries/libabsl_base.a \
-            build-ios/$arch/Release/static_libraries/libabsl_city.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
-            build-ios/$arch/Release/static_libraries/libclog.a \
-            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
-            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
-            build-ios/$arch/Release/static_libraries/libonnx.a \
-            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_common.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_framework.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_graph.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_mlas.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_optimizer.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_providers.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_session.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a \
-            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-ios/$arch/Release/static_libraries/libre2.a
+          file build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/onnxruntime
 
-          dst=onnxruntime-ios-$arch-${{ env.ONNXRUNTIME_VERSION }}
-          cp build-ios/$arch/onnxruntime.a $dst
+          dst=onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+
+          cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/onnxruntime $dst/
+          cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/Headers/* $dst/
+
           ls -lh $dst
+
+          tree build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -180,45 +158,16 @@ jobs:
         shell: bash
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
-          arch=simulator/${{ matrix.arch }}
+          arch=${{ matrix.arch }}
 
-          libtool -static -o build-ios/$arch/onnxruntime.a \
-            build-ios/$arch/Release/static_libraries/libabsl_base.a \
-            build-ios/$arch/Release/static_libraries/libabsl_city.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
-            build-ios/$arch/Release/static_libraries/libclog.a \
-            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
-            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
-            build-ios/$arch/Release/static_libraries/libonnx.a \
-            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_common.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_framework.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_graph.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_mlas.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_optimizer.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_providers.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_session.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a \
-            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-ios/$arch/Release/static_libraries/libre2.a
+          file build-ios/simulator/$arch/Release/build-ios/simulator/$arch/install/bin/onnxruntime.framework/onnxruntime
 
-          dst=onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          cp build-ios/$arch/onnxruntime.a $dst
-
-          if [[ ${{ matrix.arch }} == "arm64" ]]; then
-            # cp -v ./build-ios/simulator/arm64/install/bin/onnxruntime.framework/Headers/*.h $dst
-            cp -v ./build-ios/simulator/arm64/Release/Release-iphonesimulator/onnxruntime.framework/Headers/*.h $dst
-          fi
+          dst=onnxruntime-ios-simulator-$arch-${{ env.ONNXRUNTIME_VERSION }}
+          cp build-ios/simulator/$arch/Release/build-ios/simulator/$arch/install/bin/onnxruntime.framework/onnxruntime $dst/
 
           ls -lh $dst
+
+          tree build-ios/simulator/$arch/Release/build-ios/simulator/$arch/install/bin/onnxruntime.framework/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -265,21 +214,21 @@ jobs:
         shell: bash
         run: |
           mkdir ./simulator
-          lipo -create onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
-                       onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
+          lipo -create onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime \
+                       onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime \
                -output ./simulator/onnxruntime.a
 
           file ./simulator/onnxruntime.a
           ls -lh ./simulator/onnxruntime.a
 
           xcodebuild -create-xcframework \
-              -library onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime.a \
+              -library onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}/onnxruntime \
               -library ./simulator/onnxruntime.a \
               -output onnxruntime.xcframework
 
           mkdir -p onnxruntime.xcframework/Headers
 
-          cp -v onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}/*.h onnxruntime.xcframework/Headers
+          cp -v onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}/*.h onnxruntime.xcframework/Headers
 
           tree onnxruntime.xcframework
 
