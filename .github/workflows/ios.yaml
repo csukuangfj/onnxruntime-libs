@@ -295,8 +295,64 @@ jobs:
 
           tree onnxruntime.xcframework
 
+          tar cjvf onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 ./onnxruntime.xcframework
+
+          ls -lh onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime.xcframework
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface (onnxruntime-libs)
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+          cd huggingface
+          git lfs pull
+          cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./
+          git status
+          git lfs track "*.bz2"
+
+          git add .
+
+          git commit -m "upload onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+          cd ..
+          rm -rf huggingface
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface (ios-onnxruntime)
+        if: ${{ github.repository_owner == 'csukuangfj' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/ios-onnxruntime huggingface
+
+          cd huggingface
+          git lfs pull
+
+          rm -rfv onnxruntime.xcframework
+
+          mv -v ../onnxruntime.xcframework .
+
+          git status
+          git lfs track "*.a"
+
+          git add .
+
+          git commit -m "Add onnxruntime.xcframework ${{ env.ONNXRUNTIME_VERSION}}"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime main
+          cd ..
+          rm -rf huggingface
