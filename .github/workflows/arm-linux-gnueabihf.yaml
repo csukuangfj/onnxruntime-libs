@@ -37,12 +37,15 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
         with:
           path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-arm-linux-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime-arm-linux-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -178,7 +181,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         shell: bash

@@ -403,7 +403,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (onnxruntime-libs)
-        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -427,7 +427,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (ios-onnxruntime)
-        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: github.repository_owner == 'csukuangfj'  && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
