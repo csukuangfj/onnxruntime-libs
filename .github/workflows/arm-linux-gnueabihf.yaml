@@ -91,7 +91,7 @@ jobs:
         run: |
           arm-linux-gnueabihf-gcc --version
 
-      - name: Display protoc info
+      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
         shell: bash
         run: |
           protoc --version
