@@ -294,6 +294,14 @@ jobs:
 
           tree onnxruntime.xcframework
 
+          pushd onnxruntime.xcframework/ios-arm64
+          ln -s onnxruntime.a libonnxruntime.a
+
+          cd ../ios-arm64_x86_64-simulator
+          ln -s onnxruntime.a libonnxruntime.a
+
+          popd
+
           tar cjvf onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 ./onnxruntime.xcframework
 
           ls -lh onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
