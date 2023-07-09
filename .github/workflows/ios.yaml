@@ -37,7 +37,15 @@ jobs:
         os: [macos-latest]
 
     steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: microsoft/onnxruntime
@@ -45,6 +53,7 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Install dependencies on macos
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           python3 -m pip install cmake
@@ -53,6 +62,7 @@ jobs:
           tree --version
 
       - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # see ./cmake/deps.txt
@@ -67,16 +77,19 @@ jobs:
           ./bin/protoc --version
 
       - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
 
       - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           protoc --version
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for arm64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-ios/arm64
@@ -102,6 +115,7 @@ jobs:
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
       - name: Copy results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
@@ -150,12 +164,14 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
 
   ios_simulator:
+
     name: Build onnxruntime lib for iOS simulator on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -165,7 +181,15 @@ jobs:
         arch: [arm64, x86_64]
 
     steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: microsoft/onnxruntime
@@ -173,6 +197,7 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Install dependencies on macos
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           python3 -m pip install cmake
@@ -181,6 +206,7 @@ jobs:
           tree --version
 
       - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # see ./cmake/deps.txt
@@ -195,16 +221,19 @@ jobs:
           ./bin/protoc --version
 
       - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
 
       - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           protoc --version
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for simulator ${{ matrix.arch }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-ios/simulator/${{ matrix.arch }}
@@ -230,6 +259,7 @@ jobs:
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
       - name: Copy results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
@@ -275,6 +305,7 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -285,30 +316,42 @@ jobs:
     runs-on: macos-latest
     needs: [ios_arm64, ios_simulator]
     steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          key: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
       - name: Retrieve artifact for ios_arm64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-arm64/
 
       - name: Retrieve artifact for simulator arm64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-arm64/
 
       - name: Retrieve artifact for simulator x86_64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/download-artifact@v2
         with:
           name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-x86_64/
 
       - name: Install utilities
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           brew install tree
 
       - name: Display artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           ls -lh
@@ -316,6 +359,7 @@ jobs:
           tree -L 2 .
 
       - name: Create xcframework
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir ./simulator
@@ -351,6 +395,7 @@ jobs:
           ls -lh onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
 
       - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
@@ -358,7 +403,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (onnxruntime-libs)
-        if: ${{ github.repository_owner == 'csukuangfj' }}
+        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -382,7 +427,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (ios-onnxruntime)
-        if: ${{ github.repository_owner == 'csukuangfj' }}
+        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |

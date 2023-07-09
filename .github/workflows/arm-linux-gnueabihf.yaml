@@ -37,12 +37,21 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-arm-linux-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
       - name: Checkout
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: microsoft/onnxruntime
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
+
 
       - name: cache-toolchain
         id: cache-toolchain
@@ -63,6 +72,7 @@ jobs:
           tar xvf ./arm-linux-gcc/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
 
       - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # see ./cmake/deps.txt
@@ -72,11 +82,15 @@ jobs:
           elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.15.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
             unzip protoc-21.12-linux-x86_64.zip
+          else
+            echo "Unsupported version ${{ env.ONNXRUNTIME_VERSION }}"
+            exit 1
           fi
 
           ./bin/protoc --version
 
       - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "$GITHUB_WORKSPACE/toolchain/bin"  >> "$GITHUB_PATH"
@@ -87,11 +101,13 @@ jobs:
           echo "CXX=arm-linux-gnueabihf-g++" >> "$GITHUB_ENV"
 
       - name: Display toolchain info
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           arm-linux-gnueabihf-gcc --version
 
       - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           protoc --version
@@ -103,6 +119,7 @@ jobs:
           echo $PWD
 
       - name: Install dependencies
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           sudo apt-get update
@@ -111,6 +128,7 @@ jobs:
           cmake --version
 
       - name: Build onnxruntime for 32-bit ARM
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-arm
@@ -132,11 +150,13 @@ jobs:
             --skip_tests
 
       - name: Display build results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           tree ./build-arm
 
       - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-arm
@@ -158,6 +178,7 @@ jobs:
           mv *.zip ../
 
       - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
@@ -165,7 +186,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: ${{ github.repository_owner == 'csukuangfj' }}
+        if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
