@@ -346,20 +346,21 @@ jobs:
           git config --global user.name "Fangjun Kuang"
 
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/ios-onnxruntime huggingface
+          version=${{ env.ONNXRUNTIME_VERSION}}
 
           cd huggingface
           git lfs pull
 
-          rm -rfv onnxruntime.xcframework
-
-          mv -v ../onnxruntime.xcframework .
+          rm -rfv $version
+          mkdir $version
+          mv -v ../onnxruntime.xcframework ${version}/
 
           git status
           git lfs track "*.a"
 
           git add .
 
-          git commit -m "Add onnxruntime.xcframework ${{ env.ONNXRUNTIME_VERSION}}"
+          git commit -m "Add onnxruntime.xcframework $version"
           git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime main
           cd ..
           rm -rf huggingface
