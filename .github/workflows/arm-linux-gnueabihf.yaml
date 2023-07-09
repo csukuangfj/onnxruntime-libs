@@ -183,6 +183,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         shell: bash
         run: |
+          ls -lh
           version=${{ env.ONNXRUNTIME_VERSION }}
 
           tree ./onnxruntime-linux-arm-$version/
