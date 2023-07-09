@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - fix
     paths:
       - '.github/workflows/arm-linux-gnueabihf.yaml'
 
@@ -37,6 +38,9 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
+      - name: Checkout
+        uses: actions/cache@v2
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
