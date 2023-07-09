@@ -169,27 +169,26 @@ jobs:
             -l libonnxruntime.so.$version \
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
+
           ls -lh $build_dir/onnxruntime-linux-arm-$version
-          cd $build_dir
+
+          mv $build_dir/onnxruntime-linux-arm-$version .
+
           tree ./onnxruntime-linux-arm-$version/
-
-          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
-
-          mv *.zip ../
-
-      - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
-        with:
-          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-arm-*.zip
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         if: ${{ github.repository_owner == 'csukuangfj' }} && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        shell: bash
         run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          tree ./onnxruntime-linux-arm-$version/
+
+          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
 
@@ -205,3 +204,10 @@ jobs:
 
           git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
           git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
