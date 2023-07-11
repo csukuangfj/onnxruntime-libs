@@ -171,7 +171,6 @@ jobs:
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
 
   ios_simulator:
-
     name: Build onnxruntime lib for iOS simulator on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -311,10 +310,149 @@ jobs:
           name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
 
+  macOS:
+    name: Build onnxruntime lib for macOS on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        arch: [arm64, x86_64]
+
+    steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Install dependencies on macos
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          python3 -m pip install cmake
+          cmake --version
+          brew install tree
+          tree --version
+
+      - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # see ./cmake/deps.txt
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
+            unzip protoc-3.20.3-osx-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.15.[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
+            unzip protoc-21.12-osx-x86_64.zip
+          fi
+
+          ./bin/protoc --version
+
+      - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
+
+      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          protoc --version
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-macos/${{ matrix.arch }}
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --update \
+            --build \
+            --use_xcode \
+            --compile_no_warning_as_error \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --osx_arch ${{ matrix.arch }} \
+            --target install \
+            --parallel \
+            --skip_tests \
+            --build_apple_framework \
+            --apple_deploy_target 13.0 \
+            --use_coreml \
+            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
+
+      - name: Copy results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          arch=${{ matrix.arch }}
+
+          ls -1 build-macos/$arch/Release/static_libraries
+
+          ls -lh build-macos/$arch/Release/static_libraries
+
+          libtool -static -o build-macos/$arch/onnxruntime.a \
+            build-macos/$arch/Release/static_libraries/libabsl_base.a \
+            build-macos/$arch/Release/static_libraries/libabsl_city.a \
+            build-macos/$arch/Release/static_libraries/libabsl_hash.a \
+            build-macos/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-macos/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
+            build-macos/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_throw_delegate.a \
+            build-macos/$arch/Release/static_libraries/libclog.a \
+            build-macos/$arch/Release/static_libraries/libcpuinfo.a \
+            build-macos/$arch/Release/static_libraries/libflatbuffers.a \
+            build-macos/$arch/Release/static_libraries/libnsync_cpp.a \
+            build-macos/$arch/Release/static_libraries/libonnx.a \
+            build-macos/$arch/Release/static_libraries/libonnx_proto.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_common.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_framework.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_graph.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_mlas.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_optimizer.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_providers.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_session.a \
+            build-macos/$arch/Release/static_libraries/libonnxruntime_util.a \
+            build-macos/$arch/Release/static_libraries/libprotobuf-lite.a \
+            build-macos/$arch/Release/static_libraries/libre2.a
+
+          dst=onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          mkdir -p $dst
+
+          cp build-macos/$arch/onnxruntime.a $dst
+
+          ls -lh $dst
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+
   create_xcframework:
     name: Create xcframework
     runs-on: macos-latest
-    needs: [ios_arm64, ios_simulator]
+    needs: [ios_arm64, ios_simulator, macOS]
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
@@ -344,6 +482,20 @@ jobs:
           name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-x86_64/
 
+      - name: Retrieve artifact for macOS arm64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-macos-arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime-macos-arm64/
+
+      - name: Retrieve artifact for macOS x86_64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@v2
+        with:
+          name: onnxruntime-macos-x86_64-${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime-macos-x86_64/
+
       - name: Install utilities
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
@@ -368,12 +520,20 @@ jobs:
                -output ./simulator/onnxruntime.a
 
           file ./simulator/onnxruntime.a
-
           ls -lh ./simulator/onnxruntime.a
 
+          mkdir ./macos
+          lipo -create onnxruntime-macos-arm64/onnxruntime.a  \
+                       onnxruntime-macos-x86_64/onnxruntime.a \
+               -output ./macos/onnxruntime.a
+
+          file ./macos/onnxruntime.a
+          ls -lh ./macos/onnxruntime.a
+
           xcodebuild -create-xcframework \
-              -library onnxruntime-ios-arm64/onnxruntime.a \
+              -library ./onnxruntime-ios-arm64/onnxruntime.a \
               -library ./simulator/onnxruntime.a \
+              -library ./macos/onnxruntime.a \
               -output onnxruntime.xcframework
 
           mkdir -p onnxruntime.xcframework/Headers
@@ -386,6 +546,9 @@ jobs:
           ln -s onnxruntime.a libonnxruntime.a
 
           cd ../ios-arm64_x86_64-simulator
+          ln -s onnxruntime.a libonnxruntime.a
+
+          cd ../macos-arm64_x86_64
           ln -s onnxruntime.a libonnxruntime.a
 
           popd
