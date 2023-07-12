@@ -59,6 +59,7 @@ jobs:
         run: |
           python3 -m pip install cmake
           cmake --version
+          cmake --help
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -70,7 +71,7 @@ jobs:
             --config Release \
             --parallel \
             --enable_msvc_static_runtime \
-            --cmake_generator "Visual Studio 16 2019" \
+            --cmake_generator "Visual Studio 17 2022" \
             --skip_tests \
             --update \
             --build
