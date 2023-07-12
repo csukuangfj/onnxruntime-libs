@@ -113,7 +113,7 @@ jobs:
           cp $build_dir/Release/Release/onnxruntime_providers.lib $dst_dir/lib
           cp $build_dir/Release/Release/onnxruntime_session.lib $dst_dir/lib
           cp $build_dir/Release/Release/onnxruntime_util.lib $dst_dir/lib
-          cp $build_dir/Release/_deps/re2-build/Release/re2.lib $dst_dir/lib
+          # cp $build_dir/Release/_deps/re2-build/Release/re2.lib $dst_dir/lib
           cp $build_dir/Release/_deps/protobuf-build/Release/libprotobuf-lite.lib $dst_dir/lib
 
           echo "copy headers"
