@@ -43,6 +43,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
