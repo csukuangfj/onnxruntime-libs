@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - win-x86-static
+      - win-x64-static
     paths:
       - '.github/workflows/windows-x86.yaml'
 
