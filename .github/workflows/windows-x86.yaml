@@ -97,11 +97,11 @@ jobs:
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/hash/Release/absl_hash.lib $dst_dir/lib
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/hash/Release/absl_low_level_hash.lib $dst_dir/lib
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/container/Release/absl_raw_hash_set.lib $dst_dir/lib
-          cp $build_dir/Release/_deps/abseil_cpp-build/absl/base/Release/absl_raw_logging_internal.lib $dst_dir/lib
+          # cp $build_dir/Release/_deps/abseil_cpp-build/absl/base/Release/absl_raw_logging_internal.lib $dst_dir/lib
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/base/Release/absl_throw_delegate.lib $dst_dir/lib
-          cp $build_dir/Release/_deps/pytorch_cpuinfo-build/deps/clog/Release/clog.lib $dst_dir/lib
-          cp $build_dir/Release/_deps/pytorch_cpuinfo-build/Release/cpuinfo.lib $dst_dir/lib
-          cp $build_dir/Release/_deps/flatbuffers-build/Release/flatbuffers.lib $dst_dir/lib
+          # cp $build_dir/Release/_deps/pytorch_cpuinfo-build/deps/clog/Release/clog.lib $dst_dir/lib
+          # cp $build_dir/Release/_deps/pytorch_cpuinfo-build/Release/cpuinfo.lib $dst_dir/lib
+          # cp $build_dir/Release/_deps/flatbuffers-build/Release/flatbuffers.lib $dst_dir/lib
           cp $build_dir/Release/_deps/onnx-build/Release/onnx.lib $dst_dir/lib
           cp $build_dir/Release/_deps/onnx-build/Release/onnx_proto.lib $dst_dir/lib
           cp $build_dir/Release/Release/onnxruntime_common.lib $dst_dir/lib
