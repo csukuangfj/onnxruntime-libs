@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [windows-2019]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
@@ -71,7 +71,7 @@ jobs:
             --config Release \
             --parallel \
             --enable_msvc_static_runtime \
-            --cmake_generator "Visual Studio 17 2022" \
+            --cmake_generator "Visual Studio 16 2019" \
             --skip_tests \
             --update \
             --build \
@@ -91,6 +91,8 @@ jobs:
           mkdir -p $dst_dir/lib
 
           echo "copy libs"
+
+          find $build_dir/ -name "*.lib"
 
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/base/Release/absl_base.lib $dst_dir/lib
           cp $build_dir/Release/_deps/abseil_cpp-build/absl/hash/Release/absl_city.lib $dst_dir/lib
