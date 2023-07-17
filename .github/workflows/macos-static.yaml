@@ -125,8 +125,6 @@ jobs:
 
           ls -1 build-macos/$arch/Release/static_libraries
 
-          ls -lh build-ios/$arch/Release/static_libraries
-
           libtool -static -o build-macos/$arch/onnxruntime.a \
             build-macos/$arch/Release/static_libraries/libabsl_base.a \
             build-macos/$arch/Release/static_libraries/libabsl_city.a \
@@ -171,3 +169,25 @@ jobs:
         with:
           name: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Copy libs
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          arch=${{ matrix.arch }}
+
+          ls -1 build-macos/$arch/Release/static_libraries
+
+          dst=static-libraries-$arch-$version
+          mkdir -p $dst
+          cp  build-macos/$arch/Release/static_libraries/*.a $dst
+
+          ls -lh $dst
+
+      - name: Upload libs
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-all-libs
+          path: static-libraries-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
