@@ -43,8 +43,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -154,7 +154,7 @@ jobs:
             build-macos/$arch/Release/static_libraries/libprotobuf-lite.a \
             build-macos/$arch/Release/static_libraries/libre2.a
 
-          dst=onnxruntime-macos-$arch-${{ env.ONNXRUNTIME_VERSION }}
+          dst=onnxruntime-macos-static-$arch-${{ env.ONNXRUNTIME_VERSION }}
 
           mkdir -p $dst
 
@@ -168,5 +168,5 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
-          name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-macos-static-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
