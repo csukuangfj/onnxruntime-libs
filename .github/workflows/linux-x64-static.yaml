@@ -45,8 +45,10 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          # path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          # key: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-linux-x64-static
+          key: onnxruntime-linux-x64-static
 
       - name: Checkout
         if: steps.cache-build-result.outputs.cache-hit != 'true'
