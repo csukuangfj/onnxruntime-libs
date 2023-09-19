@@ -1,0 +1,188 @@
+name: linux-x64-static
+
+on:
+  push:
+    branches:
+      - master
+      - linux-static
+    paths:
+      - '.github/workflows/linux-x64-static.yaml'
+
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/linux-x64-static.yaml'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.15.1）"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
+
+jobs:
+  arm_linux_gnueabihf:
+    name: Linux x64 static
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Checkout
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # see ./cmake/deps.txt
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+            unzip protoc-3.20.3-linux-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.15.[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+            unzip protoc-21.12-linux-x86_64.zip
+          else
+            echo "Unsupported version ${{ env.ONNXRUNTIME_VERSION }}"
+            exit 1
+          fi
+
+          ./bin/protoc --version
+
+      - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
+
+      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          protoc --version
+
+      - name: Show current directory
+        shell: bash
+        run: |
+          ls -lh
+          echo $PWD
+
+      - name: Install dependencies
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3 git-lfs
+          python3 -m pip install cmake
+          cmake --version
+
+      - name: Build static onnxruntime for Linux x64
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-linux-x64-static
+
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --build \
+            --update \
+            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --target install \
+            --parallel \
+            --skip_tests
+
+      - name: Display build results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          tree ./build-linux-x64-static
+
+      - name: Collect results
+        if: false
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-linux-x64-static
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a onnxruntime-linux-x64-static-$version \
+            -c Release \
+            -l libonnxruntime.so.$version \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          ls -lh $build_dir/onnxruntime-linux-arm-$version
+
+          mv $build_dir/onnxruntime-linux-arm-$version .
+
+          tree ./onnxruntime-linux-arm-$version/
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        if: false
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        shell: bash
+        run: |
+          ls -lh
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          tree ./onnxruntime-linux-arm-$version/
+
+          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+          cd huggingface
+          git lfs pull
+          cp -v ../onnxruntime-linux-arm-*.zip ./
+          git status
+          git lfs track "*.zip"
+
+          git add .
+
+          git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+
+      - name: Upload artifact
+        if: false
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+
