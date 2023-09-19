@@ -119,11 +119,18 @@ jobs:
             --parallel \
             --skip_tests
 
+      - name: Display libraries
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          find ./build-linux-x64-static -name "lib*.a"
+
       - name: Display build results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           tree ./build-linux-x64-static
+
 
       - name: Collect results
         if: false
