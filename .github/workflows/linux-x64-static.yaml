@@ -29,7 +29,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.15.1' }}
 
 jobs:
-  arm_linux_gnueabihf:
+  Linux_x64_static:
     name: Linux x64 static
     runs-on: ${{ matrix.os }}
     strategy:
@@ -45,10 +45,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          # path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
-          # key: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
-          path: onnxruntime-linux-x64-static
-          key: onnxruntime-linux-x64-static
+          path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -133,33 +131,70 @@ jobs:
         run: |
           tree ./build-linux-x64-static
 
-
       - name: Collect results
-        if: false
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-linux-x64-static
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a onnxruntime-linux-x64-static-$version \
-            -c Release \
-            -l libonnxruntime.so.$version \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
+          dst_dir=onnxruntime-linux-x64-static-$version
 
-          ls -lh $build_dir/onnxruntime-linux-arm-$version
+          mkdir $dst_dir
+          mkdir $dst_dir/lib
+          mkdir $dst_dir/include
 
-          mv $build_dir/onnxruntime-linux-arm-$version .
+          echo "copy libs"
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/base/libabsl_base.a $dst_dir/lib
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/base/libabsl_raw_logging_internal.a $dst_dir/lib
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/base/libabsl_throw_delegate.a $dst_dir/lib
 
-          tree ./onnxruntime-linux-arm-$version/
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/hash/libabsl_city.a $dst_dir/lib
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/hash/libabsl_hash.a $dst_dir/lib
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/hash/libabsl_low_level_hash.a $dst_dir/lib
+
+          cp -v $build_dir/Release/_deps/abseil_cpp-build/absl/container/libabsl_raw_hash_set.a $dst_dir/lib
+
+          cp -v $build_dir/Release/_deps/flatbuffers-build/libflatbuffers.a $dst_dir/lib
+
+          cp -v $build_dir/Release/_deps/onnx-build/libonnx_proto.a $dst_dir/lib
+          cp -v $build_dir/Release/_deps/onnx-build/libonnx.a $dst_dir/lib
+
+          cp -v $build_dir/Release/libonnxruntime_common.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_flatbuffers.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_framework.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_graph.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_mlas.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_optimizer.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_providers.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_session.a $dst_dir/lib
+          cp -v $build_dir/Release/libonnxruntime_util.a $dst_dir/lib
+
+          cp -v $build_dir/Release/_deps/protobuf-build/libprotobuf-lite.a $dst_dir/lib
+
+          echo "copy headers"
+
+          cp ./include/onnxruntime/core/providers/cpu/cpu_provider_factory.h $dst_dir/include/
+          cp ./include/onnxruntime/core/session/onnxruntime_c_api.h $dst_dir/include
+          cp ./include/onnxruntime/core/session/onnxruntime_cxx_api.h $dst_dir/include
+          cp ./include/onnxruntime/core/session/onnxruntime_cxx_inline.h $dst_dir/include
+          cp ./include/onnxruntime/core/session/onnxruntime_run_options_config_keys.h $dst_dir/include
+          cp ./include/onnxruntime/core/session/onnxruntime_session_options_config_keys.h $dst_dir/include
+          cp ./include/onnxruntime/core/framework/provider_options.h $dst_dir/include
+          cp ./include/onnxruntime/core/providers/tensorrt/tensorrt_provider_factory.h $dst_dir/include
+
+          tree $dst_dir
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: false
-        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         shell: bash
@@ -167,9 +202,9 @@ jobs:
           ls -lh
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          tree ./onnxruntime-linux-arm-$version/
+          tree ./onnxruntime-linux-x64-static-$version/
 
-          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+          zip -r onnxruntime-linux-x64-static-${version}.zip ./onnxruntime-linux-x64-static-$version/
 
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
@@ -178,20 +213,13 @@ jobs:
 
           cd huggingface
           git lfs pull
-          cp -v ../onnxruntime-linux-arm-*.zip ./
+          cp -v ../onnxruntime-linux-x64-static-*.zip ./
           git status
           git lfs track "*.zip"
 
           git add .
 
-          git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
+          git commit -m "upload onnxruntime-linux-x64-static-${{ env.ONNXRUNTIME_VERSION }}.zip"
           git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
 
-      - name: Upload artifact
-        if: false
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
-        with:
-          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
 
