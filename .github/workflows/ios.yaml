@@ -29,7 +29,7 @@ env:
 
 jobs:
   ios_arm64:
-    name: Build onnxruntime lib for iOS arm64 on ${{ matrix.os }}
+    name: arm64
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -160,6 +160,7 @@ jobs:
           cp -v build-ios/$arch/onnxruntime.a $dst
 
           cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/Headers/* $dst/
+          cp -v include/onnxruntime/core/providers/coreml/coreml_provider_factory.h $dst
 
           ls -lh $dst
 
@@ -171,7 +172,7 @@ jobs:
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
 
   ios_simulator:
-    name: Build onnxruntime lib for iOS simulator on ${{ matrix.os }}
+    name: Simulator ${{ matrix.arc }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -185,7 +186,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -311,7 +312,7 @@ jobs:
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
 
   macOS:
-    name: Build onnxruntime lib for macOS on ${{ matrix.os }}
+    name: macOS ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -325,7 +326,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -459,7 +460,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
-          key: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Retrieve artifact for ios_arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
