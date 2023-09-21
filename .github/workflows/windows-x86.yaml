@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019]
+        os: [windows-latest]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
