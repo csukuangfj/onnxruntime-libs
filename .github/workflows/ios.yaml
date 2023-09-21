@@ -160,7 +160,8 @@ jobs:
           cp -v build-ios/$arch/onnxruntime.a $dst
 
           cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/Headers/* $dst/
-          cp -v include/onnxruntime/core/providers/coreml/coreml_provider_factory.h $dst
+          cp -v include/onnxruntime/core/providers/coreml/coreml_provider_factory.h $dst/
+          cp -v include/onnxruntime/core/session/onnxruntime_float16.h $dst/
 
           ls -lh $dst
 

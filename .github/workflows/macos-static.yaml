@@ -161,6 +161,8 @@ jobs:
 
           cp -v build-macos/$arch/Release/build-macos/$arch/install/bin/onnxruntime.framework/Headers/* $dst/
 
+          cp ./include/onnxruntime/core/session/onnxruntime_float16.h $dst/
+
           ls -lh $dst
 
       - name: Upload artifact
