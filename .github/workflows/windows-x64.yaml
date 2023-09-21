@@ -70,7 +70,7 @@ jobs:
             --config Release \
             --parallel \
             --enable_msvc_static_runtime \
-            --cmake_generator "Visual Studio 16 2019" \
+            --cmake_generator "Visual Studio 17 2022" \
             --skip_tests \
             --update \
             --build
