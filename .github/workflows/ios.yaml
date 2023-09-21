@@ -69,7 +69,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.15.[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
