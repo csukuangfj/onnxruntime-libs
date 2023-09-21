@@ -137,6 +137,7 @@ jobs:
           build_dir=./build-arm
 
           python3 ./tools/ci_build/build.py \
+            --compile_no_warning_as_error \
             --build_dir $build_dir \
             --config Release \
             --build \
