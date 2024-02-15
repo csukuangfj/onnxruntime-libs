@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - fix-arm
     paths:
       - '.github/workflows/arm-linux-gnueabihf.yaml'
 
@@ -16,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information（e.g., 1.16.0）"
+        description: "Version information（e.g., 1.17.0）"
         required: true
 
 permissions:
@@ -25,7 +26,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.0' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -61,18 +62,16 @@ jobs:
         uses: actions/cache@v3
         with:
           path: toolchain
-          key: gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf
+          key: gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf
 
       - name: Download toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          git lfs install
-          git clone https://huggingface.co/csukuangfj/arm-linux-gcc
-          ls -lh arm-linux-gcc
+          wget -q https://huggingface.co/csukuangfj/sherpa-ncnn-toolchains/resolve/main/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz
 
           mkdir $GITHUB_WORKSPACE/toolchain
-          tar xvf ./arm-linux-gcc/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          tar xvf ./gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
 
       - name: Download protoc
         if: steps.cache-build-result.outputs.cache-hit != 'true'
