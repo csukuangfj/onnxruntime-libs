@@ -1,18 +1,6 @@
 name: arm-linux-gnueabihf
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/arm-linux-gnueabihf.yaml'
-
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/arm-linux-gnueabihf.yaml'
-
   workflow_dispatch:
     inputs:
       version:
