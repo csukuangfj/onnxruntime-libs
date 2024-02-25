@@ -119,6 +119,12 @@ jobs:
           TOOLCHAIN_VERSION="2023.11.20"
           RISCV_TOOLCHAIN_FILE_NAME="riscv64-glibc-ubuntu-22.04-llvm-nightly-2023.11.20-nightly.tar.gz"
           RISCV_TOOLCHAIN_FILE_SHA="98d6531b757fac01e065460c19abe8974976c607a8d88631cc5c1529d90ba7ba"
+
+          RISCV_GNU_TOOLCHAIN_URL="https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download"
+          TOOLCHAIN_VERSION="2023.10.17"
+          RISCV_TOOLCHAIN_FILE_NAME="riscv64-glibc-ubuntu-20.04-gcc-nightly-2023.10.17-nightly.tar.gz"
+          RISCV_TOOLCHAIN_FILE_SHA="5540a42cea5380ae0d519794192105b6235ffca53fd2357d2476c4208b5d1297"
+
           TOOLCHAIN_PATH_PREFIX=${PREBUILT_DIR}
           execute () {
             if ! eval "$1"; then
