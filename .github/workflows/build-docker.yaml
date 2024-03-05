@@ -36,14 +36,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout pypa/manylinux
+        uses: actions/checkout@v4
+        with:
+          repository: pypa/manylinux
+          submodules: true
+          ref: 5eda9aded5462201e6310105728d33016e637ea7
+
       - name: Build docker Image
         shell: bash
         run: |
-          cd .github/docker
+          git clone https://github.com/pypa/manylinux
+          cd manylinux/
+          git checkout 5eda9aded5462201e6310105728d33016e637ea7
+          cd ..
+
+          cp .github/docker/Dockerfile.manylinux2014_cpu manylinux/docker/Dockerfile
+
           tag=ghcr.io/${{ github.repository_owner }}/onnxruntime-libs:manylinux2014-x86_64-cpu
           echo "tag: $tag"
 
-          mv -v Dockerfile.manylinux2014_cpu Dockerfile
+          cd manylinux/docker/Dockerfile
 
           docker build \
             -t $tag \
