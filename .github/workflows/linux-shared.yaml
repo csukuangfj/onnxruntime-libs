@@ -1,6 +1,9 @@
 name: linux-shared
 
 on:
+  push:
+    branches:
+      - linux-shared
   workflow_dispatch:
     inputs:
       version:
@@ -24,8 +27,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         arch: [x86_64]
-        # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        config: ['Release']
+        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
 
 
     steps:
@@ -53,6 +55,7 @@ jobs:
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
+              echo "config: ${{ matrix.config }}"
               uname -a
               which gcc
 
@@ -80,7 +83,7 @@ jobs:
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
                 --build_dir $build_dir \
                 --cmake_generator 'Ninja' \
-                --config Release \
+                --config ${{ matrix.config }} \
                 --update \
                 --build \
                 --parallel \
@@ -92,6 +95,8 @@ jobs:
                 --allow_running_as_root
 
               chmod a=rwx build-shared
+              ls -lh build-shared
+              ls -lh build-shared/*
 
       - name: Collect results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
