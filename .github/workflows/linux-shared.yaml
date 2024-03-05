@@ -46,7 +46,7 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
-      - name: Build onnxruntime
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         uses: addnab/docker-run-action@v3
         with:
             image: quay.io/pypa/manylinux2014_x86_64
