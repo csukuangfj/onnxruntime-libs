@@ -141,7 +141,7 @@ jobs:
       - name: Clone onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         shell: bash
         run: |
-          git clone --branch 2.9 --depth 1 https://github.com/zhangwm-pt/onnxruntime
+          git clone --branch 2.9 --depth 1 https://github.com/safe00/onnxruntime
 
           mkdir -p ./onnxruntime/csi-nn2/install_nn2
           mv csi-nn2/install_nn2/c920/* ./onnxruntime/csi-nn2/install_nn2
@@ -164,6 +164,8 @@ jobs:
           sed -i.bak s/2.9.0/$version/g onnxruntime/onnxruntime/core/session/onnxruntime_c_api.cc
           cd onnxruntime
           git diff
+          echo "----------"
+          cat cmake/rv.cmake
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
