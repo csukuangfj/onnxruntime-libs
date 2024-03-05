@@ -11,7 +11,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    '1.14.1'
+    1.14.1
 
 
 jobs:
@@ -153,6 +153,17 @@ jobs:
           echo "--------------------"
 
           tree ./csi-nn2
+
+          cat onnxruntime/VERSION_NUMBER
+          echo "---"
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          echo $version > onnxruntime/VERSION_NUMBER
+          cat onnxruntime/VERSION_NUMBER
+
+          sed -i.bak s/2.9.0/$version/g onnxruntime/onnxruntime/core/session/onnxruntime_c_api.cc
+          cd onnxruntime
+          git diff
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
