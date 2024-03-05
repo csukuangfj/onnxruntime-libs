@@ -1,0 +1,66 @@
+name: linux-shared
+
+on:
+  push:
+    branches:
+      - linux-shared
+
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information（e.g., 1.17.1）"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+
+jobs:
+  linux-shared:
+    name: linux-shared
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86_64]
+
+    steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-linux-shared-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-shared-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Build onnxruntime
+        uses: addnab/docker-run-action@v3
+        with:
+            image: quay.io/pypa/manylinux2014_x86_64
+            options: |
+              --volume ${{ github.workspace }}/:/shared
+            shell: bash
+            run: |
+              cd /shared
+              ls -lh
+              touch /shared/a.txt
+
+      - name: Display
+        shell: bash
+        run: |
+          ls -lh
+          echo "----------"
+          ls -lh a.txt
