@@ -193,7 +193,7 @@ jobs:
 
               # https://github.com/zhangwm-pt/onnxruntime/blob/2.9/tools/ci_build/build.py
               python3 tools/ci_build/build.py \
-                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF CMAKE_TOOLCHAIN_FILE=/shared/onnxruntime/cmake/rv.cmake ONNX_CUSTOM_PROTOC_EXECUTABLE=/shared/bin/protoc \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF CMAKE_TOOLCHAIN_FILE=/shared/onnxruntime/cmake/rv.cmake ONNX_CUSTOM_PROTOC_EXECUTABLE=/shared/bin/protoc onnxruntime_SHL_HOME=/shared/onnxruntime/csi-nn2/install_nn2 \
                 --build_dir $build_dir \
                 --cmake_generator 'Ninja' \
                 --config ${{ matrix.config }} \
@@ -205,9 +205,7 @@ jobs:
                 --build_shared_lib \
                 --skip_submodule_sync \
                 --enable_lto \
-                \
                 --use_shl \
-                --shl_home /shared/onnxruntime/csi-nn2/install_nn2 \
                 --shl_target C920
 
               chmod a=rwx $build_dir
