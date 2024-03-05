@@ -1,0 +1,267 @@
+name: shl
+
+on:
+  push:
+    branches:
+      - shl
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    '1.14.1'
+
+
+jobs:
+  shl:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [riscv64]
+        config: [Release]
+
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Download protoc
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # see ./cmake/deps.txt
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+            unzip protoc-3.20.3-linux-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+            unzip protoc-21.12-linux-x86_64.zip
+          else
+            echo "Unsupported version ${{ env.ONNXRUNTIME_VERSION }}"
+            exit 1
+          fi
+
+          ./bin/protoc --version
+
+      - name: Set environment variable
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
+
+      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          protoc --version
+
+      - name: cache-toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.1-20220906.tar.gz
+
+      - name: Download toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          wget -q https://occ-oss-prod.oss-cn-hangzhou.aliyuncs.com/resource//1663142514282/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.1-20220906.tar.gz
+
+          mkdir $GITHUB_WORKSPACE/toolchain
+          tar xvf ./Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.1-20220906.tar.gz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          ls -lh $GITHUB_WORKSPACE/toolchain/bin
+
+      - name: Display toolchain info
+        shell: bash
+        run: |
+          export PATH=$GITHUB_WORKSPACE/toolchain/bin:$PATH
+          ls -lh toolchain/bin
+          echo "----------"
+          riscv64-unknown-linux-gnu-gcc --version
+          riscv64-unknown-linux-gnu-g++ --version
+          echo "----------"
+          echo "pwd: $PWD"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+
+      - name: cache-csi-nn2
+        id: cache-csi-nn2
+        uses: actions/cache@v4
+        with:
+          path: csi-nn2
+          key: csi-nn2-v1
+
+      - name: Build csi-nn2
+        if: steps.cache-csi-nn2.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          export PATH=$GITHUB_WORKSPACE/toolchain/bin:$PATH
+
+          git clone https://github.com/T-head-Semi/csi-nn2.git
+          cd csi-nn2
+          git submodule update --init --recursive
+
+          make nn2_c920
+          make install_nn2
+          ls -lh install_nn2
+          tree install_nn2
+          mv -v install_nn2 ..
+          cd ..
+          rm -rf csi-nn2
+          mkdir csi-nn2
+          mv install_nn2 ./csi-nn2
+
+
+      - name: Show csi-nn2
+        shell: bash
+        run: |
+          ls -lh csi-nn2
+          echo "----------"
+          ls -lh csi-nn2/install_nn2
+
+          echo "lib"
+          ls -lh csi-nn2/install_nn2/c920/lib
+          echo "include"
+          ls -lh csi-nn2/install_nn2/c920/include
+
+          tree ./csi-nn2
+
+      - name: Clone onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+        shell: bash
+        run: |
+          git clone --branch 2.9 --depth 1 https://github.com/zhangwm-pt/onnxruntime
+
+          mkdir -p ./onnxruntime/csi-nn2/install_nn2
+          mv csi-nn2/install_nn2/c920/* ./onnxruntime/csi-nn2/install_nn2
+          rm -rf csi-nn2
+          cp -a ./onnxruntime/csi-nn2 .
+
+          tree onnxruntime/csi-nn2
+
+          echo "--------------------"
+
+          tree ./csi-nn2
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: addnab/docker-run-action@v3
+        with:
+            image: quay.io/pypa/manylinux2014_x86_64
+            options: |
+              --volume ${{ github.workspace }}/:/shared/
+            shell: bash
+            run: |
+              uname -a
+              gcc --version
+              export PATH=/opt/_internal/cpython-3.8.18/bin:$PATH
+              python3 --version
+              python3 -m pip install ninja
+
+              export PATH=/shared/toolchain/bin:$PATH
+
+              cd /shared
+              build_dir=/shared/build-shared
+
+              mkdir -p $build_dir
+
+              ls -lh onnxruntime
+
+              cd onnxruntime
+
+              # https://github.com/zhangwm-pt/onnxruntime/blob/2.9/tools/ci_build/build.py
+              python3 tools/ci_build/build.py \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF CMAKE_TOOLCHAIN_FILE=/shared/onnxruntime/cmake/rv.cmake ONNX_CUSTOM_PROTOC_EXECUTABLE=/shared/bin/protoc \
+                --build_dir $build_dir \
+                --cmake_generator 'Ninja' \
+                --config ${{ matrix.config }} \
+                --update \
+                --build \
+                --parallel \
+                --skip_tests \
+                --compile_no_warning_as_error \
+                --build_shared_lib \
+                --skip_submodule_sync \
+                --enable_lto \
+                \
+                --use_shl \
+                --shl_home /shared/onnxruntime/csi-nn2/install_nn2 \
+                --shl_target C920
+
+              chmod a=rwx $build_dir
+              ls -lh $build_dir
+              ls -lh $build_dir/*
+
+      - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=$PWD/build-shared
+          sudo chown -R runner $build_dir
+          ls -lh $build_dir
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          config=${{ matrix.config }}
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+          tag=$(git rev-parse HEAD)
+          echo "tag: $tag"
+          ./onnxruntime/tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a $artifact \
+            -c $config \
+            -l libonnxruntime.so.$version \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+          mv $build_dir/$artifact ./
+          tree ./$artifact
+          zip -r ${artifact}.zip ./$artifact
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        shell: bash
+        run: |
+          ls -lh
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          config=${{ matrix.config }}
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+          tree ./$artifact
+          git config --global user.email "csukuangfj@gmail.com"
+          git config --global user.name "Fangjun Kuang"
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+          cd huggingface
+          git lfs pull
+          cp -v ../onnxruntime-linux*.zip ./
+          git status
+          git lfs track "*.zip"
+          git add .
+          git commit -m "upload $artifact"
+          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
