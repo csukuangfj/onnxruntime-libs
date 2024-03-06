@@ -226,13 +226,18 @@ jobs:
           artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
-          ./onnxruntime/tools/ci_build/github/linux/copy_strip_binary.sh \
+          cd onnxruntime
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
             -a $artifact \
             -c $config \
             -l libonnxruntime.so.$version \
-            -s $PWD/ \
+            -s $PWD \
             -t "$(git rev-parse HEAD)"
+
+          cd ..
+
           mv $build_dir/$artifact ./
           tree ./$artifact
           zip -r ${artifact}.zip ./$artifact
