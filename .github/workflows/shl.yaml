@@ -109,7 +109,7 @@ jobs:
         run: |
           export PATH=$GITHUB_WORKSPACE/toolchain/bin:$PATH
 
-          git clone https://github.com/T-head-Semi/csi-nn2.git
+          git clone https://github.com/safe00/csi-nn2.git
           cd csi-nn2
           git submodule update --init --recursive
 
