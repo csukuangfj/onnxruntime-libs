@@ -176,6 +176,9 @@ jobs:
 
           mv $build_dir/$artifact ./
           tree ./$artifact
+
+          cp -v ./include/onnxruntime/core/session/onnxruntime_float16.h ./$artifact/include
+
           zip -r ${artifact}.zip ./$artifact
 
       - name: Upload artifact
