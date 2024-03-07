@@ -1,9 +1,9 @@
-name: shl
+name: shl-2
 
 on:
   push:
     branches:
-      - shl-2
+      - shl
 
 permissions:
   contents: write
@@ -11,11 +11,10 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    1.14.1
-
+    1.16.0
 
 jobs:
-  shl:
+  shl_2:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -96,76 +95,12 @@ jobs:
           echo "pwd: $PWD"
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
 
-      - name: cache-csi-nn2
-        id: cache-csi-nn2
-        uses: actions/cache@v4
-        with:
-          path: csi-nn2
-          key: csi-nn2-v1
-
-      - name: Build csi-nn2
-        if: steps.cache-csi-nn2.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          export PATH=$GITHUB_WORKSPACE/toolchain/bin:$PATH
-
-          git clone https://github.com/safe00/csi-nn2.git
-          cd csi-nn2
-          git submodule update --init --recursive
-
-          make nn2_c920
-          make install_nn2
-          ls -lh install_nn2
-          tree install_nn2
-          mv -v install_nn2 ..
-          cd ..
-          rm -rf csi-nn2
-          mkdir csi-nn2
-          mv install_nn2 ./csi-nn2
-
-
-      - name: Show csi-nn2
-        shell: bash
-        run: |
-          ls -lh csi-nn2
-          echo "----------"
-          ls -lh csi-nn2/install_nn2
-
-          echo "lib"
-          ls -lh csi-nn2/install_nn2/c920/lib
-          echo "include"
-          ls -lh csi-nn2/install_nn2/c920/include
-
-          tree ./csi-nn2
-
       - name: Clone onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         shell: bash
         run: |
-          git clone --branch 2.9 --depth 1 https://github.com/safe00/onnxruntime
-
-          mkdir -p ./onnxruntime/csi-nn2/install_nn2
-          mv csi-nn2/install_nn2/c920/* ./onnxruntime/csi-nn2/install_nn2
-          rm -rf csi-nn2
-          cp -a ./onnxruntime/csi-nn2 .
-
-          tree onnxruntime/csi-nn2
-
-          echo "--------------------"
-
-          tree ./csi-nn2
-
-          cat onnxruntime/VERSION_NUMBER
-          echo "---"
-
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          echo $version > onnxruntime/VERSION_NUMBER
-          cat onnxruntime/VERSION_NUMBER
-
-          sed -i.bak s/2.9.0/$version/g onnxruntime/onnxruntime/core/session/onnxruntime_c_api.cc
+          git clone https://github.com/mycourses2/onnxruntime
           cd onnxruntime
-          git diff
-          echo "----------"
-          cat cmake/rv.cmake
+          git checkout shl_ep
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -195,12 +130,12 @@ jobs:
 
               # https://github.com/zhangwm-pt/onnxruntime/blob/2.9/tools/ci_build/build.py
               python3 tools/ci_build/build.py \
-                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF CMAKE_TOOLCHAIN_FILE=/shared/onnxruntime/cmake/rv.cmake ONNX_CUSTOM_PROTOC_EXECUTABLE=/shared/bin/protoc onnxruntime_SHL_HOME=/shared/onnxruntime/csi-nn2/install_nn2 \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF ONNX_CUSTOM_PROTOC_EXECUTABLE=/shared/bin/protoc \
                 --build_dir $build_dir \
                 --cmake_generator 'Ninja' \
                 --config ${{ matrix.config }} \
-                --update \
                 --build \
+                --update \
                 --parallel \
                 --skip_tests \
                 --compile_no_warning_as_error \
@@ -208,7 +143,8 @@ jobs:
                 --skip_submodule_sync \
                 --enable_lto \
                 --use_shl \
-                --shl_target C920
+                --shl_target C920 \
+                --allow_running_as_root
 
               chmod a=rwx $build_dir
               ls -lh $build_dir
