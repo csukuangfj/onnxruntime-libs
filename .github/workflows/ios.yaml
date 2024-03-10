@@ -1,22 +1,10 @@
 name: ios
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/ios.yaml'
-
-  pull_request:
-    branches:
-      - master
-    paths:
-      - '.github/workflows/ios.yaml'
-
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information（e.g., 1.16.0）"
+        description: "Version information（e.g., 1.17.1）"
         required: true
 
 permissions:
@@ -25,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.0' }}
 
 jobs:
   ios_arm64:
@@ -69,7 +57,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -104,7 +92,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --ios \
-            --ios_sysroot iphoneos \
+            --apple_sysroot iphoneos \
             --osx_arch arm64 \
             --target install \
             --parallel \
@@ -214,7 +202,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -249,7 +237,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --ios \
-            --ios_sysroot iphonesimulator \
+            --apple_sysroot iphonesimulator \
             --osx_arch ${{ matrix.arch }} \
             --target install \
             --parallel \
@@ -354,7 +342,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
