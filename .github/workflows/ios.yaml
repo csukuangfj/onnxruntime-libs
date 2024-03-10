@@ -161,7 +161,7 @@ jobs:
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
 
   ios_simulator:
-    name: Simulator ${{ matrix.arc }}
+    name: Simulator ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -365,6 +365,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          # For apple_sysroot, see
+          # /Applications/Xcode.app/Contents/Developer/Platforms
           build_dir=./build-macos/${{ matrix.arch }}
 
           python3 ./tools/ci_build/build.py \
@@ -377,6 +379,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --apple_sysroot macosx \
             --osx_arch ${{ matrix.arch }} \
             --target install \
             --parallel \
