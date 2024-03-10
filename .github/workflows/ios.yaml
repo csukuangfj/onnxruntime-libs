@@ -108,6 +108,13 @@ jobs:
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
           arch=arm64
+          brew install tree
+
+          ls -lh build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework
+
+          file build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework/onnxruntime
+
+          tree build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework
 
           ls -1 build-ios/$arch/Release/static_libraries
 
@@ -120,13 +127,18 @@ jobs:
             build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_strings.a \
+            build-ios/$arch/Release/static_libraries/libabsl_synchronization.a \
             build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
+            build-ios/$arch/Release/static_libraries/libabsl_time.a \
             build-ios/$arch/Release/static_libraries/libclog.a \
             build-ios/$arch/Release/static_libraries/libcpuinfo.a \
             build-ios/$arch/Release/static_libraries/libflatbuffers.a \
             build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
             build-ios/$arch/Release/static_libraries/libonnx.a \
             build-ios/$arch/Release/static_libraries/libonnx_proto.a \
+            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
+            build-ios/$arch/Release/static_libraries/libre2.a \
             build-ios/$arch/Release/static_libraries/libonnxruntime_common.a \
             build-ios/$arch/Release/static_libraries/libonnxruntime_coreml_proto.a \
             build-ios/$arch/Release/static_libraries/libonnxruntime_flatbuffers.a \
@@ -137,9 +149,7 @@ jobs:
             build-ios/$arch/Release/static_libraries/libonnxruntime_providers.a \
             build-ios/$arch/Release/static_libraries/libonnxruntime_providers_coreml.a \
             build-ios/$arch/Release/static_libraries/libonnxruntime_session.a \
-            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a \
-            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-ios/$arch/Release/static_libraries/libre2.a
+            build-ios/$arch/Release/static_libraries/libonnxruntime_util.a
 
           dst=onnxruntime-ios-$arch-${{ env.ONNXRUNTIME_VERSION }}
 
