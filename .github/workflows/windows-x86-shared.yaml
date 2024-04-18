@@ -104,37 +104,36 @@ jobs:
         shell: bash
         run: |
           build_dir=./build-windows-x86
-          tree $build_dir
+          ls -lh $build_dir/Release/$build_dir/install
+          echo "----"
+          ls -lh $build_dir/Release/$build_dir/install/bin
+          echo "----"
+          ls -lh $build_dir/Release/$build_dir/install/lib
+          echo "----"
+          ls -lh $build_dir/Release/$build_dir/install/include
+          echo "----"
+          ls -lh $build_dir/Release/$build_dir/install/include/onnxruntime
 
       - name: Collect results
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-windows-x86
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a onnxruntime-win-x86-$version \
-            -c Release \
-            -l libonnxruntime.so.$version \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
+          dst=onnxruntime-win-x86-${version}
 
-          ls -lh $build_dir/onnxruntime-linux-arm-$version
+          mkdir -p $dst/include
+          mkdir -p $dst/lib
 
-          mv $build_dir/onnxruntime-linux-arm-$version .
+          cp -v $build_dir/Release/$build_dir/install/include/onnxruntime/*.h $dst/include
+          cp -v $build_dir/Release/$build_dir/install/lib/*.lib $dst/lib
+          cp -v $build_dir/Release/$build_dir/install/bin/*.dll $dst/lib
 
-          tree ./onnxruntime-linux-arm-$version/
-
-          cp -v ./include/onnxruntime/core/session/onnxruntime_float16.h ./onnxruntime-linux-arm-$version/include
-
-          zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
+          zip -r $dst.zip $dst
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -145,8 +144,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         shell: bash
@@ -154,7 +152,7 @@ jobs:
           ls -lh
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          tree ./onnxruntime-linux-arm-$version/
+          dst=onnxruntime-win-x86-${version}
 
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
@@ -163,19 +161,18 @@ jobs:
 
           cd huggingface
           git lfs pull
-          cp -v ../onnxruntime-linux-arm-*.zip ./
+          cp -v ../$dst.zip ./
           git status
           git lfs track "*.zip"
 
           git add .
 
-          git commit -m "upload onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}.zip"
+          git commit -m "upload $dst.zip"
           git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
 
       - name: Upload artifact
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
-          name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}
