@@ -168,27 +168,31 @@ jobs:
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        shell: bash
-        run: |
-          ls -lh
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            config=${{ matrix.config }}
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
 
-          tree ./$artifact
+            tree ./$artifact
 
-          git config --global user.email "csukuangfj@gmail.com"
-          git config --global user.name "Fangjun Kuang"
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
 
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
-          cd huggingface
-          git lfs pull
-          cp -v ../onnxruntime-linux*.zip ./
-          git status
-          git lfs track "*.zip"
+            cd huggingface
+            git lfs pull
+            cp -v ../onnxruntime-linux*.zip ./
+            git status
+            git lfs track "*.zip"
 
-          git add .
+            git add .
 
-          git commit -m "upload $artifact"
-          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+            git commit -m "upload $artifact"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main

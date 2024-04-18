@@ -3,7 +3,7 @@ name: arm-linux-gnueabihf
 on:
   push:
     branches:
-      - fix-ios
+      - fix-ios2
   workflow_dispatch:
     inputs:
       version:
