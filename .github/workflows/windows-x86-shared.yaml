@@ -130,14 +130,14 @@ jobs:
           cp -v $build_dir/Release/$build_dir/install/lib/*.lib $dst/lib
           cp -v $build_dir/Release/$build_dir/install/bin/*.dll $dst/lib
 
-          zip -r $dst.zip $dst
+          tar cjvf $dst.tar.bz2 $dst
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
-          file: "./*.zip"
+          file: "./*.tar.bz2"
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
@@ -161,13 +161,13 @@ jobs:
 
           cd huggingface
           git lfs pull
-          cp -v ../$dst.zip ./
+          cp -v ../$dst.tar.bz2 ./
           git status
-          git lfs track "*.zip"
+          git lfs track "*.tar.bz2"
 
           git add .
 
-          git commit -m "upload $dst.zip"
+          git commit -m "upload $dst.tar.bz2"
           git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
 
       - name: Upload artifact
