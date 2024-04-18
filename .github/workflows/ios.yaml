@@ -142,8 +142,8 @@ jobs:
             build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
             build-ios/$arch/Release/static_libraries/libre2.a \
             \
+            build-ios/$arch/Release/Release-iphoneos/libcoreml_proto.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_common.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_coreml_proto.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_flatbuffers.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_framework.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_graph.a \
@@ -153,6 +153,8 @@ jobs:
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_providers_coreml.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_session.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_util.a
+
+          # from 1.17.3, libonnxruntime_coreml_proto.a is renamed to libcoreml_proto.a
 
           dst=onnxruntime-ios-$arch-${{ env.ONNXRUNTIME_VERSION }}
 
@@ -293,8 +295,8 @@ jobs:
             build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
             build-ios/$arch/Release/static_libraries/libre2.a \
             \
+            build-ios/$arch/Release/Release-iphonesimulator/libcoreml_proto.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_common.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_coreml_proto.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_flatbuffers.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_framework.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_graph.a \
@@ -443,8 +445,8 @@ jobs:
             build-macos/$arch/Release/static_libraries/libprotobuf-lite.a \
             build-macos/$arch/Release/static_libraries/libre2.a \
             \
+            build-macos/$arch/Release/Release/libcoreml_proto.a \
             build-macos/$arch/Release/Release/libonnxruntime_common.a \
-            build-macos/$arch/Release/Release/libonnxruntime_coreml_proto.a \
             build-macos/$arch/Release/Release/libonnxruntime_flatbuffers.a \
             build-macos/$arch/Release/Release/libonnxruntime_framework.a \
             build-macos/$arch/Release/Release/libonnxruntime_graph.a \
