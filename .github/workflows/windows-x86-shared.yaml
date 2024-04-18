@@ -61,6 +61,21 @@ jobs:
           cmake --version
           cmake --help
 
+#   Visual Studio 17 2022        = Generates Visual Studio 2022 project files.
+#                                  Use -A option to specify architecture.
+# * Visual Studio 16 2019        = Generates Visual Studio 2019 project files.
+#                                  Use -A option to specify architecture.
+#   Visual Studio 15 2017 [arch] = Generates Visual Studio 2017 project files.
+#                                  Optional [arch] can be "Win64" or "ARM".
+#   Visual Studio 14 2015 [arch] = Generates Visual Studio 2015 project files.
+#                                  Optional [arch] can be "Win64" or "ARM".
+#   Visual Studio 12 2013 [arch] = Deprecated.  Generates Visual Studio 2013
+#                                  project files.  Optional [arch] can be
+#                                  "Win64" or "ARM".
+#   Visual Studio 9 2008 [arch]  = Deprecated.  Generates Visual Studio 2008
+#                                  project files.  Optional [arch] can be
+#                                  "Win64" or "IA64".
+
       - name: Build onnxruntime for windows x86
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
@@ -75,6 +90,7 @@ jobs:
             --build_shared_lib \
             --x86 \
             --update \
+            --cmake_generator "Visual Studio 17 2022" \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --target install \
