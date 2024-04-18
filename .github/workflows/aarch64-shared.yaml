@@ -83,6 +83,19 @@ jobs:
               touch /shared/a.txt
               mkdir build-shared
 
+              version=${{ env.ONNXRUNTIME_VERSION }}
+              which python
+              v=$(cat ./VERSION_NUMBER)
+              if [[ $v == "1.18.0" ]]; then
+                echo $version > ./VERSION_NUMBER
+                sed -i.bak s/1.18.0/$version/g ./onnxruntime/core/session/onnxruntime_c_api.cc
+              fi
+
+              echo "---$version---"
+              cat ./VERSION_NUMBER
+              echo "---"
+              git diff
+
               which python
 
               build_dir=/shared/build-shared
