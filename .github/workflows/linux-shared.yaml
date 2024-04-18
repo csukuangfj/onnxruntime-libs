@@ -3,8 +3,7 @@ name: linux-shared
 on:
   push:
     branches:
-      - linux-shared
-      - fix-ios
+      - fix-ios2
   workflow_dispatch:
     inputs:
       version:
