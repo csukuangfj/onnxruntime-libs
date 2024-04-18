@@ -118,6 +118,9 @@ jobs:
           ls -1 build-ios/$arch/Release/static_libraries
 
           ls -lh build-ios/$arch/Release/static_libraries
+          echo "----------"
+          ls -1 build-ios/$arch/Release/Release-iphoneos
+          ls -lh build-ios/$arch/Release/Release-iphoneos
 
           libtool -static -o build-ios/$arch/onnxruntime.a \
             build-ios/$arch/Release/static_libraries/libabsl_base.a \
@@ -266,6 +269,10 @@ jobs:
 
           ls -lh build-ios/$arch/Release/static_libraries
 
+          echo "----------"
+          ls -1 build-ios/$arch/Release/Release-iphonesimulator
+          ls -lh build-ios/$arch/Release/Release-iphonesimulator
+
           libtool -static -o build-ios/$arch/onnxruntime.a \
             build-ios/$arch/Release/static_libraries/libabsl_base.a \
             build-ios/$arch/Release/static_libraries/libabsl_city.a \
@@ -411,6 +418,10 @@ jobs:
           ls -1 build-macos/$arch/Release/static_libraries
 
           ls -lh build-macos/$arch/Release/static_libraries
+
+          echo "----------"
+          ls -1 build-macos/$arch/Release/Release
+          ls -lh build-macos/$arch/Release/Release
 
           libtool -static -o build-macos/$arch/onnxruntime.a \
             build-macos/$arch/Release/static_libraries/libabsl_base.a \
