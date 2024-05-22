@@ -1,10 +1,6 @@
 name: windows x86 shared
 
 on:
-  push:
-    branches:
-      - fix-ios2
-
   workflow_dispatch:
     inputs:
       version:

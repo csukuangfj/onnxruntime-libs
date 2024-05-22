@@ -1,6 +1,9 @@
-name: linux-shared
+name: macos-shared
 
 on:
+  push:
+    branches:
+      - fix-ios
   workflow_dispatch:
     inputs:
       version:
@@ -16,24 +19,27 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
 
 jobs:
-  linux-shared:
-    name: ${{ matrix.config }}
+  macos-shared:
+    name: ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        arch: [x86_64]
-        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-
+        os: [macos-latest]
+        arch: [x86_64, arm64, universal2]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -43,75 +49,65 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+      - name: Install dependencies on macos
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: addnab/docker-run-action@v3
-        with:
-            image: quay.io/pypa/manylinux2014_x86_64
-            options: |
-              --volume ${{ github.workspace }}/:/shared
-            shell: bash
-            run: |
-              echo "config: ${{ matrix.config }}"
-              uname -a
-              which gcc
+        shell: bash
+        run: |
+          brew install cmake ninja
+          cmake --version
+          brew install tree
+          tree --version
 
-              gcc --version
-              which python
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake --version
 
-              find /opt -name "python*"
+          build_dir=./build-macos/${{ matrix.arch }}
+          arch=${{ matrix.arch }}
+          if [[ $arch == universal2 ]]; then
+            arch='x86_64;arm64'
+            sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
+          fi
 
-              echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.8.19/bin:$PATH
-              which python3
-              python3 --version
-              python3 -m pip install ninja
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
 
-              cd /shared
-              ls -lh
-              touch /shared/a.txt
-              mkdir build-shared
+          git diff
 
-              version=${{ env.ONNXRUNTIME_VERSION }}
-              which python
-
-              sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
-
-              git diff
-
-              build_dir=/shared/build-shared
-
-              python3 tools/ci_build/build.py \
-                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-                --build_dir $build_dir \
-                --cmake_generator 'Ninja' \
-                --config ${{ matrix.config }} \
-                --update \
-                --build \
-                --parallel \
-                --skip_tests \
-                --compile_no_warning_as_error \
-                --build_shared_lib \
-                --skip_submodule_sync \
-                --enable_lto \
-                --allow_running_as_root
-
-              chmod a=rwx build-shared
-              ls -lh build-shared
-              ls -lh build-shared/*
+          python3 ./tools/ci_build/build.py \
+            --build_dir $build_dir \
+            --config Release \
+            --cmake_generator 'Ninja' \
+            --update \
+            --build \
+            --use_xcode \
+            --compile_no_warning_as_error \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --apple_sysroot macosx \
+            --osx_arch "$arch" \
+            --target install \
+            --parallel \
+            --skip_tests \
+            --skip_submodule_sync \
+            --apple_deploy_target '10.15' \
+            --use_coreml
 
       - name: Collect results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build-shared
+          build_dir=./build-macos/${{ matrix.arch }}
 
-          sudo chown -R runner $build_dir
           ls -lh $build_dir
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          artifact=onnxruntime-osx-${{ matrix.arch }}-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -119,8 +115,8 @@ jobs:
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
             -a $artifact \
-            -c $config \
-            -l libonnxruntime.so \
+            -c Release \
+            -l libonnxruntime.dylib \
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
 
@@ -133,8 +129,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -160,8 +156,8 @@ jobs:
 
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
-            config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+            arch=${{ matrix.arch }}
+            artifact=onnxruntime-osx-$arch-$version
 
             tree ./$artifact
 
@@ -173,7 +169,7 @@ jobs:
 
             cd huggingface
             git lfs pull
-            cp -v ../onnxruntime-linux*.zip ./
+            cp -v ../onnxruntime-osx*.zip ./
             git status
             git lfs track "*.zip"
 
