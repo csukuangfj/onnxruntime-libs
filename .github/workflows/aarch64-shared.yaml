@@ -1,13 +1,10 @@
 name: aarch64-shared
 
 on:
-  push:
-    branches:
-      - linux-shared
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information（e.g., 1.17.1）"
+        description: "Version information (e.g., 1.18.0)"
         required: true
 
 permissions:
@@ -16,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
 
 jobs:
   aarch64-shared:
@@ -29,7 +26,6 @@ jobs:
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
         # config: ['Release']
-
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
@@ -72,7 +68,7 @@ jobs:
               find /opt -name "python*"
 
               echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.8.18/bin:$PATH
+              export PATH=/opt/_internal/cpython-3.8.19/bin:$PATH
               which python3
               python3 --version
               python3 -m pip install ninja
@@ -81,6 +77,21 @@ jobs:
               ls -lh
               touch /shared/a.txt
               mkdir build-shared
+
+              version=${{ env.ONNXRUNTIME_VERSION }}
+              which python
+              # v=$(cat ./VERSION_NUMBER)
+              # if [[ $v == "1.18.0" ]]; then
+              #   echo $version > ./VERSION_NUMBER
+              #   sed -i.bak s/1.18.0/$version/g ./onnxruntime/core/session/onnxruntime_c_api.cc
+              # fi
+
+              # echo "---$version---"
+              # cat ./VERSION_NUMBER
+              # echo "---"
+
+              sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+              git diff
 
               which python
 
@@ -125,7 +136,7 @@ jobs:
             -r $build_dir \
             -a $artifact \
             -c $config \
-            -l libonnxruntime.so.$version \
+            -l libonnxruntime.so \
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
 
@@ -155,27 +166,32 @@ jobs:
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        shell: bash
-        run: |
-          ls -lh
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            config=${{ matrix.config }}
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
 
-          tree ./$artifact
+            tree ./$artifact
 
-          git config --global user.email "csukuangfj@gmail.com"
-          git config --global user.name "Fangjun Kuang"
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
 
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
-          cd huggingface
-          git lfs pull
-          cp -v ../onnxruntime-linux*.zip ./
-          git status
-          git lfs track "*.zip"
+            cd huggingface
+            git lfs pull
+            cp -v ../onnxruntime-linux*.zip ./
+            git status
+            git lfs track "*.zip"
 
-          git add .
+            git add .
 
-          git commit -m "upload $artifact"
-          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+            git commit -m "upload $artifact"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
