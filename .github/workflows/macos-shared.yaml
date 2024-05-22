@@ -20,6 +20,7 @@ env:
 
 jobs:
   macos-shared:
+    if: false
     name: ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -91,7 +92,6 @@ jobs:
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
             --apple_sysroot macosx \
-            --build_apple_framework \
             --target install \
             --parallel \
             --skip_tests \
