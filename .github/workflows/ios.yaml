@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information（e.g., 1.17.1）"
+        description: "Version information (e.g., 1.18.0)"
         required: true
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
 
 jobs:
   ios_arm64:
@@ -44,7 +44,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          python3 -m pip install cmake
+          brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -57,10 +57,12 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
+
+          rm -fv protoc*.zip
 
           ./bin/protoc --version
 
@@ -98,7 +100,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target 13.0 \
+            --apple_deploy_target '12.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -202,7 +204,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          python3 -m pip install cmake
+          brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -215,7 +217,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -256,7 +258,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target 13.0 \
+            --apple_deploy_target '12.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -350,7 +352,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          python3 -m pip install cmake
+          brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -363,7 +365,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -406,7 +408,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target 11.0 \
+            --apple_deploy_target '12.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -604,6 +606,7 @@ jobs:
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
 
+          export GIT_CLONE_PROTECTION_ACTIVE=false
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
@@ -628,6 +631,7 @@ jobs:
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
 
+          export GIT_CLONE_PROTECTION_ACTIVE=false
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/ios-onnxruntime huggingface
           version=${{ env.ONNXRUNTIME_VERSION}}
 

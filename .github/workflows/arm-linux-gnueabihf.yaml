@@ -1,13 +1,10 @@
 name: arm-linux-gnueabihf
 
 on:
-  push:
-    branches:
-      - fix-ios2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information（e.g., 1.17.3）"
+        description: "Version information (e.g., 1.18.0)"
         required: true
 
 permissions:
@@ -16,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.3' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -29,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
@@ -40,12 +37,11 @@ jobs:
 
       - name: Checkout
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
-
 
       - name: cache-toolchain
         id: cache-toolchain
@@ -58,12 +54,12 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          curl -SL -O https://huggingface.co/csukuangfj/arm-linux-gcc/resolve/main/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
           git lfs install
-          git clone https://huggingface.co/csukuangfj/arm-linux-gcc
-          ls -lh arm-linux-gcc
-
           mkdir $GITHUB_WORKSPACE/toolchain
-          tar xvf ./arm-linux-gcc/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+
+          tar xvf ./gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          rm -v gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
 
       - name: Download protoc
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -73,13 +69,15 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
             unzip protoc-3.20.3-linux-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[567].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
             unzip protoc-21.12-linux-x86_64.zip
           else
             echo "Unsupported version ${{ env.ONNXRUNTIME_VERSION }}"
             exit 1
           fi
+
+          rm -fv protoc*.zip
 
           ./bin/protoc --version
 
@@ -131,15 +129,8 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           which python
-          v=$(cat ./VERSION_NUMBER)
-          if [[ $v == "1.18.0" ]]; then
-            echo $version > ./VERSION_NUMBER
-            sed -i.bak s/1.18.0/$version/g ./onnxruntime/core/session/onnxruntime_c_api.cc
-          fi
 
-          echo "---$version---"
-          cat ./VERSION_NUMBER
-          echo "---"
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
 
           git diff
 
@@ -183,7 +174,7 @@ jobs:
             -r $build_dir \
             -a onnxruntime-linux-arm-$version \
             -c Release \
-            -l libonnxruntime.so.$version \
+            -l libonnxruntime.so \
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
 
@@ -206,7 +197,6 @@ jobs:
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
-
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
@@ -222,6 +212,7 @@ jobs:
           git config --global user.email "csukuangfj@gmail.com"
           git config --global user.name "Fangjun Kuang"
 
+          export GIT_CLONE_PROTECTION_ACTIVE=false
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
