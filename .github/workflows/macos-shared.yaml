@@ -69,8 +69,8 @@ jobs:
           build_dir=./build-macos/${{ matrix.arch }}
           arch=${{ matrix.arch }}
           if [[ $arch == universal2 ]]; then
-            arch='x86_64;arm64'
-            sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
+            arch="x86_64;arm64"
+            # sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
           fi
 
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
@@ -89,12 +89,12 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines BUILD_SHARED_LIBS=ON \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
             --apple_sysroot macosx \
-            --osx_arch "$arch" \
+            --build_apple_framework \
             --target install \
             --parallel \
             --skip_tests \
-            --skip_submodule_sync \
             --apple_deploy_target '10.15' \
             --use_coreml
 
