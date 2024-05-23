@@ -50,6 +50,17 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
@@ -90,10 +101,6 @@ jobs:
               # echo "---$version---"
               # cat ./VERSION_NUMBER
               # echo "---"
-
-              sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
-              sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
-              git diff
 
               which python
 
@@ -145,6 +152,14 @@ jobs:
           mv $build_dir/$artifact ./
           tree ./$artifact
 
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
           zip -r ${artifact}.zip ./$artifact
 
       - name: Upload artifact
@@ -188,7 +203,7 @@ jobs:
             GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
             cd huggingface
-            git lfs pull
+            # git lfs pull
             cp -v ../onnxruntime-linux*.zip ./
             git status
             git lfs track "*.zip"
