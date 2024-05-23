@@ -131,6 +131,7 @@ jobs:
           which python
 
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
 
           git diff
 

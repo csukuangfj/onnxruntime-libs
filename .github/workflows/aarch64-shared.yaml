@@ -24,7 +24,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         arch: [aarch64]
-        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        config: ['MinSizeRel', 'Release']
         # config: ['Release']
 
     steps:
@@ -91,6 +92,7 @@ jobs:
               # echo "---"
 
               sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+              sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
               git diff
 
               which python

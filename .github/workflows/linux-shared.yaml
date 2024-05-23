@@ -24,7 +24,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         arch: [x86_64]
-        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        config: ['MinSizeRel', 'Release']
 
 
     steps:
@@ -76,6 +77,7 @@ jobs:
               which python
 
               sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+              sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
 
               git diff
 
@@ -126,6 +128,9 @@ jobs:
 
           mv $build_dir/$artifact ./
           tree ./$artifact
+
+          ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
 
