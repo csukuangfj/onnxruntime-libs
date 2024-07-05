@@ -104,6 +104,7 @@ jobs:
             --use_xcode \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=ON \
+            --cmake_extra_defines BUILD_SHARED_LIB=ON \
             --build_shared_lib \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --ios \
@@ -126,8 +127,10 @@ jobs:
 
           build_dir=./build-ios/arm64
           ls -lh $build_dir
-          echo "----install----"
-          tree ./build_dir/install
+
+          ls -lh $build_dir/Release/installed
+          echo "----$build_dir/Release/installed----"
+          tree $build_dir/Release/installed
           echo "---------------"
 
 
