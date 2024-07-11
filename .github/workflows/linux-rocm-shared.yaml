@@ -44,18 +44,9 @@ jobs:
       - name: Free more space
         shell: bash
         run: |
-          # see https://github.com/apache/flink/blob/02d30ace69dc18555a5085eccf70ee884e73a16e/tools/azure-pipelines/free_disk_space.sh
-          echo "Listing 100 largest packages"
-          dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
-          df -h
-          echo "Removing large packages"
-          sudo apt-get remove -y '^ghc-8.*'
-          sudo apt-get remove -y '^dotnet-.*'
-          sudo apt-get remove -y '^llvm-.*'
-          sudo apt-get remove -y 'php.*'
-          sudo apt-get remove -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell mono-devel
-          sudo apt-get autoremove -y
-          sudo apt-get clean
+          # https://github.com/orgs/community/discussions/25678
+          cd /opt
+          find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
 
       - name: Check space
         shell: bash
