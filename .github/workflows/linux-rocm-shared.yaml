@@ -1,0 +1,228 @@
+name: linux-shared
+
+on:
+  push:
+    branches:
+      - rocm
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information (e.g., 1.18.1)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.1' }}
+
+jobs:
+  linux-rocmshared:
+    name: ${{ matrix.config }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86_64]
+        python-version: ["3.8"]
+        # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # config: ['MinSizeRel', 'Release']
+        config: ['Release']
+
+    steps:
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-python-${{ matrix.python-version }}-rocm
+
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Install ROCm
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # See https://rocm.docs.amd.com/projects/install-on-linux/en/docs-6.0.0/tutorial/quick-start.html#amdgpu-ubuntu
+          sudo apt install "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)"
+          # See prerequisites. Adding current user to Video and Render groups
+          # sudo usermod -a -G render,video $LOGNAME
+          curl -SL -O https://repo.radeon.com/amdgpu-install/6.0/ubuntu/jammy/amdgpu-install_6.0.60000-1_all.deb
+          sudo apt install -y ./amdgpu-install_6.0.60000-1_all.deb
+          sudo apt update
+          sudo apt install -y amdgpu-dkms
+          sudo apt install -y rocm-hip-libraries
+          echo Please reboot system for all settings to take effect.
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          ls
+          echo "pwd: $PWD"
+
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake --version
+
+          uname -a
+          which gcc
+
+          gcc --version
+
+          find /opt -name "python*"
+
+          echo "--------------------"
+          which python3
+          python3 --version
+          python3 -m pip install ninja
+
+          ls -lh
+          mkdir build-shared
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          build_dir=/shared/build-shared
+
+          python3 tools/ci_build/build.py \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --build_dir $build_dir \
+            --cmake_generator 'Ninja' \
+            --config ${{ matrix.config }} \
+            --update \
+            --build \
+            --parallel \
+            --skip_tests \
+            --compile_no_warning_as_error \
+            --build_shared_lib \
+            --skip_submodule_sync \
+            --enable_lto
+
+            # --allow_running_as_root
+
+          chmod a=rwx build-shared
+          ls -lh build-shared
+          ls -lh build-shared/*
+
+      - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-shared
+
+          sudo chown -R runner $build_dir
+          ls -lh $build_dir
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          config=${{ matrix.config }}
+          artifact=onnxruntime-linux-x64-rocm-$config-$version
+
+          tag=$(git rev-parse HEAD)
+          echo "tag: $tag"
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a $artifact \
+            -c $config \
+            -l libonnxruntime.so \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          mv $build_dir/$artifact ./
+          tree ./$artifact
+
+          ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          zip -r ${artifact}.zip ./$artifact
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            rm -rf huggingface
+
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            config=${{ matrix.config }}
+            artifact=onnxruntime-linux-x64-rocm-$config-$version
+
+            tree ./$artifact
+
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+            cd huggingface
+            # git lfs pull
+            cp -v ../onnxruntime-linux*.zip ./
+            git status
+            git lfs track "*.zip"
+
+            git add .
+
+            git commit -m "upload $artifact"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
