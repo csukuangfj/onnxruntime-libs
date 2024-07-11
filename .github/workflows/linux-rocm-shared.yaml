@@ -179,7 +179,7 @@ jobs:
           artifact=onnxruntime-linux-x64-rocm-$config-$version
 
           tag=$(git rev-parse HEAD)
-          echo "tag: $tag"
+          echo "tag: $tag "
 
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
