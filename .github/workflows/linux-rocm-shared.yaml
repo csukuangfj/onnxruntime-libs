@@ -66,6 +66,20 @@ jobs:
           sudo apt install -y rocm-hip-libraries
           echo Please reboot system for all settings to take effect.
 
+      - name: Find rocm_home
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          ls -lh /opt
+
+          echo "----"
+          ls -lh /opt/rocm-6.0.0
+
+          echo "----"
+          ls -lh /opt/rocm-6.0.0/bin
+          # this will be either <ROCM_HOME>/hip/bin/hipcc or <ROCM_HOME>/bin/hipcc
+          which hipcc
+
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
@@ -126,7 +140,8 @@ jobs:
             --build_shared_lib \
             --skip_submodule_sync \
             --enable_lto \
-            --use_rocm
+            --use_rocm \
+            --rocm_home /opt/rocm-6.0.0
 
             # --allow_running_as_root
 
