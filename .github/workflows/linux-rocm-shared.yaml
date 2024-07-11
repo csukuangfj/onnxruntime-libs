@@ -81,7 +81,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y patchelf
+          # sudo apt-get install -y patchelf
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -167,13 +167,13 @@ jobs:
           mv $build_dir/$artifact ./
           tree ./$artifact
 
-          ldd ./$artifact/lib/libonnxruntime.so
-          readelf -d ./$artifact/lib/libonnxruntime.so
+          # ldd ./$artifact/lib/libonnxruntime.so
+          # readelf -d ./$artifact/lib/libonnxruntime.so
 
-          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          # patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
-          ldd ./$artifact/lib/libonnxruntime.so
-          readelf -d ./$artifact/lib/libonnxruntime.so
+          # ldd ./$artifact/lib/libonnxruntime.so
+          # readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
 
