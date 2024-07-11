@@ -125,8 +125,6 @@ jobs:
 
               echo "pwd: $PWD"
 
-              export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-              export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
               cmake --version
 
               uname -a
