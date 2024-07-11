@@ -101,8 +101,6 @@ jobs:
 
           gcc --version
 
-          find /opt -name "python*"
-
           echo "--------------------"
           which python3
           python3 --version
@@ -113,7 +111,7 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
 
-          build_dir=/shared/build-shared
+          build_dir=./build-shared
 
           python3 tools/ci_build/build.py \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
@@ -127,7 +125,8 @@ jobs:
             --compile_no_warning_as_error \
             --build_shared_lib \
             --skip_submodule_sync \
-            --enable_lto
+            --enable_lto \
+            --use_rocm
 
             # --allow_running_as_root
 
@@ -180,8 +179,7 @@ jobs:
           path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -191,8 +189,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         uses: nick-fields/retry@v3
