@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest]
         arch: [x86_64]
         python-version: ["3.8"]
         # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
@@ -51,6 +51,22 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
 
       - name: Check space
         shell: bash
@@ -81,7 +97,7 @@ jobs:
 
           git diff
 
-          # sudo apt-get install -y patchelf
+          sudo apt-get install -y patchelf
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -167,13 +183,13 @@ jobs:
           mv $build_dir/$artifact ./
           tree ./$artifact
 
-          # ldd ./$artifact/lib/libonnxruntime.so
-          # readelf -d ./$artifact/lib/libonnxruntime.so
+          ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
 
-          # patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
-          # ldd ./$artifact/lib/libonnxruntime.so
-          # readelf -d ./$artifact/lib/libonnxruntime.so
+          ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
 
