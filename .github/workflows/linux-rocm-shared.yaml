@@ -113,7 +113,8 @@ jobs:
         with:
             # image: quay.io/pypa/manylinux2014_x86_64
             # image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
-            image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_staging_base
+            # image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_staging_base
+            image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_1.13.1
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
