@@ -66,11 +66,22 @@ jobs:
           sudo apt install -y rocm-hip-libraries
           echo Please reboot system for all settings to take effect.
 
+      - name: Install tree
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sudo apt-get install -y tree
+
       - name: Find rocm_home
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           ls -lh /opt
+
+          echo "---"
+          ls -lh /opt/rocm/
+
+          tree /opt/rocm
 
           echo "----"
           ls -lh /opt/rocm-6.0.0
