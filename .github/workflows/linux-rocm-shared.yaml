@@ -118,6 +118,8 @@ jobs:
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
+              export PATH=/opt/rocm/bin:$PATH
+
               df -h
               id
 
