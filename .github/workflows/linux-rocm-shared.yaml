@@ -118,6 +118,7 @@ jobs:
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
+              df -h
               id
 
               echo "pwd: $PWD"
