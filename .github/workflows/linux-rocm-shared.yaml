@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [macos-latest]
         arch: [x86_64]
         python-version: ["3.8"]
         # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
