@@ -21,8 +21,7 @@ env:
 jobs:
   linux-rocmshared:
     name: ${{ matrix.config }}
-    container:
-      image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
+      # image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -35,15 +34,17 @@ jobs:
         config: ['Release']
 
     steps:
+      - name: Free space
+        shell: bash
+        run: |
+          df -h
+          rm -rf /opt/hostedtoolcache
+          df -h
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ matrix.os }}-python-${{ matrix.python-version }}-rocm
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
@@ -51,51 +52,6 @@ jobs:
         with:
           path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
-
-      - name: Install ROCm
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
-        shell: bash
-        run: |
-          # See https://rocm.docs.amd.com/projects/install-on-linux/en/docs-6.0.0/tutorial/quick-start.html#amdgpu-ubuntu
-          sudo apt install "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)"
-          # See prerequisites. Adding current user to Video and Render groups
-          # sudo usermod -a -G render,video $LOGNAME
-          curl -SL -O https://repo.radeon.com/amdgpu-install/6.0/ubuntu/jammy/amdgpu-install_6.0.60000-1_all.deb
-          sudo apt install -y ./amdgpu-install_6.0.60000-1_all.deb
-          sudo apt update
-          sudo apt install -y amdgpu-dkms
-          sudo apt install -y rocm-hip-libraries
-          echo Please reboot system for all settings to take effect.
-
-      - name: Install tree
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          sudo apt-get install -y tree
-
-      - name: Find rocm_home
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          ls -lh /opt
-
-          echo "---"
-          ls -lh /opt/rocm/
-
-          tree /opt/rocm
-
-          echo "----"
-          ls -lh /opt/rocm
-
-          echo "----"
-          ls -lh /opt/rocm/bin
-          # this will be either <ROCM_HOME>/hip/bin/hipcc or <ROCM_HOME>/bin/hipcc
-          which hipcc || true
-
-          export PATH=/opt/rocm/bin:$PATH
-
-          which hipcc || true
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -116,57 +72,62 @@ jobs:
 
           sudo apt-get install -y patchelf
 
-      - name: Build
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          export PATH=/opt/rocm-6.0.0/bin:$PATH
+        uses: addnab/docker-run-action@v3
+        with:
+            # image: quay.io/pypa/manylinux2014_x86_64
+            image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
+            options: |
+              --volume ${{ github.workspace }}/:/shared
+            shell: bash
+            run: |
+              a
+              echo "pwd: $PWD"
 
-          ls
-          echo "pwd: $PWD"
+              export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+              export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+              cmake --version
 
-          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-          cmake --version
+              uname -a
+              which gcc
 
-          uname -a
-          which gcc
+              gcc --version
 
-          gcc --version
+              echo "--------------------"
+              which python3
+              python3 --version
+              python3 -m pip install ninja
+              cd /shared
+              mkdir build-shared
 
-          echo "--------------------"
-          which python3
-          python3 --version
-          python3 -m pip install ninja
+              ls -lh
+              mkdir build-shared
 
-          ls -lh
-          mkdir build-shared
+              version=${{ env.ONNXRUNTIME_VERSION }}
 
-          version=${{ env.ONNXRUNTIME_VERSION }}
+              build_dir=/shared/build-shared
 
-          build_dir=./build-shared
+              python3 tools/ci_build/build.py \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+                --build_dir $build_dir \
+                --cmake_generator 'Ninja' \
+                --config ${{ matrix.config }} \
+                --update \
+                --build \
+                --parallel \
+                --skip_tests \
+                --compile_no_warning_as_error \
+                --build_shared_lib \
+                --skip_submodule_sync \
+                --enable_lto \
+                --use_rocm \
+                --rocm_home /opt/rocm \
+                --allow_running_as_root
 
-          python3 tools/ci_build/build.py \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --build_dir $build_dir \
-            --cmake_generator 'Ninja' \
-            --config ${{ matrix.config }} \
-            --update \
-            --build \
-            --parallel \
-            --skip_tests \
-            --compile_no_warning_as_error \
-            --build_shared_lib \
-            --skip_submodule_sync \
-            --enable_lto \
-            --use_rocm \
-            --rocm_home /opt/rocm
-
-            # --allow_running_as_root
-
-          chmod a=rwx build-shared
-          ls -lh build-shared
-          ls -lh build-shared/*
+              chmod a=rwx build-shared
+              ls -lh build-shared
+              ls -lh build-shared/*
 
       - name: Collect results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
