@@ -104,7 +104,8 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
             # image: quay.io/pypa/manylinux2014_x86_64
-            image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
+            # image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
+            image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_staging_base
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
