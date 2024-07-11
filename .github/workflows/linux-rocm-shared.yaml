@@ -1,9 +1,9 @@
 name: linux-shared
 
 on:
-  push:
-    branches:
-      - rocm
+  # push:
+  #   branches:
+  #     - rocm
   workflow_dispatch:
     inputs:
       version:
@@ -152,6 +152,7 @@ jobs:
                 --config ${{ matrix.config }} \
                 --update \
                 --build \
+                --parallel \
                 --skip_tests \
                 --compile_no_warning_as_error \
                 --build_shared_lib \
@@ -160,8 +161,6 @@ jobs:
                 --use_rocm \
                 --rocm_home /opt/rocm \
                 --allow_running_as_root
-
-                # --parallel \
 
               ls -lh build-shared
               ls -lh build-shared/*
@@ -180,7 +179,7 @@ jobs:
           artifact=onnxruntime-linux-x64-rocm-$config-$version
 
           tag=$(git rev-parse HEAD)
-          echo "tag: $tag "
+          echo "tag: $tag"
 
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
