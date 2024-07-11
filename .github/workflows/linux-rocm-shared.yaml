@@ -21,6 +21,8 @@ env:
 jobs:
   linux-rocmshared:
     name: ${{ matrix.config }}
+    container:
+      image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,7 +35,6 @@ jobs:
         config: ['Release']
 
     steps:
-
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -52,7 +53,8 @@ jobs:
           key: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Install ROCm
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
         shell: bash
         run: |
           # See https://rocm.docs.amd.com/projects/install-on-linux/en/docs-6.0.0/tutorial/quick-start.html#amdgpu-ubuntu
@@ -84,14 +86,14 @@ jobs:
           tree /opt/rocm
 
           echo "----"
-          ls -lh /opt/rocm-6.0.0
+          ls -lh /opt/rocm
 
           echo "----"
-          ls -lh /opt/rocm-6.0.0/bin
+          ls -lh /opt/rocm/bin
           # this will be either <ROCM_HOME>/hip/bin/hipcc or <ROCM_HOME>/bin/hipcc
           which hipcc || true
 
-          export PATH=/opt/rocm-6.0.0/bin:$PATH
+          export PATH=/opt/rocm/bin:$PATH
 
           which hipcc || true
 
@@ -158,7 +160,7 @@ jobs:
             --skip_submodule_sync \
             --enable_lto \
             --use_rocm \
-            --rocm_home /opt/rocm-6.0.0
+            --rocm_home /opt/rocm
 
             # --allow_running_as_root
 
