@@ -99,6 +99,14 @@ jobs:
 
           sudo apt-get install -y patchelf
 
+      - name: create build directory
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir build-shared
+          chmod a=rwx build-shared
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
@@ -110,7 +118,8 @@ jobs:
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
-              a
+              id
+
               echo "pwd: $PWD"
 
               export CMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -127,10 +136,8 @@ jobs:
               python3 --version
               python3 -m pip install ninja
               cd /shared
-              mkdir build-shared
 
               ls -lh
-              mkdir build-shared
 
               version=${{ env.ONNXRUNTIME_VERSION }}
 
@@ -153,7 +160,6 @@ jobs:
                 --rocm_home /opt/rocm \
                 --allow_running_as_root
 
-              chmod a=rwx build-shared
               ls -lh build-shared
               ls -lh build-shared/*
 
