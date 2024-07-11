@@ -107,6 +107,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          export PATH=/opt/rocm-6.0.0/bin:$PATH
+
           ls
           echo "pwd: $PWD"
 
