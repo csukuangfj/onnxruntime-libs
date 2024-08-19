@@ -1,6 +1,9 @@
 name: linux-shared
 
 on:
+  # push:
+  #   branches:
+  #     - rocm
   workflow_dispatch:
     inputs:
       version:
@@ -16,25 +19,66 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.0' }}
 
 jobs:
-  linux-shared:
+  linux-rocmshared:
     name: ${{ matrix.config }}
+      # image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         arch: [x86_64]
+        python-version: ["3.8"]
         # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        config: ['MinSizeRel', 'Release']
-
+        # config: ['MinSizeRel', 'Release']
+        config: ['Release']
 
     steps:
+      - name: Free space
+        shell: bash
+        run: |
+          df -h
+          rm -rf /opt/hostedtoolcache
+          df -h
+
+      - name: Free more space
+        shell: bash
+        run: |
+          # https://github.com/orgs/community/discussions/25678
+          cd /opt
+          find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: true
+
+      - name: Check space
+        shell: bash
+        run: |
+          df -h
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -55,39 +99,49 @@ jobs:
 
           sudo apt-get install -y patchelf
 
+      - name: create build directory
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir build-shared
+          chmod a=rwx build-shared
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
         with:
-            image: quay.io/pypa/manylinux2014_x86_64
+            # image: quay.io/pypa/manylinux2014_x86_64
+            # image: rocm/pytorch:rocm6.0_ubuntu20.04_py3.9_pytorch_2.1.1
+            # image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_staging_base
+            image: rocm/pytorch:rocm6.1_ubuntu20.04_py3.9_pytorch_1.13.1
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
-              echo "config: ${{ matrix.config }}"
+              export PATH=/opt/rocm/bin:$PATH
+
+              df -h
+              id
+
+              echo "pwd: $PWD"
+
+              cmake --version
+
               uname -a
               which gcc
 
               gcc --version
-              which python
-
-              find /opt -name "python*"
 
               echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.8.19/bin:$PATH
               which python3
               python3 --version
               python3 -m pip install ninja
-
               cd /shared
+
               ls -lh
-              touch /shared/a.txt
-              mkdir build-shared
 
               version=${{ env.ONNXRUNTIME_VERSION }}
-              which python
-
-
 
               build_dir=/shared/build-shared
 
@@ -104,9 +158,10 @@ jobs:
                 --build_shared_lib \
                 --skip_submodule_sync \
                 --enable_lto \
+                --use_rocm \
+                --rocm_home /opt/rocm \
                 --allow_running_as_root
 
-              chmod a=rwx build-shared
               ls -lh build-shared
               ls -lh build-shared/*
 
@@ -121,7 +176,7 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          artifact=onnxruntime-linux-x64-rocm-$config-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -151,8 +206,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-x64-rocm-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -179,7 +234,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+            artifact=onnxruntime-linux-x64-rocm-$config-$version
 
             tree ./$artifact
 
