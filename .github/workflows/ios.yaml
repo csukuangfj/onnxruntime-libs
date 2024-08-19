@@ -100,7 +100,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -258,7 +258,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -408,7 +408,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 

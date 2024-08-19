@@ -141,6 +141,13 @@ jobs:
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
 
+          pushd ./tools/ci_build/github/linux
+          rm copy_strip_binary.sh
+          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          chmod +x copy_strip_binary.sh
+          ls -lh
+          popd
+
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
             -a $artifact \
