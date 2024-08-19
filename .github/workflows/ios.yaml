@@ -169,7 +169,7 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
@@ -317,7 +317,7 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -467,7 +467,7 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -591,7 +591,7 @@ jobs:
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v2
         with:
           name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
