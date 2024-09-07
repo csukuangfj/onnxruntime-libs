@@ -1,4 +1,4 @@
-name: macos-shared
+name: vision_os-shared
 
 on:
   push:
@@ -77,8 +77,12 @@ jobs:
           for a in xros xrsimulator; do
             ls -lh build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework
 
-            artifact=onnxruntime-vision_os-${a}_arm64$version
-            mv build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework $artifact/
+            artifact=onnxruntime-vision_os-${a}_arm64-$version
+            mkdir -p $artifact//onnxruntime.framework
+            cp -a build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework/* $artifact/onnxruntime.framework/
+            pushd $artifact/onnxruntime.framework/
+            ln -s onnxruntime libonnxruntime.dylib
+            popd
             tree ./$artifact
             zip -r ${artifact}.zip ./$artifact
           done
