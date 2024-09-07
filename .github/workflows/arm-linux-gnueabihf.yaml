@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.18.0)"
+        description: "Version information (e.g., 1.19.0)"
         required: true
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.0' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -70,7 +70,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
             unzip protoc-3.20.3-linux-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
             unzip protoc-21.12-linux-x86_64.zip
           else
@@ -174,6 +174,13 @@ jobs:
           build_dir=./build-arm
           version=${{ env.ONNXRUNTIME_VERSION }}
 
+          pushd ./tools/ci_build/github/linux
+          rm copy_strip_binary.sh
+          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          chmod +x copy_strip_binary.sh
+          ls -lh
+          popd
+
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
             -a onnxruntime-linux-arm-$version \
@@ -242,7 +249,7 @@ jobs:
 
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.18.0)"
+        description: "Version information (e.g., 1.19.0)"
         required: true
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.0' }}
 
 jobs:
   windows_x64_static:
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.18.0)"
+        description: "Version information (e.g., 1.19.0)"
         required: true
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.0' }}
 
 jobs:
   ios_arm64:
@@ -57,7 +57,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -100,7 +100,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -170,7 +170,7 @@ jobs:
 
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
@@ -217,7 +217,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -258,7 +258,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -317,8 +317,8 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -365,7 +365,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[5678].[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -408,7 +408,7 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
-            --apple_deploy_target '12.0' \
+            --apple_deploy_target '13.3' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
 
@@ -467,8 +467,8 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -487,35 +487,35 @@ jobs:
 
       - name: Retrieve artifact for ios_arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-arm64/
 
       - name: Retrieve artifact for simulator arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-arm64/
 
       - name: Retrieve artifact for simulator x86_64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-x86_64/
 
       - name: Retrieve artifact for macOS arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-macos-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-macos-arm64/
 
       - name: Retrieve artifact for macOS x86_64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-macos-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-macos-x86_64/
@@ -591,8 +591,8 @@ jobs:
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime.xcframework
