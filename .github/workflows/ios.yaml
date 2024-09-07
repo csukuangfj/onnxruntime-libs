@@ -169,8 +169,8 @@ jobs:
           ls -lh $dst
 
       - name: Upload artifact
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
@@ -318,7 +318,7 @@ jobs:
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -468,7 +468,7 @@ jobs:
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -487,35 +487,35 @@ jobs:
 
       - name: Retrieve artifact for ios_arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-arm64/
 
       - name: Retrieve artifact for simulator arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-arm64/
 
       - name: Retrieve artifact for simulator x86_64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-ios-simulator-x86_64/
 
       - name: Retrieve artifact for macOS arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-macos-arm64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-macos-arm64/
 
       - name: Retrieve artifact for macOS x86_64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: onnxruntime-macos-x86_64-${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime-macos-x86_64/
@@ -592,7 +592,7 @@ jobs:
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime.xcframework
