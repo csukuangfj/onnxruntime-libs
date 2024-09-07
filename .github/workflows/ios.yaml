@@ -610,7 +610,6 @@ jobs:
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
-          git lfs pull
           cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./
           git status
           git lfs track "*.bz2"
@@ -636,7 +635,6 @@ jobs:
           version=${{ env.ONNXRUNTIME_VERSION}}
 
           cd huggingface
-          git lfs pull
 
           rm -rfv $version
           mkdir $version
