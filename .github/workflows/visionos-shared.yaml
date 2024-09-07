@@ -3,11 +3,11 @@ name: macos-shared
 on:
   push:
     branches:
-      - fix-ios
+      - vos
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.18.0)"
+        description: "Version information (e.g., 1.19.2)"
         required: true
 
 permissions:
@@ -16,11 +16,10 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.18.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.2' }}
 
 jobs:
-  macos-shared:
-    if: false
+  vision_os-shared:
     name: ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -34,8 +33,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -66,37 +65,9 @@ jobs:
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
-
-          build_dir=./build-macos/${{ matrix.arch }}
-          arch=${{ matrix.arch }}
-          if [[ $arch == universal2 ]]; then
-            arch="x86_64;arm64"
-            # sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
-          fi
-
-          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
-
-          git diff
-
-          python3 ./tools/ci_build/build.py \
-            --build_dir $build_dir \
+          python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
-            --cmake_generator 'Ninja' \
-            --update \
-            --build \
-            --use_xcode \
-            --build_shared_lib \
-            --compile_no_warning_as_error \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines BUILD_SHARED_LIBS=ON \
-            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
-            --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
-            --apple_sysroot macosx \
-            --target install \
-            --parallel \
-            --skip_tests \
-            --apple_deploy_target '10.15' \
-            --use_coreml
+            tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
 
       - name: Collect results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -108,7 +79,7 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           config=${{ matrix.config }}
-          artifact=onnxruntime-osx-${{ matrix.arch }}-$version
+          artifact=onnxruntime-vision_os-${{ matrix.arch }}-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -130,8 +101,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -158,7 +129,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             arch=${{ matrix.arch }}
-            artifact=onnxruntime-osx-$arch-$version
+            artifact=onnxruntime-vision_os-$arch-$version
 
             tree ./$artifact
 
@@ -170,7 +141,7 @@ jobs:
 
             cd huggingface
             git lfs pull
-            cp -v ../onnxruntime-osx*.zip ./
+            cp -v ../onnxruntime-vision_os*.zip ./
             git status
             git lfs track "*.zip"
 
