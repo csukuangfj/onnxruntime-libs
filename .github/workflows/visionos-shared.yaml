@@ -20,26 +20,25 @@ env:
 
 jobs:
   vision_os-shared:
-    name: ${{ matrix.os }} ${{ matrix.arch }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        arch: [x86_64, arm64, universal2]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-vision_os-{{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-vision_os-{{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}
+          key: ${{ matrix.os }}-vision_os
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -73,36 +72,30 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build-macos/${{ matrix.arch }}
-
-          ls -lh $build_dir
-
           version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-vision_os-${{ matrix.arch }}-$version
 
-          tag=$(git rev-parse HEAD)
-          echo "tag: $tag"
+          for a in xros xrsimulator; do
+            ls -lh build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework
 
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a $artifact \
-            -c Release \
-            -l libonnxruntime.dylib \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
+            artifact=onnxruntime-vision_os-${a}_arm64$version
+            mv build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework $artifact/
+            tree ./$artifact
+            zip -r ${artifact}.zip ./$artifact
+          done
 
-          mv $build_dir/$artifact ./
-          tree ./$artifact
-
-          zip -r ${artifact}.zip ./$artifact
-
-      - name: Upload artifact
+      - name: Upload artifact xros
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-vision_os-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload artifact xrsimulator
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -128,10 +121,6 @@ jobs:
 
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
-            arch=${{ matrix.arch }}
-            artifact=onnxruntime-vision_os-$arch-$version
-
-            tree ./$artifact
 
             git config --global user.email "csukuangfj@gmail.com"
             git config --global user.name "Fangjun Kuang"
@@ -147,5 +136,5 @@ jobs:
 
             git add .
 
-            git commit -m "upload $artifact"
+            git commit -m "upload vision_os"
             git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
