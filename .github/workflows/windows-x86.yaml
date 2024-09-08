@@ -161,7 +161,6 @@ jobs:
           GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
-          git lfs pull
           cp -v ../$dst_dir.tar.bz2 ./
           git status
           git lfs track "*.bz2"
