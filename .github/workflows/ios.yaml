@@ -607,7 +607,7 @@ jobs:
           git config --global user.name "Fangjun Kuang"
 
           export GIT_CLONE_PROTECTION_ACTIVE=false
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
           cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./
@@ -631,7 +631,7 @@ jobs:
           git config --global user.name "Fangjun Kuang"
 
           export GIT_CLONE_PROTECTION_ACTIVE=false
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/ios-onnxruntime huggingface
+          GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime huggingface
           version=${{ env.ONNXRUNTIME_VERSION}}
 
           cd huggingface
