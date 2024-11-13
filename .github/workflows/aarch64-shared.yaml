@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.19.0)"
+        description: "Version information (e.g., 1.20.0)"
         required: true
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.19.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
 
 jobs:
   aarch64-shared:
