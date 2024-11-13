@@ -69,6 +69,23 @@ jobs:
               which gcc
 
               gcc --version
+
+              echo "update gcc"
+
+              # See https://github.com/nealef/clefos/issues/9
+              echo "multilib_policy=best" >> /etc/yum.conf
+              echo "skip_missing_names_on_install=False" >> /etc/yum.conf
+              sed -i '/^override_install_langs=/d' /etc/yum.conf
+              yum -y update
+              yum -y install yum-utils curl
+              yum-config-manager --enable extras
+              yum -y install centos-release-scl-rh
+              yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
+
+              which gcc
+
+              gcc --version
+
               which python
 
               find /opt -name "python*"
