@@ -84,8 +84,10 @@ jobs:
 
               scl enable devtoolset-11 bash
 
+              echo 'which gcc'
               which gcc
 
+              echo 'gcc --version'
               gcc --version
 
               which python
