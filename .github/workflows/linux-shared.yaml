@@ -82,7 +82,11 @@ jobs:
               yum -y install centos-release-scl-rh
               yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
 
-              scl enable devtoolset-11 bash
+              ls -lh /opt/rh/devtoolset-11
+
+              source /opt/rh/devtoolset-11/enable
+
+              # scl enable devtoolset-11 bash
 
               echo 'which gcc'
               which gcc
