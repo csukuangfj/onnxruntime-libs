@@ -20,7 +20,7 @@ env:
 
 jobs:
   macos-shared:
-    if: false
+    if: true
     name: ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
