@@ -82,6 +82,8 @@ jobs:
               yum -y install centos-release-scl-rh
               yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
 
+              scl enable devtoolset-11 bash
+
               which gcc
 
               gcc --version
