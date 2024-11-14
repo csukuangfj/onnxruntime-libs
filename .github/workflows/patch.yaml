@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - patchelf
+      - release-1.20.0
 
 permissions:
   contents: write
@@ -11,7 +12,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
 
 jobs:
   patchelf:
