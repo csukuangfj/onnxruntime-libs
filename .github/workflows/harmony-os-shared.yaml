@@ -49,6 +49,15 @@ jobs:
           path: command-line-tools
           key: commandline-tools-linux-x64-5.0.3.906.zip
 
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime
+
       - name: Download toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
@@ -70,7 +79,7 @@ jobs:
           cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
           echo "===="
 
-          echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin"  >> "$GITHUB_PATH"
+          # echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin"  >> "$GITHUB_PATH"
 
           ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/
           echo "--"
@@ -100,20 +109,16 @@ jobs:
           x86_64-unknown-linux-ohos-clang++ --version
           x86_64-unknown-linux-ohos-clang --version
 
-      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/onnxruntime
-          submodules: true
-          ref: v${{ env.ONNXRUNTIME_VERSION }}
-
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          cd onnxruntime
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          cd tools/ci_build
+          sed -i.bak s/-fcf-protection// ./build.py
 
           git diff
 
@@ -123,6 +128,7 @@ jobs:
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          cd onnxruntime
           mkdir build-shared
 
           version=${{ env.ONNXRUNTIME_VERSION }}
@@ -132,9 +138,38 @@ jobs:
 
           ls -lh
 
+          # export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin:$PATH
+          d=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin
+
+          export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin:$PATH
+
+          arch=${{ matrix.arch }}
+          if [[ $arch == "arm64-v8a" ]]; then
+            CMAKE_C_COMPILER=aarch64-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=aarch64-unknown-linux-ohos-clang++
+          elif [[ $arch == "armeabi-v7a" ]]; then
+            CMAKE_C_COMPILER=armv7-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=armv7-unknown-linux-ohos-clang++
+          elif [[ $arch == "x86_64" ]]; then
+            CMAKE_C_COMPILER=x86_64-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=x86_64-unknown-linux-ohos-clang++
+          else
+            echo "Unknown arch: $arch"
+            exit 1
+          fi
+          ls -lh $d/$CMAKE_C_COMPILER
+          ls -lh $d/$CMAKE_ASM_COMPILER
+          ls -lh $d/$CMAKE_CXX_COMPILER
+
           python3 tools/ci_build/build.py \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
+            --cmake_extra_defines CMAKE_C_COMPILER=$d/$CMAKE_C_COMPILER \
+            --cmake_extra_defines CMAKE_ASM_COMPILER=$d/$CMAKE_ASM_COMPILER \
+            --cmake_extra_defines CMAKE_CXX_COMPILER=$d/$CMAKE_CXX_COMPILER \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             --build_dir $build_dir \
@@ -153,6 +188,7 @@ jobs:
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          cd onnxruntime
           build_dir=./build-shared
 
           sudo chown -R runner $build_dir
@@ -191,6 +227,8 @@ jobs:
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
+          mv *.zip ../
+          mv $artifact ../
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
