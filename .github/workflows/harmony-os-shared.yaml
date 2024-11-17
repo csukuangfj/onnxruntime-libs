@@ -195,8 +195,9 @@ jobs:
             --skip_tests \
             --compile_no_warning_as_error \
             --build_shared_lib \
-            --skip_submodule_sync \
-            --enable_lto
+            --skip_submodule_sync
+
+            # --enable_lto
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
