@@ -122,8 +122,13 @@ jobs:
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
 
-          cd tools/ci_build
+          pushd tools/ci_build
           sed -i.bak s/-fcf-protection// ./build.py
+          popd
+
+          pushd onnxruntime/core/platform/posix
+          sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
+          popd
 
           git diff
 
@@ -170,7 +175,6 @@ jobs:
           ls -lh $d/$CMAKE_CXX_COMPILER
 
           python3 tools/ci_build/build.py \
-            --cmake_extra_defines onnxruntime_ENABLE_CPUINFO="OFF" \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
