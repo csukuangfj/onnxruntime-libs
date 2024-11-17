@@ -175,7 +175,7 @@ jobs:
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             --cmake_extra_defines CMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             --cmake_extra_defines CMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
-            --cmake_extra_defines CMAKE_CXX_FLAGS="-DANDROID=1" \
+            --cmake_extra_defines CMAKE_CXX_FLAGS="-D__ANDROID__=1" \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             --build_dir $build_dir \
