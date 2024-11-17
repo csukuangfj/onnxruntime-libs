@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.17.1)"
+        description: "Version information (e.g., 1.16.3)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.3' }}
 
 jobs:
   harmony-os-shared:
@@ -139,7 +139,7 @@ jobs:
           ls -lh
 
           export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin:$PATH
-          # d=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin
+          d=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin
 
           export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin:$PATH
 
