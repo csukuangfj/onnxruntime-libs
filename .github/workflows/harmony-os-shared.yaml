@@ -25,10 +25,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest]
+        # arch: [arm64-v8a, armeabi-v7a, x86_64]
         arch: [arm64-v8a]
 
     steps:
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
@@ -36,15 +42,63 @@ jobs:
           path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
+      - name: cache-toolchain (CPU)
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: command-line-tools
+          key: commandline-tools-linux-x64-5.0.3.906.zip
+
       - name: Download toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-mac-arm64-5.0.5.200.zip
-          unzip commandline-tools-mac-arm64-5.0.5.200.zip
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-5.0.3.906.zip
+          unzip commandline-tools-linux-x64-5.0.3.906.zip
+
+      - name: Set environment variable
+        if: false
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin"  >> "$GITHUB_PATH"
+          which cmake
+
+          cmake --version
+
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
+          echo "===="
+          cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+          echo "===="
+
+          echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin"  >> "$GITHUB_PATH"
+
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/
+          echo "--"
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/*unknown*
+
+          echo $GITHUB_PATH
+
+          which aarch64-unknown-linux-ohos-clang++ || true
+          which aarch64-unknown-linux-ohos-clang || true
+
+          aarch64-unknown-linux-ohos-clang++ --version || true
+          aarch64-unknown-linux-ohos-clang --version || true
+
+          which armv7-unknown-linux-ohos-clang++
+          which armv7-unknown-linux-ohos-clang
+
+          armv7-unknown-linux-ohos-clang++ --version
+          armv7-unknown-linux-ohos-clang --version
+
+          which x86_64-unknown-linux-ohos-clang++
+          which x86_64-unknown-linux-ohos-clang
+
+          x86_64-unknown-linux-ohos-clang++ --version
+          x86_64-unknown-linux-ohos-clang --version
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
@@ -52,8 +106,7 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: patch
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
@@ -64,75 +117,17 @@ jobs:
           sudo apt-get install -y patchelf
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          gcc --version
-
-          echo "update gcc"
-
-          # See https://github.com/nealef/clefos/issues/9
-          echo "multilib_policy=best" >> /etc/yum.conf
-          echo "skip_missing_names_on_install=False" >> /etc/yum.conf
-          sed -i '/^override_install_langs=/d' /etc/yum.conf
-          yum -y update
-          yum -y install yum-utils curl
-          yum-config-manager --enable extras
-          yum -y install centos-release-scl-rh
-          yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
-
-          # see https://stackoverflow.com/questions/72904802/can-not-find-required-gcc-version-after-devtoolset-installation
-          ls -lh /opt/rh/devtoolset-11
-
-          source /opt/rh/devtoolset-11/enable
-
-          echo 'which gcc'
-          which gcc
-
-          echo 'gcc --version'
-          gcc --version
-
-          which python
-
-          find /opt -name "python*"
-
-          echo "--------------------"
-          export PATH=/opt/_internal/cpython-3.8.20/bin:$PATH
-          which python3
-          python3 --version
-          python3 -m pip install ninja
-
-          cd /shared
-          ls -lh
-          touch /shared/a.txt
           mkdir build-shared
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           which python
 
+          build_dir=./build-shared
 
-
-          build_dir=/shared/build-shared
-
-          python3 tools/ci_build/build.py \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --build_dir $build_dir \
-            --cmake_generator 'Ninja' \
-            --config ${{ matrix.config }} \
-            --update \
-            --build \
-            --parallel \
-            --skip_tests \
-            --compile_no_warning_as_error \
-            --build_shared_lib \
-            --skip_submodule_sync \
-            --enable_lto \
-            --allow_running_as_root
-
-          chmod a=rwx build-shared
-          ls -lh build-shared
-          ls -lh build-shared/*
+          ls -lh
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
