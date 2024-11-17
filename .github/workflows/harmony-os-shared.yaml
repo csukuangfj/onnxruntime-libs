@@ -101,7 +101,7 @@ jobs:
           x86_64-unknown-linux-ohos-clang --version
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
@@ -109,7 +109,7 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: patch
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
@@ -120,7 +120,7 @@ jobs:
           sudo apt-get install -y patchelf
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir build-shared
@@ -132,9 +132,25 @@ jobs:
 
           ls -lh
 
+          python3 tools/ci_build/build.py \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
+            --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
+            --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
+            --build_dir $build_dir \
+            --cmake_generator 'Ninja' \
+            --config Release \
+            --update \
+            --build \
+            --parallel \
+            --skip_tests \
+            --compile_no_warning_as_error \
+            --build_shared_lib \
+            --skip_submodule_sync \
+            --enable_lto
+
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
         shell: bash
         run: |
           build_dir=./build-shared
@@ -143,8 +159,7 @@ jobs:
           ls -lh $build_dir
 
           version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          artifact=onnxruntime-ohos-${{ matrix.arch }}-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -179,15 +194,15 @@ jobs:
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        # if: false
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        # if: false
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -198,7 +213,7 @@ jobs:
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        # if: false
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         uses: nick-fields/retry@v3
@@ -211,8 +226,7 @@ jobs:
 
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
-            config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+            artifact=onnxruntime-ohos-${{ matrix.arch }}-$version
 
             tree ./$artifact
 
@@ -224,7 +238,7 @@ jobs:
 
             cd huggingface
             # git lfs pull
-            cp -v ../onnxruntime-linux*.zip ./
+            cp -v ../onnxruntime-ohos*.zip ./
             git status
             git lfs track "*.zip"
 
