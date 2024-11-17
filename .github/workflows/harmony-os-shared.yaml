@@ -170,12 +170,12 @@ jobs:
           ls -lh $d/$CMAKE_CXX_COMPILER
 
           python3 tools/ci_build/build.py \
+            --cmake_extra_defines onnxruntime_ENABLE_CPUINFO="OFF" \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             --cmake_extra_defines CMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             --cmake_extra_defines CMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
-            --cmake_extra_defines CMAKE_CXX_FLAGS="-D__ANDROID__=1" \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             --build_dir $build_dir \
