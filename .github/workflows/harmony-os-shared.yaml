@@ -76,7 +76,11 @@ jobs:
           echo "--"
           ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/*unknown*
 
-          echo $GITHUB_PATH
+          cat $GITHUB_PATH
+
+          # /home/runner/work/onnxruntime-libs/onnxruntime-libs/command-line-tools/sdk/default/openharmony/native/llvm/bin/aarch64-unknown-linux-ohos-clang -v || true
+          export PATH=$PWD/command-line-tools/sdk/default/openharmony/native/llvm/bin:$PATH
+          echo "path: $PATH"
 
           which aarch64-unknown-linux-ohos-clang++ || true
           which aarch64-unknown-linux-ohos-clang || true
