@@ -184,7 +184,7 @@ jobs:
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             --cmake_extra_defines CMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             --cmake_extra_defines CMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
-            --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA" \
+            --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA -DCPUINFO_PRIVATE" \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
             --cmake_extra_defines CMAKE_SYSTEM_PROCESSOR=$CMAKE_SYSTEM_PROCESSOR \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
