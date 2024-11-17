@@ -54,6 +54,7 @@ jobs:
           key: commandline-tools-linux-x64-5.0.5.200.zip
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: false
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
@@ -116,6 +117,7 @@ jobs:
 
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
         shell: bash
         run: |
           cd onnxruntime
@@ -131,6 +133,7 @@ jobs:
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
         shell: bash
         run: |
           cd onnxruntime
@@ -175,6 +178,7 @@ jobs:
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             --cmake_extra_defines CMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             --cmake_extra_defines CMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
+            --cmake_extra_defines CMAKE_CXX_FLAGS="-DANDROID=1" \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             --build_dir $build_dir \
@@ -191,6 +195,7 @@ jobs:
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: false
         shell: bash
         run: |
           cd onnxruntime
@@ -237,7 +242,7 @@ jobs:
 
       - name: Upload artifact
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        # if: false
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -245,7 +250,7 @@ jobs:
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        # if: false
+        if: false
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -256,7 +261,7 @@ jobs:
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
-        # if: false
+        if: false
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         uses: nick-fields/retry@v3
