@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
 
+# commandline-tools-linux-x64-5.0.3.906.zip supports only onnxruntime<=1.16.3
+# since its clang is 15.0.4 and does not support bfloat16_t
+#
+
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
@@ -47,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: command-line-tools
-          key: commandline-tools-linux-x64-5.0.3.906.zip
+          key: commandline-tools-linux-x64-5.0.5.200.zip
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -62,8 +66,9 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-5.0.3.906.zip
-          unzip commandline-tools-linux-x64-5.0.3.906.zip
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-5.0.5.200.zip
+          unzip commandline-tools-linux-x64-5.0.5.200.zip
+          rm commandline-tools-linux-x64-5.0.5.200.zip
 
       - name: Set environment variable
         shell: bash
