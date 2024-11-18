@@ -242,7 +242,7 @@ jobs:
           ./tools/ci_build/github/linux/copy_strip_binary.sh \
             -r $build_dir \
             -a $artifact \
-            -c $config \
+            -c Release \
             -l libonnxruntime.so \
             -s $PWD/ \
             -t "$(git rev-parse HEAD)"
