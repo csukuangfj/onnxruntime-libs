@@ -248,12 +248,13 @@ jobs:
           mv $build_dir/$artifact ./
           tree ./$artifact
 
-          ldd ./$artifact/lib/libonnxruntime.so
+          ldd=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin/ldd
+          $ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
-          ldd ./$artifact/lib/libonnxruntime.so
+          $ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
