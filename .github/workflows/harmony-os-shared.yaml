@@ -134,8 +134,8 @@ jobs:
 
           sudo apt-get install -y patchelf
 
-      - name: Patch toolchain
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+      - name: Patch toolchain file
+        if: false
         shell: bash
         run: |
           sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Linux/g $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
