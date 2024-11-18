@@ -189,9 +189,9 @@ jobs:
           ls -lh $d/$CMAKE_CXX_COMPILER
 
             # --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA -DCPUINFO_PRIVATE" \
+            # --cmake_extra_defines onnxruntime_ENABLE_CPUINFO=OFF \
 
           python3 tools/ci_build/build.py \
-            --cmake_extra_defines onnxruntime_ENABLE_CPUINFO=OFF \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
