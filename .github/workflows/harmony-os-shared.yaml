@@ -134,6 +134,16 @@ jobs:
 
           sudo apt-get install -y patchelf
 
+      - name: Patch toolchain
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # see sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Android/g ./a.txt
+          sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Android/g $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
+          echo "---"
+          cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
@@ -158,20 +168,21 @@ jobs:
             CMAKE_C_COMPILER=aarch64-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=aarch64-unknown-linux-ohos-clang++
-            CMAKE_SYSTEM_PROCESSOR=aarch64
-            MY_EXTRA=" -D__aarch64__ "
+            # CMAKE_SYSTEM_PROCESSOR=aarch64
+            # MY_EXTRA=" -D__aarch64__ "
           elif [[ $arch == "armeabi-v7a" ]]; then
             CMAKE_C_COMPILER=armv7-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=armv7-unknown-linux-ohos-clang++
-            CMAKE_SYSTEM_PROCESSOR=armv7
-            MY_EXTRA=" -mfloat-abi=hard -D__arm__ "
+            # CMAKE_SYSTEM_PROCESSOR=armv7
+            # MY_EXTRA=" -mfloat-abi=hard -D__arm__ "
+            MY_EXTRA=" -mfloat-abi=hard "
           elif [[ $arch == "x86_64" ]]; then
             CMAKE_C_COMPILER=x86_64-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=x86_64-unknown-linux-ohos-clang++
-            CMAKE_SYSTEM_PROCESSOR=x86_64
-            MY_EXTRA=" -D__x86_64__ "
+            # CMAKE_SYSTEM_PROCESSOR=x86_64
+            # MY_EXTRA=" -D__x86_64__ "
           else
             echo "Unknown arch: $arch"
             exit 1
@@ -180,15 +191,17 @@ jobs:
           ls -lh $d/$CMAKE_ASM_COMPILER
           ls -lh $d/$CMAKE_CXX_COMPILER
 
+            # --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA -DCPUINFO_PRIVATE" \
+            # --cmake_extra_defines CMAKE_SYSTEM_PROCESSOR=$CMAKE_SYSTEM_PROCESSOR \
+
           python3 tools/ci_build/build.py \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_CROSS_COMPILING=ON \
             --cmake_extra_defines CMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             --cmake_extra_defines CMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             --cmake_extra_defines CMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
-            --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA -DCPUINFO_PRIVATE" \
+            --cmake_extra_defines CMAKE_CXX_FLAGS="$MY_EXTRA" \
             --cmake_extra_defines OHOS_ARCH=${{ matrix.arch }} \
-            --cmake_extra_defines CMAKE_SYSTEM_PROCESSOR=$CMAKE_SYSTEM_PROCESSOR \
             --cmake_extra_defines CMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             --build_dir $build_dir \
             --cmake_generator 'Ninja' \
