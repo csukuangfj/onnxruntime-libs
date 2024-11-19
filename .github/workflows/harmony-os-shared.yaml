@@ -233,7 +233,7 @@ jobs:
             -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER \
             -DCMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
-            -DOHOS_ARCH=$CMAKE_SYSTEM_PROCESSOR \
+            -DOHOS_ARCH=$arch \
             -DCMAKE_TLS_VERIFY=ON \
             -Donnxruntime_BUILD_UNIT_TESTS=OFF \
             -DFETCHCONTENT_QUIET=OFF \
