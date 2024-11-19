@@ -199,19 +199,16 @@ jobs:
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=aarch64-unknown-linux-ohos-clang++
             CMAKE_SYSTEM_PROCESSOR=aarch64
-            MY_EXTRA=" -D__aarch64__ -march=armv8-a"
           elif [[ $arch == "armeabi-v7a" ]]; then
             CMAKE_C_COMPILER=armv7-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=armv7-unknown-linux-ohos-clang++
             CMAKE_SYSTEM_PROCESSOR=armv7
-            MY_EXTRA=" -mfloat-abi=hard -D__arm__ "
           elif [[ $arch == "x86_64" ]]; then
             CMAKE_C_COMPILER=x86_64-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=x86_64-unknown-linux-ohos-clang++
             CMAKE_SYSTEM_PROCESSOR=x86_64
-            MY_EXTRA=" -D__x86_64__ "
           else
             echo "Unknown arch: $arch"
             exit 1
