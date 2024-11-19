@@ -154,6 +154,7 @@ jobs:
           sed -i.bak 's/"Enable link time optimization" OFF/"Enable link time optimization" ON/' ./CMakeLists.txt
           sed -i.bak 's/"Build ONNXRuntime unit tests" ON/"Build ONNXRuntime unit tests" OFF/' ./CMakeLists.txt
           sed -i.bak 's/"Build a shared library" OFF/"Build a shared library" ON/' ./CMakeLists.txt
+          sed -i.bak 's/CMAKE_BUILD_TYPE "RelWithDebInfo"/CMAKE_BUILD_TYPE "Release"/' ./CMakeLists.txt
 
           popd
 
@@ -352,6 +353,13 @@ jobs:
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          file ./$artifact/lib/libonnxruntime.so
+          ls -lh ./$artifact/lib/libonnxruntime.so
+          $PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin/llvm-strip ./$artifact/lib/libonnxruntime.so
+          echo "after strip"
+
+          file ./$artifact/lib/libonnxruntime.so
+          ls -lh ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
           mv *.zip ../
