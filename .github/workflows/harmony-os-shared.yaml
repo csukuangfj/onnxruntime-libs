@@ -1,0 +1,409 @@
+name: harmony-os-shared
+
+on:
+  push:
+    branches:
+      - harmony-os
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information (e.g., 1.16.3)"
+        required: true
+
+permissions:
+  contents: write
+
+# commandline-tools-linux-x64-5.0.3.906.zip supports only onnxruntime<=1.16.3
+# since its clang is 15.0.4 and does not support bfloat16_t
+#
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.3' }}
+
+jobs:
+  harmony-os-shared:
+    name: harmony os shared
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [arm64-v8a, armeabi-v7a, x86_64]
+        # arch: [arm64-v8a]
+
+    steps:
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v2
+        with:
+          path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: cache-toolchain (CPU)
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: command-line-tools
+          key: commandline-tools-linux-x64-5.0.5.200.zip
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+          path: ./onnxruntime
+
+      - name: Download toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-5.0.5.200.zip
+          unzip commandline-tools-linux-x64-5.0.5.200.zip
+          rm commandline-tools-linux-x64-5.0.5.200.zip
+
+      - name: Set environment variable
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin"  >> "$GITHUB_PATH"
+          which cmake
+
+          cmake --version
+
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
+          echo "===="
+          cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+          echo "===="
+
+          # echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin"  >> "$GITHUB_PATH"
+
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/
+          echo "--"
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/*unknown*
+
+          cat $GITHUB_PATH
+
+          # /home/runner/work/onnxruntime-libs/onnxruntime-libs/command-line-tools/sdk/default/openharmony/native/llvm/bin/aarch64-unknown-linux-ohos-clang -v || true
+          export PATH=$PWD/command-line-tools/sdk/default/openharmony/native/llvm/bin:$PATH
+          echo "path: $PATH"
+
+          which aarch64-unknown-linux-ohos-clang++ || true
+          which aarch64-unknown-linux-ohos-clang || true
+
+          aarch64-unknown-linux-ohos-clang++ --version || true
+          aarch64-unknown-linux-ohos-clang --version || true
+
+          which armv7-unknown-linux-ohos-clang++
+          which armv7-unknown-linux-ohos-clang
+
+          armv7-unknown-linux-ohos-clang++ --version
+          armv7-unknown-linux-ohos-clang --version
+
+          which x86_64-unknown-linux-ohos-clang++
+          which x86_64-unknown-linux-ohos-clang
+
+          x86_64-unknown-linux-ohos-clang++ --version
+          x86_64-unknown-linux-ohos-clang --version
+
+      - name: patch
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cd onnxruntime
+          pushd cmake
+          sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
+
+          echo "list(APPEND onnxruntime_EXTERNAL_LIBRARIES cpuinfo::cpuinfo cpuinfo::clog)" >> ./onnxruntime_common.cmake
+
+          echo 'set(ABSL_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
+          mv a.txt CMakeLists.txt
+
+          echo 'set(CPUINFO_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
+          mv a.txt CMakeLists.txt
+
+          arch=${{ matrix.arch }}
+          if [[ $arch == arm64-v8a ]]; then
+            echo 'set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
+            mv a.txt CMakeLists.txt
+          elif [[ $arch == x86_64 ]]; then
+            echo 'set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
+            mv a.txt CMakeLists.txt
+          elif [[ $arch == armeabi-v7a ]]; then
+            echo 'set(CMAKE_SYSTEM_PROCESSOR armv7 CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
+            mv a.txt CMakeLists.txt
+          else
+            echo "unknown arch $arch"
+            exit 1
+          fi
+
+          echo 'set(CMAKE_SYSTEM_NAME Linux CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
+          mv a.txt CMakeLists.txt
+
+          sed -i.bak 's/"Enable link time optimization" OFF/"Enable link time optimization" ON/' ./CMakeLists.txt
+          sed -i.bak 's/"Build ONNXRuntime unit tests" ON/"Build ONNXRuntime unit tests" OFF/' ./CMakeLists.txt
+          sed -i.bak 's/"Build a shared library" OFF/"Build a shared library" ON/' ./CMakeLists.txt
+
+          popd
+
+          pushd tools/ci_build
+          sed -i.bak s/-fcf-protection// ./build.py
+          popd
+
+          pushd onnxruntime/core/platform/posix
+          sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
+          popd
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
+      - name: Patch toolchain file
+        shell: bash
+        run: |
+          sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Linux/g $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
+          echo "---"
+          cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cd onnxruntime
+          build_dir=./build-shared
+          mkdir $build_dir
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          which python
+
+          ls -lh
+
+          export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin:$PATH
+          d=$PWD/../command-line-tools/sdk/default/openharmony/native/llvm/bin
+
+          export PATH=$PWD/../command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin:$PATH
+
+          arch=${{ matrix.arch }}
+          if [[ $arch == "arm64-v8a" ]]; then
+            CMAKE_C_COMPILER=aarch64-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=aarch64-unknown-linux-ohos-clang++
+            CMAKE_SYSTEM_PROCESSOR=aarch64
+            MY_EXTRA=" -D__aarch64__ -march=armv8-a"
+          elif [[ $arch == "armeabi-v7a" ]]; then
+            CMAKE_C_COMPILER=armv7-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=armv7-unknown-linux-ohos-clang++
+            CMAKE_SYSTEM_PROCESSOR=armv7
+            MY_EXTRA=" -mfloat-abi=hard -D__arm__ "
+          elif [[ $arch == "x86_64" ]]; then
+            CMAKE_C_COMPILER=x86_64-unknown-linux-ohos-clang
+            CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
+            CMAKE_CXX_COMPILER=x86_64-unknown-linux-ohos-clang++
+            CMAKE_SYSTEM_PROCESSOR=x86_64
+            MY_EXTRA=" -D__x86_64__ "
+          else
+            echo "Unknown arch: $arch"
+            exit 1
+          fi
+          ls -lh $d/$CMAKE_C_COMPILER
+          ls -lh $d/$CMAKE_ASM_COMPILER
+          ls -lh $d/$CMAKE_CXX_COMPILER
+
+          cd $build_dir
+          cmake \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DABSL_ENABLE_INSTALL=ON \
+            -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$build_dir \
+            -Donnxruntime_CROSS_COMPILING=ON \
+            -D onnxruntime_BUILD_SHARED_LIB=ON \
+            -DCMAKE_C_COMPILER=aarch64-unknown-linux-ohos-clang \
+            -DCMAKE_ASM_COMPILER=aarch64-unknown-linux-ohos-clang \
+            -DCMAKE_CXX_COMPILER=aarch64-unknown-linux-ohos-clang++ \
+            -DOHOS_ARCH=arm64-v8a \
+            -DCMAKE_TLS_VERIFY=ON \
+            -Donnxruntime_BUILD_UNIT_TESTS=OFF \
+            -DFETCHCONTENT_QUIET=OFF \
+            -Donnxruntime_ENABLE_MEMLEAK_CHECKER=OFF \
+            --compile-no-warning-as-error \
+            -Donnxruntime_RUN_ONNX_TESTS=OFF \
+            -Donnxruntime_GENERATE_TEST_REPORTS=OFF \
+            -Donnxruntime_USE_MIMALLOC=OFF \
+            -Donnxruntime_ENABLE_PYTHON=OFF \
+            -Donnxruntime_BUILD_CSHARP=OFF \
+            -Donnxruntime_BUILD_JAVA=OFF \
+            -Donnxruntime_BUILD_NODEJS=OFF \
+            -Donnxruntime_BUILD_OBJC=OFF \
+            -Donnxruntime_BUILD_APPLE_FRAMEWORK=OFF \
+            -Donnxruntime_USE_DNNL=OFF \
+            -Donnxruntime_USE_NNAPI_BUILTIN=OFF \
+            -Donnxruntime_USE_RKNPU=OFF \
+            -Donnxruntime_USE_LLVM=OFF \
+            -Donnxruntime_ENABLE_MICROSOFT_INTERNAL=OFF \
+            -Donnxruntime_USE_VITISAI=OFF \
+            -Donnxruntime_USE_TENSORRT=OFF \
+            -Donnxruntime_USE_TENSORRT_BUILTIN_PARSER=ON \
+            -Donnxruntime_USE_TVM=OFF \
+            -Donnxruntime_TVM_CUDA_RUNTIME=OFF \
+            -Donnxruntime_TVM_USE_HASH=OFF \
+            -Donnxruntime_USE_MIGRAPHX=OFF \
+            -Donnxruntime_DISABLE_CONTRIB_OPS=OFF \
+            -Donnxruntime_DISABLE_ML_OPS=OFF \
+            -Donnxruntime_DISABLE_RTTI=OFF \
+            -Donnxruntime_DISABLE_EXCEPTIONS=OFF \
+            -Donnxruntime_MINIMAL_BUILD=OFF \
+            -Donnxruntime_EXTENDED_MINIMAL_BUILD=OFF \
+            -Donnxruntime_MINIMAL_BUILD_CUSTOM_OPS=OFF \
+            -Donnxruntime_REDUCED_OPS_BUILD=OFF \
+            -Donnxruntime_ENABLE_LANGUAGE_INTEROP_OPS=OFF \
+            -Donnxruntime_USE_DML=OFF \
+            -Donnxruntime_USE_WINML=OFF \
+            -Donnxruntime_BUILD_MS_EXPERIMENTAL_OPS=OFF \
+            -Donnxruntime_USE_TELEMETRY=OFF \
+            -Donnxruntime_ENABLE_LTO=OFF \
+            -Donnxruntime_USE_ACL=OFF \
+            -Donnxruntime_USE_ACL_1902=OFF \
+            -Donnxruntime_USE_ACL_1905=OFF \
+            -Donnxruntime_USE_ACL_1908=OFF \
+            -Donnxruntime_USE_ACL_2002=OFF \
+            -Donnxruntime_USE_ARMNN=OFF \
+            -Donnxruntime_ARMNN_RELU_USE_CPU=ON \
+            -Donnxruntime_ARMNN_BN_USE_CPU=ON \
+            -Donnxruntime_USE_JSEP=OFF \
+            -Donnxruntime_ENABLE_NVTX_PROFILE=OFF \
+            -Donnxruntime_ENABLE_TRAINING=OFF \
+            -Donnxruntime_ENABLE_TRAINING_OPS=OFF \
+            -Donnxruntime_ENABLE_TRAINING_APIS=OFF \
+            -Donnxruntime_ENABLE_CPU_FP16_OPS=OFF \
+            -Donnxruntime_USE_NCCL=OFF \
+            -Donnxruntime_BUILD_BENCHMARKS=OFF \
+            -Donnxruntime_USE_ROCM=OFF \
+            -DOnnxruntime_GCOV_COVERAGE=OFF \
+            -Donnxruntime_USE_MPI=OFF \
+            -Donnxruntime_ENABLE_MEMORY_PROFILE=OFF \
+            -Donnxruntime_ENABLE_CUDA_LINE_NUMBER_INFO=OFF \
+            -Donnxruntime_BUILD_WEBASSEMBLY_STATIC_LIB=OFF \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_EXCEPTION_CATCHING=ON \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_API_EXCEPTION_CATCHING=OFF \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_EXCEPTION_THROWING=ON \
+            -Donnxruntime_WEBASSEMBLY_RUN_TESTS_IN_BROWSER=OFF \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_THREADS=OFF \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_DEBUG_INFO=OFF \
+            -Donnxruntime_ENABLE_WEBASSEMBLY_PROFILING=OFF \
+            -Donnxruntime_ENABLE_LAZY_TENSOR=OFF \
+            -Donnxruntime_ENABLE_EXTERNAL_CUSTOM_OP_SCHEMAS=OFF \
+            -Donnxruntime_ENABLE_CUDA_PROFILING=OFF \
+            -Donnxruntime_ENABLE_ROCM_PROFILING=OFF \
+            -Donnxruntime_USE_XNNPACK=OFF \
+            -Donnxruntime_USE_WEBNN=OFF \
+            -Donnxruntime_USE_CANN=OFF \
+            -Donnxruntime_USE_TRITON_KERNEL=OFF \
+            -Donnxruntime_DISABLE_FLOAT8_TYPES=OFF \
+            ../cmake
+
+            make
+
+      - name: Collect results
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cd onnxruntime
+          build_dir=./build-shared
+
+          ls -lh $build_dir
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          artifact=onnxruntime-ohos-${{ matrix.arch }}-$version
+
+          tag=$(git rev-parse HEAD)
+          echo "tag: $tag"
+
+          pushd ./tools/ci_build/github/linux
+          rm copy_strip_binary.sh
+          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          chmod +x copy_strip_binary.sh
+          ls -lh
+          popd
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a $artifact \
+            -l libonnxruntime.so \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          mv $build_dir/$artifact ./
+          tree ./$artifact
+
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          zip -r ${artifact}.zip ./$artifact
+          mv *.zip ../
+          mv $artifact ../
+
+      - name: Upload artifact
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            rm -rf huggingface
+
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            artifact=onnxruntime-ohos-${{ matrix.arch }}-$version
+
+            tree ./$artifact
+
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+            cd huggingface
+            # git lfs pull
+            cp -v ../onnxruntime-ohos*.zip ./
+            git status
+            git lfs track "*.zip"
+
+            git add .
+
+            git commit -m "upload $artifact"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
