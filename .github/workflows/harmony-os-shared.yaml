@@ -348,12 +348,15 @@ jobs:
           mv $build_dir/$artifact ./
           tree ./$artifact
 
+          file ./$artifact/lib/libonnxruntime.so
+
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
           mv *.zip ../
+          rm -rf ../$artifact
           mv $artifact ../
 
       - name: Upload artifact
