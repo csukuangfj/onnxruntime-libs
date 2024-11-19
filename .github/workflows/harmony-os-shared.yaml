@@ -223,7 +223,7 @@ jobs:
           cd $build_dir
           cmake \
             -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_SYSTEM_PROCESSOR=$CMAKE_SYSTEM_PROCESSOR \
             -DABSL_ENABLE_INSTALL=ON \
             -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
@@ -314,7 +314,7 @@ jobs:
             -Donnxruntime_DISABLE_FLOAT8_TYPES=OFF \
             ../cmake
 
-            make
+            make -j2
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
