@@ -314,7 +314,7 @@ jobs:
             -Donnxruntime_DISABLE_FLOAT8_TYPES=OFF \
             ../cmake
 
-            make -j
+            make
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
