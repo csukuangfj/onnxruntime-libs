@@ -118,7 +118,7 @@ jobs:
           cp ./include/onnxruntime/core/framework/provider_options.h $dst_dir/include
           cp ./include/onnxruntime/core/providers/tensorrt/tensorrt_provider_factory.h $dst_dir/include
 
-          cp ./include/onnxruntime/core/session/onnxruntime_float16.h $dst_dir/include
+          cp -fv ./include/onnxruntime/core/session/onnxruntime_float16.h $dst_dir/include
 
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
