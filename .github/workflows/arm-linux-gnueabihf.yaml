@@ -205,7 +205,9 @@ jobs:
           # ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
-          cp -v ./include/onnxruntime/core/session/onnxruntime_float16.h ./onnxruntime-linux-arm-$version/include
+          if [ -f ./include/onnxruntime/core/session/onnxruntime_float16.h ]; then
+            cp -fv ./include/onnxruntime/core/session/onnxruntime_float16.h ./onnxruntime-linux-arm-$version/include
+          fi
 
           zip -r onnxruntime-linux-arm-${version}.zip ./onnxruntime-linux-arm-$version/
 
