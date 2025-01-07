@@ -20,7 +20,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.3' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.13.1' }}
 
 jobs:
   harmony-os-shared:
@@ -124,6 +124,8 @@ jobs:
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
 
           arch=${{ matrix.arch }}
+          v=${{ env.ONNXRUNTIME_VERSION }}
+
           if [[ $arch != armeabi-v7a ]]; then
             echo "list(APPEND onnxruntime_EXTERNAL_LIBRARIES cpuinfo::cpuinfo cpuinfo::clog)" >> ./onnxruntime_common.cmake
           fi
