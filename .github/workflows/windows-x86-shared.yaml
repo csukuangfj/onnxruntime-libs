@@ -37,14 +37,14 @@ jobs:
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
           submodules: true

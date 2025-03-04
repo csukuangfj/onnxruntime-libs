@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
