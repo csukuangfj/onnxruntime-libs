@@ -49,18 +49,18 @@ jobs:
         uses: actions/cache@v3
         with:
           path: toolchain
-          key: gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf
+          key: gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf
 
       - name: Download toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/arm-linux-gcc/resolve/main/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
+          curl -SL -O https://developer.arm.com/-/media/Files/downloads/gnu-a/8.3-2019.03/binrel/gcc-arm-8.3-2019.03-x86_64-aarch64_be-linux-gnu.tar.xz
           git lfs install
           mkdir $GITHUB_WORKSPACE/toolchain
 
-          tar xvf ./gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
-          rm -v gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
+          tar xvf ./gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          rm -v gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf.tar.xz
 
       - name: Download protoc
         if: steps.cache-build-result.outputs.cache-hit != 'true'
