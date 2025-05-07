@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: toolchain
-          key: gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf
+          key: gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf
 
       - name: Download toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
@@ -59,8 +59,8 @@ jobs:
           git lfs install
           mkdir $GITHUB_WORKSPACE/toolchain
 
-          tar xvf ./gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
-          rm -v gcc-arm-8.3-2019.03-x86_64-arm-none-linux-gnueabihf.tar.xz
+          tar xvf ./gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          rm -v gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz
 
       - name: Download protoc
         if: steps.cache-build-result.outputs.cache-hit != 'true'
