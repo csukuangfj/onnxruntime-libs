@@ -30,7 +30,7 @@ jobs:
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@vv
+        uses: actions/cache@v3
         with:
           path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-arm-linux-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
