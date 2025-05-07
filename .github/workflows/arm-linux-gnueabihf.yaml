@@ -120,6 +120,15 @@ jobs:
           python3 -m pip install cmake
           cmake --version
 
+      - name: Install updated CMake
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get install -y cmake
+          cmake --version
+
       - name: apply patch
         shell: bash
         run: |
