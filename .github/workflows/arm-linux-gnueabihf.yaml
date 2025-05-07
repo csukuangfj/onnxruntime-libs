@@ -90,14 +90,14 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
           ls -lh "$GITHUB_WORKSPACE/toolchain/bin"
 
-          echo "CC=arm-none-linux-gnueabihf-gcc" >> "$GITHUB_ENV"
+          echo "CC=arm-linux-gnueabihf" >> "$GITHUB_ENV"
           echo "CXX=arm-none-linux-gnueabihf-g++" >> "$GITHUB_ENV"
 
       - name: Display toolchain info
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          arm-none-linux-gnueabihf-gcc --version
+          arm-linux-gnueabihf --version
 
       - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
