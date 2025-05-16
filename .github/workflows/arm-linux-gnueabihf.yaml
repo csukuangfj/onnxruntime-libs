@@ -1,10 +1,13 @@
 name: arm-linux-gnueabihf
 
 on:
+  push:
+    branches:
+      - v1.22.0-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.20.0)"
+        description: "Version information (e.g., 1.22.0)"
         required: true
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -22,6 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # os: [ubuntu-22.04-arm]
         os: [ubuntu-latest]
 
     steps:
@@ -30,7 +34,7 @@ jobs:
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-linux-arm-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-arm-linux-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
@@ -43,24 +47,23 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
-
       - name: cache-toolchain
         id: cache-toolchain
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: toolchain
-          key: gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf
+          key: gcc-arm-11.2-2022.02-x86_64-arm-none-linux-gnueabihf.tar.xz
 
       - name: Download toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/arm-linux-gcc/resolve/main/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
+          curl -SL -O https://huggingface.co/csukuangfj/arm-linux-gcc/resolve/main/gcc-arm-11.2-2022.02-x86_64-arm-none-linux-gnueabihf.tar.xz
           git lfs install
           mkdir $GITHUB_WORKSPACE/toolchain
 
-          tar xvf ./gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
-          rm -v gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf.tar.xz
+          tar xvf ./gcc-arm-11.2-2022.02-x86_64-arm-none-linux-gnueabihf.tar.xz --strip-components 1 -C $GITHUB_WORKSPACE/toolchain
+          rm -v gcc-arm-11.2-2022.02-x86_64-arm-none-linux-gnueabihf.tar.xz
 
       - name: Download protoc
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -70,7 +73,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
             unzip protoc-3.20.3-linux-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
             unzip protoc-21.12-linux-x86_64.zip
           else
@@ -150,7 +153,6 @@ jobs:
             --config Release \
             --build \
             --build_shared_lib \
-            --arm \
             --update \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
@@ -205,6 +207,8 @@ jobs:
           # ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
+          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
+
           if [ -f ./include/onnxruntime/core/session/onnxruntime_float16.h ]; then
             cp -fv ./include/onnxruntime/core/session/onnxruntime_float16.h ./onnxruntime-linux-arm-$version/include
           fi
@@ -240,7 +244,8 @@ jobs:
 
           cd huggingface
           # git lfs pull
-          cp -v ../onnxruntime-linux-arm-*.zip ./
+          mkdir -p $version
+          cp -v ../onnxruntime-linux-arm-*.zip ./$version/
           git status
           git lfs track "*.zip"
 

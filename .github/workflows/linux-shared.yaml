@@ -1,10 +1,13 @@
 name: linux-shared
 
 on:
+  push:
+    branches:
+      - v1.22.0-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.20.0)"
+        description: "Version information (e.g., 1.22.0)"
         required: true
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
 
 jobs:
   linux-shared:
@@ -24,14 +27,14 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         arch: [x86_64]
-        # config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        config: ['MinSizeRel', 'Release']
+        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # config: ['MinSizeRel', 'Release']
 
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
@@ -60,6 +63,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
             image: quay.io/pypa/manylinux2014_x86_64
+            # image: quay.io/pypa/manylinux_2_28_x86_64
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
@@ -98,7 +102,7 @@ jobs:
               find /opt -name "python*"
 
               echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.8.20/bin:$PATH
+              export PATH=/opt/_internal/cpython-3.10.17/bin:$PATH
               which python3
               python3 --version
               python3 -m pip install ninja
@@ -110,8 +114,6 @@ jobs:
 
               version=${{ env.ONNXRUNTIME_VERSION }}
               which python
-
-
 
               build_dir=/shared/build-shared
 
@@ -176,6 +178,8 @@ jobs:
           ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
+          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
+
           zip -r ${artifact}.zip ./$artifact
 
       - name: Upload artifact
@@ -218,11 +222,13 @@ jobs:
             git config --global user.name "Fangjun Kuang"
 
             export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
             GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
             cd huggingface
+            mkdir -p $version
             # git lfs pull
-            cp -v ../onnxruntime-linux*.zip ./
+            cp -v ../onnxruntime-linux*.zip ./$version
             git status
             git lfs track "*.zip"
 

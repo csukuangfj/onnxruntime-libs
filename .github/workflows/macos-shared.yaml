@@ -3,11 +3,11 @@ name: macos-shared
 on:
   push:
     branches:
-      - fix-ios
+      - v1.22.0
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.20.0)"
+        description: "Version information (e.g., 1.22.0)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
 
 jobs:
   macos-shared:
@@ -26,13 +26,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
-        arch: [x86_64, arm64, universal2]
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-13
+            arch: universal2
+          - os: macos-13
+            arch: x86_64
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
@@ -54,7 +59,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          brew install cmake ninja
+          brew install ninja
           cmake --version
           brew install tree
           tree --version
@@ -67,10 +72,13 @@ jobs:
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
+          extra_opt=""
+
           build_dir=./build-macos/${{ matrix.arch }}
           arch=${{ matrix.arch }}
           if [[ $arch == universal2 ]]; then
             arch="x86_64;arm64"
+            extra_opt="--no_kleidiai"
             # sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
           fi
 
@@ -88,7 +96,6 @@ jobs:
             --build_shared_lib \
             --compile_no_warning_as_error \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines BUILD_SHARED_LIBS=ON \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
             --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
             --apple_sysroot macosx \
@@ -96,7 +103,10 @@ jobs:
             --parallel \
             --skip_tests \
             --apple_deploy_target '10.15' \
+            $extra_opt \
             --use_coreml
+            # see  https://github.com/microsoft/onnxruntime/pull/24194/files
+            # for why to use --no_kleidiai
 
       - name: Collect results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -113,15 +123,72 @@ jobs:
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
 
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a $artifact \
-            -c Release \
-            -l libonnxruntime.dylib \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
+          current=$PWD
 
-          mv $build_dir/$artifact ./
+          if true; then
+            ls -lh build-macos/${{ matrix.arch }}/Release/build-macos/${{ matrix.arch }}/install/lib/libonnxruntime.dylib
+            mkdir -p $build_dir/Release
+
+            ARTIFACT_NAME=$artifact
+            LIB_NAME=libonnxruntime.dylib
+            SOURCE_DIR=$PWD
+            COMMIT_ID=$(git rev-parse HEAD)
+
+            BINARY_DIR=build-macos/${{ matrix.arch }}/Release/build-macos/${{ matrix.arch }}
+
+            # BINARY_DIR=$build_dir
+            cd "$BINARY_DIR"
+            mkdir -p $ARTIFACT_NAME/include
+
+            mv -v install/include/onnxruntime/* $ARTIFACT_NAME/include/
+
+            mkdir -p $ARTIFACT_NAME/lib
+            cp -v install/lib/libonnxruntime.*.dylib $ARTIFACT_NAME/lib
+
+            pushd $ARTIFACT_NAME/lib
+            name=$(ls libonnxruntime.*.dylib)
+            strip -S $name
+            ln -s $name libonnxruntime.dylib
+
+            popd
+
+            cp -v $SOURCE_DIR/include/onnxruntime/core/providers/coreml/coreml_provider_factory.h  $ARTIFACT_NAME/include
+
+            cp -v $SOURCE_DIR/README.md $ARTIFACT_NAME/README.md
+            cp -v $SOURCE_DIR/docs/Privacy.md $ARTIFACT_NAME/Privacy.md
+            cp -v $SOURCE_DIR/LICENSE $ARTIFACT_NAME/LICENSE
+            cp -v $SOURCE_DIR/ThirdPartyNotices.txt $ARTIFACT_NAME/ThirdPartyNotices.txt
+            cp -v $SOURCE_DIR/VERSION_NUMBER $ARTIFACT_NAME/VERSION_NUMBER
+
+            echo $COMMIT_ID > $ARTIFACT_NAME/GIT_COMMIT_ID
+
+            mv -v $ARTIFACT_NAME $current/
+            cd $current
+            echo "---"
+            ls -lh
+            echo "---"
+            ls -lh $ARTIFACT_NAME
+            echo "---"
+            ls -lh $ARTIFACT_NAME/lib
+            tree $ARTIFACT_NAME
+          fi
+
+          if false; then
+            cp -v build-macos/${{ matrix.arch }}/Release/build-macos/${{ matrix.arch }}/install/lib/libonnxruntime.dylib $build_dir/Release
+
+            ./tools/ci_build/github/linux/copy_strip_binary.sh \
+              -r $build_dir \
+              -a $artifact \
+              -c Release \
+              -l libonnxruntime.dylib \
+              -s $PWD/ \
+              -t "$(git rev-parse HEAD)"
+
+            mv $build_dir/$artifact ./
+          fi
+
+          which tree
+
           tree ./$artifact
 
           zip -r ${artifact}.zip ./$artifact
@@ -166,10 +233,13 @@ jobs:
             git config --global user.name "Fangjun Kuang"
 
             export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
             GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
             cd huggingface
-            cp -v ../onnxruntime-osx*.zip ./
+            mkdir -p $version
+
+            cp -v ../onnxruntime-osx*.zip ./$version
             git status
             git lfs track "*.zip"
 
