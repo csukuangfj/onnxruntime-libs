@@ -1,10 +1,13 @@
 name: ios
 
 on:
+  push:
+    branches:
+      - v1.22.0-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.20.0)"
+        description: "Version information (e.g., 1.22.0)"
         required: true
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
 
 jobs:
   ios_arm64:
@@ -27,14 +30,14 @@ jobs:
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
           submodules: true
@@ -44,7 +47,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          brew install cmake
+          # brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -57,7 +60,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -100,9 +103,32 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
+            --ios \
             --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
+
+      - name: Display results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          arch=arm64
+
+          echo "---ls -lh build-ios/$arch/Release/static_libraries/lib*.a---"
+          pushd build-ios/$arch/Release/static_libraries/
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          popd
+          echo "---"
+
+          echo "---build-ios/$arch/Release/Release-iphoneos---"
+          pushd build-ios/$arch/Release/Release-iphoneos
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          echo "---"
+          popd
 
       - name: Copy results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -125,20 +151,72 @@ jobs:
           ls -lh build-ios/$arch/Release/Release-iphoneos
 
           libtool -static -o build-ios/$arch/onnxruntime.a \
+            build-ios/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
+            build-ios/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
             build-ios/$arch/Release/static_libraries/libabsl_base.a \
             build-ios/$arch/Release/static_libraries/libabsl_city.a \
+            build-ios/$arch/Release/static_libraries/libabsl_civil_time.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cord.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cord_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_functions.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_handle.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_info.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc32c.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_debugging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
+            build-ios/$arch/Release/static_libraries/libabsl_demangle_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_demangle_rust.a \
+            build-ios/$arch/Release/static_libraries/libabsl_examine_stack.a \
+            build-ios/$arch/Release/static_libraries/libabsl_exponential_biased.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_config.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_program_name.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_reflection.a \
+            build-ios/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
             build-ios/$arch/Release/static_libraries/libabsl_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
+            build-ios/$arch/Release/static_libraries/libabsl_int128.a \
+            build-ios/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_entry.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_globals.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_format.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_message.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_severity.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_sink.a \
             build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_malloc_internal.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
+            build-ios/$arch/Release/static_libraries/libabsl_stacktrace.a \
+            build-ios/$arch/Release/static_libraries/libabsl_str_format_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_strerror.a \
+            build-ios/$arch/Release/static_libraries/libabsl_string_view.a \
             build-ios/$arch/Release/static_libraries/libabsl_strings.a \
+            build-ios/$arch/Release/static_libraries/libabsl_strings_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_symbolize.a \
             build-ios/$arch/Release/static_libraries/libabsl_synchronization.a \
             build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
             build-ios/$arch/Release/static_libraries/libabsl_time.a \
-            build-ios/$arch/Release/static_libraries/libclog.a \
+            build-ios/$arch/Release/static_libraries/libabsl_time_zone.a \
+            build-ios/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
+            build-ios/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
             build-ios/$arch/Release/static_libraries/libcpuinfo.a \
             build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
             build-ios/$arch/Release/static_libraries/libonnx.a \
             build-ios/$arch/Release/static_libraries/libonnx_proto.a \
             build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
@@ -149,6 +227,7 @@ jobs:
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_flatbuffers.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_framework.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_graph.a \
+            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_lora.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_mlas.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_optimizer.a \
             build-ios/$arch/Release/Release-iphoneos/libonnxruntime_providers.a \
@@ -187,14 +266,14 @@ jobs:
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
           submodules: true
@@ -204,7 +283,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          brew install cmake
+          # brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -217,7 +296,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -258,9 +337,31 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
+            --ios \
             --apple_deploy_target '13.0' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
+
+      - name: Display results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          arch=simulator/${{ matrix.arch }}
+
+          echo "---ls -lh build-ios/$arch/Release/static_libraries/lib*.a---"
+          pushd build-ios/$arch/Release/static_libraries
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          popd
+          echo "---"
+
+          echo "---build-ios/$arch/Release/Release-iphonesimulator---"
+          pushd build-ios/$arch/Release/Release-iphonesimulator/
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          popd
 
       - name: Copy results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -278,20 +379,72 @@ jobs:
           ls -lh build-ios/$arch/Release/Release-iphonesimulator
 
           libtool -static -o build-ios/$arch/onnxruntime.a \
+            build-ios/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
+            build-ios/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
             build-ios/$arch/Release/static_libraries/libabsl_base.a \
             build-ios/$arch/Release/static_libraries/libabsl_city.a \
+            build-ios/$arch/Release/static_libraries/libabsl_civil_time.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cord.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cord_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_functions.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_handle.a \
+            build-ios/$arch/Release/static_libraries/libabsl_cordz_info.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc32c.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
+            build-ios/$arch/Release/static_libraries/libabsl_crc_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_debugging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
+            build-ios/$arch/Release/static_libraries/libabsl_demangle_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_demangle_rust.a \
+            build-ios/$arch/Release/static_libraries/libabsl_examine_stack.a \
+            build-ios/$arch/Release/static_libraries/libabsl_exponential_biased.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_config.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_program_name.a \
+            build-ios/$arch/Release/static_libraries/libabsl_flags_reflection.a \
+            build-ios/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
             build-ios/$arch/Release/static_libraries/libabsl_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
+            build-ios/$arch/Release/static_libraries/libabsl_int128.a \
+            build-ios/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_entry.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_globals.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_format.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_message.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_severity.a \
+            build-ios/$arch/Release/static_libraries/libabsl_log_sink.a \
             build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-ios/$arch/Release/static_libraries/libabsl_malloc_internal.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
             build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
+            build-ios/$arch/Release/static_libraries/libabsl_stacktrace.a \
+            build-ios/$arch/Release/static_libraries/libabsl_str_format_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_strerror.a \
+            build-ios/$arch/Release/static_libraries/libabsl_string_view.a \
             build-ios/$arch/Release/static_libraries/libabsl_strings.a \
+            build-ios/$arch/Release/static_libraries/libabsl_strings_internal.a \
+            build-ios/$arch/Release/static_libraries/libabsl_symbolize.a \
             build-ios/$arch/Release/static_libraries/libabsl_synchronization.a \
             build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
             build-ios/$arch/Release/static_libraries/libabsl_time.a \
-            build-ios/$arch/Release/static_libraries/libclog.a \
+            build-ios/$arch/Release/static_libraries/libabsl_time_zone.a \
+            build-ios/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
+            build-ios/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
             build-ios/$arch/Release/static_libraries/libcpuinfo.a \
             build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libnsync_cpp.a \
             build-ios/$arch/Release/static_libraries/libonnx.a \
             build-ios/$arch/Release/static_libraries/libonnx_proto.a \
             build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
@@ -302,6 +455,7 @@ jobs:
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_flatbuffers.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_framework.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_graph.a \
+            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_lora.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_mlas.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_optimizer.a \
             build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_providers.a \
@@ -329,20 +483,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
-        arch: [arm64, x86_64]
+        # os: [macos-latest]
+        # arch: [arm64, x86_64]
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-13
+            arch: x86_64
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
           submodules: true
@@ -352,7 +511,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          brew install cmake
+          # brew install cmake
           cmake --version
           brew install tree
           tree --version
@@ -365,7 +524,7 @@ jobs:
           if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
             unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
             unzip protoc-21.12-osx-x86_64.zip
           fi
@@ -408,9 +567,32 @@ jobs:
             --parallel \
             --skip_tests \
             --build_apple_framework \
+            --macos MacOSX \
             --apple_deploy_target '13.3' \
             --use_coreml \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
+
+      - name: Display results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          arch=${{ matrix.arch }}
+
+          echo "---ls -lh build-macos/$arch/Release/static_libraries/lib*.a---"
+          pushd build-macos/$arch/Release/static_libraries
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          popd
+          echo "---"
+
+          echo "---build-macos/$arch/Release/Release-iphonesimulator---"
+          pushd build-macos/$arch/Release/Release
+          ls -lh lib*.a
+          echo "---"
+          ls -1 lib*.a
+          echo "---"
+          popd
 
       - name: Copy results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -428,20 +610,72 @@ jobs:
           ls -lh build-macos/$arch/Release/Release
 
           libtool -static -o build-macos/$arch/onnxruntime.a \
+            build-macos/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
+            build-macos/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
             build-macos/$arch/Release/static_libraries/libabsl_base.a \
             build-macos/$arch/Release/static_libraries/libabsl_city.a \
+            build-macos/$arch/Release/static_libraries/libabsl_civil_time.a \
+            build-macos/$arch/Release/static_libraries/libabsl_cord.a \
+            build-macos/$arch/Release/static_libraries/libabsl_cord_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_cordz_functions.a \
+            build-macos/$arch/Release/static_libraries/libabsl_cordz_handle.a \
+            build-macos/$arch/Release/static_libraries/libabsl_cordz_info.a \
+            build-macos/$arch/Release/static_libraries/libabsl_crc32c.a \
+            build-macos/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
+            build-macos/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
+            build-macos/$arch/Release/static_libraries/libabsl_crc_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_debugging_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
+            build-macos/$arch/Release/static_libraries/libabsl_demangle_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_demangle_rust.a \
+            build-macos/$arch/Release/static_libraries/libabsl_examine_stack.a \
+            build-macos/$arch/Release/static_libraries/libabsl_exponential_biased.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_config.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_program_name.a \
+            build-macos/$arch/Release/static_libraries/libabsl_flags_reflection.a \
+            build-macos/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
             build-macos/$arch/Release/static_libraries/libabsl_hash.a \
+            build-macos/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
+            build-macos/$arch/Release/static_libraries/libabsl_int128.a \
+            build-macos/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_entry.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_globals.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_format.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_message.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_severity.a \
+            build-macos/$arch/Release/static_libraries/libabsl_log_sink.a \
             build-macos/$arch/Release/static_libraries/libabsl_low_level_hash.a \
+            build-macos/$arch/Release/static_libraries/libabsl_malloc_internal.a \
             build-macos/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
             build-macos/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
+            build-macos/$arch/Release/static_libraries/libabsl_stacktrace.a \
+            build-macos/$arch/Release/static_libraries/libabsl_str_format_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_strerror.a \
+            build-macos/$arch/Release/static_libraries/libabsl_string_view.a \
             build-macos/$arch/Release/static_libraries/libabsl_strings.a \
+            build-macos/$arch/Release/static_libraries/libabsl_strings_internal.a \
+            build-macos/$arch/Release/static_libraries/libabsl_symbolize.a \
             build-macos/$arch/Release/static_libraries/libabsl_synchronization.a \
             build-macos/$arch/Release/static_libraries/libabsl_throw_delegate.a \
             build-macos/$arch/Release/static_libraries/libabsl_time.a \
-            build-macos/$arch/Release/static_libraries/libclog.a \
+            build-macos/$arch/Release/static_libraries/libabsl_time_zone.a \
+            build-macos/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
+            build-macos/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
             build-macos/$arch/Release/static_libraries/libcpuinfo.a \
             build-macos/$arch/Release/static_libraries/libflatbuffers.a \
-            build-macos/$arch/Release/static_libraries/libnsync_cpp.a \
             build-macos/$arch/Release/static_libraries/libonnx.a \
             build-macos/$arch/Release/static_libraries/libonnx_proto.a \
             build-macos/$arch/Release/static_libraries/libprotobuf-lite.a \
@@ -452,6 +686,7 @@ jobs:
             build-macos/$arch/Release/Release/libonnxruntime_flatbuffers.a \
             build-macos/$arch/Release/Release/libonnxruntime_framework.a \
             build-macos/$arch/Release/Release/libonnxruntime_graph.a \
+            build-macos/$arch/Release/Release/libonnxruntime_lora.a \
             build-macos/$arch/Release/Release/libonnxruntime_mlas.a \
             build-macos/$arch/Release/Release/libonnxruntime_optimizer.a \
             build-macos/$arch/Release/Release/libonnxruntime_providers.a \
@@ -480,7 +715,7 @@ jobs:
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           key: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
@@ -610,7 +845,11 @@ jobs:
           GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
           cd huggingface
-          cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./
+
+          d=${{ env.ONNXRUNTIME_VERSION }}
+          mkdir -p $d
+
+          cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./$d/
           git status
           git lfs track "*.bz2"
 
@@ -636,9 +875,8 @@ jobs:
 
           cd huggingface
 
-          rm -rfv $version
-          mkdir $version
-          mv -v ../onnxruntime.xcframework ${version}/
+          mkdir -p $version
+          mv -v ../onnxruntime.xcframework $version/
 
           git status
           git lfs track "*.a"

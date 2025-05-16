@@ -3,7 +3,7 @@ name: aarch64-shared
 on:
   push:
     branches:
-      - v1.22.0
+      - v1.22.0-2
   workflow_dispatch:
     inputs:
       version:
@@ -66,6 +66,8 @@ jobs:
             #
             # onnxruntime v1.22.0   GCC version must be greater than or equal to 11.1
             # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
+            #
+            # https://github.com/pypa/manylinux/issues/1266
             image: quay.io/pypa/manylinux_2_28_aarch64 # onnxruntime v1.22.0 requires gcc >= 11
             options: |
               --volume ${{ github.workspace }}/:/shared
@@ -168,6 +170,8 @@ jobs:
           # ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
+          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
+
           zip -r ${artifact}.zip ./$artifact
 
       - name: Upload artifact
@@ -188,7 +192,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         uses: nick-fields/retry@v3
@@ -208,6 +212,7 @@ jobs:
             git config --global user.name "Fangjun Kuang"
 
             export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
             GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
             cd huggingface
