@@ -56,6 +56,12 @@ jobs:
 
           sudo apt-get install -y patchelf
 
+          cd cmake
+          rm deps.txt
+          wget https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.17.1/deps.txt
+          git diff .
+
+
       - name: build
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
