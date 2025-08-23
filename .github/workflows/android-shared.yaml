@@ -20,24 +20,21 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
 
 jobs:
-  android-shared:
-    name: ${{ matrix.config }} ${{ matrix.abi }} ${{ matrix.api }}
+  build:
+    name: ${{ matrix.config }} ${{ matrix.abi }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
-        config: [Relase]
-        # nnapi requires api level >= 24
-        api: [21, 24]
+        config: [Release]
 
     steps:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          # key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: android-${{ matrix.abi }}-${{ matrix.api }}
+          key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
@@ -80,18 +77,13 @@ jobs:
 
           build_dir=./build-shared/${{ matrix.abi }}
 
-          if [[ ${{ matrix.api }} == "24" ]]; then
-            extra_opts="--use_nnapi"
-          else
-            extra_opts=""
-          fi
-
           python3 tools/ci_build/build.py \
             --build_java \
             --build_dir $build_dir \
-            --android "$extra_opts" \
+            --android \
+            --use_nnapi \
             --android_abi ${{ matrix.abi }} \
-            --android_api ${{ matrix.api }} \
+            --android_api 27 \
             \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_generator 'Ninja' \
@@ -119,63 +111,93 @@ jobs:
           readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
 
       - name: Collect results
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        if: false
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build-shared
+          build_dir=./build-shared/${{ matrix.abi }}
 
           sudo chown -R runner $build_dir
           ls -lh $build_dir
 
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          d=${{ matrix.abi }}
+          mkdir -p $d
 
-          tag=$(git rev-parse HEAD)
-          echo "tag: $tag"
+          cp -v $build_dir/Release/libonnxruntime.so $d
+          cp -v $build_dir/Release/libonnxruntime4j_jni $d
+          cp -v $build_dir/Release/android/headers/*.h $d
 
-          pushd ./tools/ci_build/github/linux
-          rm copy_strip_binary.sh
-          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
-          chmod +x copy_strip_binary.sh
-          ls -lh
-          popd
-
-          ./tools/ci_build/github/linux/copy_strip_binary.sh \
-            -r $build_dir \
-            -a $artifact \
-            -c $config \
-            -l libonnxruntime.so \
-            -s $PWD/ \
-            -t "$(git rev-parse HEAD)"
-
-          mv $build_dir/$artifact ./
-          tree ./$artifact
-
-          ldd ./$artifact/lib/libonnxruntime.so
-          readelf -d ./$artifact/lib/libonnxruntime.so
-
-          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
-
-          ldd ./$artifact/lib/libonnxruntime.so
-          readelf -d ./$artifact/lib/libonnxruntime.so
-
-          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
-
-          zip -r ${artifact}.zip ./$artifact
+          zip -r ${d}.zip $d
 
       - name: Upload artifact
-        if: false
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-${{ matrix.abi }}
+          path: ${{ matrix.abi }}
+
+  collect:
+    name: collect
+    needs: [build]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve artifact from arm64-v8a
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-arm64-v8a
+          path: /tmp/arm64-v8a
+
+      - name: Retrieve artifact from armeabi-v7a
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-armeabi-v7a
+          path: /tmp/armeabi-v7a
+
+      - name: Retrieve artifact from x86
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-x86
+          path: /tmp/x86
+
+      - name: Retrieve artifact from x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-x86_64
+          path: /tmp/x86_64
+
+      - name: Download android onnxruntime lib
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          d=onnxruntime-android-$version
+          wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/$version/$d.aar
+          mv $d.aar d.zip
+          mkdir $d
+          pushd $d
+          unzip ../$d.aar
+          ls -lh
+
+          for abi in arm64-v8a armeabi-v7a x86 x86_64 do
+            ls -l ./jni/$abi/
+            sleep 2
+            cp -fv /tmp/$abi/*.so ./jni/$abi/
+            ls -l ./jni/$abi/
+          done
+
+          popd
+
+          zip -r ${d}.zip $d
+          ls -lh
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
-        if: false
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -183,42 +205,40 @@ jobs:
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
-      # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: false
-        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v2
         with:
           max_attempts: 20
           timeout_seconds: 200
           shell: bash
           command: |
-            rm -rf huggingface
-
-            ls -lh
-            version=${{ env.ONNXRUNTIME_VERSION }}
-            config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
-
-            tree ./$artifact
-
             git config --global user.email "csukuangfj@gmail.com"
             git config --global user.name "Fangjun Kuang"
 
-            export GIT_CLONE_PROTECTION_ACTIVE=false
             rm -rf huggingface
-            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            export GIT_LFS_SKIP_SMUDGE=1
+            export GIT_CLONE_PROTECTION_ACTIVE=false
 
+            git clone https://huggingface.co/csukuangfj/android-onnxruntime-libs huggingface
+
+            ls -lh
             cd huggingface
-            mkdir -p $version
-            # git lfs pull
-            cp -v ../onnxruntime-linux*.zip ./$version
+            git pull
+
+            version=${{ env.ONNXRUNTIME_VERSION }}
+
+            src=onnxruntime-android-$version
+
+            dst=v$version
+            rm -rf $dst
+            mkdir $dst
+            mv -v ../$src/headers $dst/ || mv -v ../headers $dst/
+            mv -v ../$src/jni $dst/ || mv ../jni $dst/
+
             git status
-            git lfs track "*.zip"
-
             git add .
-
-            git commit -m "upload $artifact"
-            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+            git commit -m "add $version"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/android-onnxruntime-libs main
