@@ -108,8 +108,6 @@ jobs:
           ls -lh build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
 
           readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
-          echo "---"
-          readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so | grep 'ALIGN'
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
