@@ -192,10 +192,13 @@ jobs:
             ls -l ./jni/$abi/
           done
 
+          zip -r ../${d}.zip ./
+
           popd
 
-          zip -r ${d}.zip $d
           ls -lh
+
+          unzip -l ./${d}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         uses: svenstaro/upload-release-action@v2
