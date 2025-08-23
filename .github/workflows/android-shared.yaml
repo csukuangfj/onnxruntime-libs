@@ -31,6 +31,11 @@ jobs:
         config: [Relase]
 
     steps:
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: android-${{ matrix.abi }}
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v4
@@ -67,9 +72,13 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+
           build_dir=./build-shared/${{ matrix.abi }}
 
           python3 tools/ci_build/build.py \
+            --build_java \
             --build_dir $build_dir \
             --android \
             --android_abi ${{ matrix.abi }} \
@@ -91,6 +100,16 @@ jobs:
 
           ls -lh build-shared/${{ matrix.abi }}
           ls -lh build-shared/${{ matrix.abi }}/*
+
+          find build-shared/${{ matrix.abi }} -name "*.so"
+          echo "---"
+          find build-shared/${{ matrix.abi }} -name "*.h"
+
+          ls -lh build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
+
+          readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
+          echo "---"
+          readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so | grep 'ALIGN'
 
       - name: Collect results
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
