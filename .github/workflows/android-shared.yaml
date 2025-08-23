@@ -184,10 +184,12 @@ jobs:
           unzip ../$d.aar
           ls -lh
 
-          for abi in arm64-v8a armeabi-v7a x86 x86_64 do
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            ls -lh ./jni/$abi/
             ls -l ./jni/$abi/
             sleep 2
             cp -fv /tmp/$abi/*.so ./jni/$abi/
+            ls -lh ./jni/$abi/
             ls -l ./jni/$abi/
           done
 
