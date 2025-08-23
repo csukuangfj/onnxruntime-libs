@@ -40,8 +40,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}-cache
+          key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}-cache
+          path: ${{ matrix.abi }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -179,7 +179,6 @@ jobs:
           version=${{ env.ONNXRUNTIME_VERSION }}
           d=onnxruntime-android-$version
           wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/$version/$d.aar
-          mv $d.aar d.zip
           mkdir $d
           pushd $d
           unzip ../$d.aar
