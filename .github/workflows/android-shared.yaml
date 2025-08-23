@@ -72,8 +72,6 @@ jobs:
           python3 tools/ci_build/build.py \
             --build_dir $build_dir
             --android \
-            --android_sdk_path <android sdk path> \
-            --android_ndk_path <android ndk path> \
             --android_abi ${{ matrix.abi }} \
             --android_api 21 \
             \
