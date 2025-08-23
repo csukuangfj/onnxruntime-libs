@@ -70,14 +70,12 @@ jobs:
           build_dir=./build-shared/${{ matrix.abi }}
 
           python3 tools/ci_build/build.py \
-            --build_dir $build_dir
+            --build_dir $build_dir \
             --android \
             --android_abi ${{ matrix.abi }} \
             --android_api 21 \
             \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines CMAKE_CXX_STANDARD=17 \
-            --cmake_extra_defines CMAKE_BUILD_TYPE=Release \
             --cmake_generator 'Ninja' \
             --config Release \
             --update \
