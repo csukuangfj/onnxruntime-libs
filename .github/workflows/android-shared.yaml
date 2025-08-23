@@ -21,7 +21,7 @@ env:
 
 jobs:
   android-shared:
-    name: ${{ matrix.config }} ${{ matrix.abi }}
+    name: ${{ matrix.config }} ${{ matrix.abi }} ${{ matrix.api }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -29,12 +29,15 @@ jobs:
         os: [ubuntu-latest]
         abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
         config: [Relase]
+        # nnapi requires api level >= 24
+        api: [21, 24]
 
     steps:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: android-${{ matrix.abi }}
+          # key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: android-${{ matrix.abi }}-${{ matrix.api }}
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
@@ -77,12 +80,18 @@ jobs:
 
           build_dir=./build-shared/${{ matrix.abi }}
 
+          if [[ ${{ matrix.api }} == "24" ]]; then
+            extra_opts="--use_nnapi"
+          else
+            extra_opts=""
+          fi
+
           python3 tools/ci_build/build.py \
             --build_java \
             --build_dir $build_dir \
-            --android \
+            --android "$extra_opts" \
             --android_abi ${{ matrix.abi }} \
-            --android_api 21 \
+            --android_api ${{ matrix.api }} \
             \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_generator 'Ninja' \
