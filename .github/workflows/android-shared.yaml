@@ -77,6 +77,7 @@ jobs:
             --android_api 21 \
             \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_extra_defines CMAKE_CXX_STANDARD=17 \
             --cmake_generator 'Ninja' \
             --config Release \
             --update \
@@ -87,7 +88,8 @@ jobs:
             --build_shared_lib \
             --skip_submodule_sync \
             --enable_lto \
-            --cmake_extra_defines CMAKE_SHARED_LINKER_FLAGS="-Wl,-z,max-page-size=16384" CMAKE_EXE_LINKER_FLAGS="-Wl,-z,max-page-size=16384"
+            --cmake_extra_defines CMAKE_SHARED_LINKER_FLAGS="-Wl,-z,max-page-size=16384" \
+            --cmake_extra_defines CMAKE_EXE_LINKER_FLAGS="-Wl,-z,max-page-size=16384"
 
           ls -lh build-shared/${{ matrix.abi }}
           ls -lh build-shared/${{ matrix.abi }}/*
