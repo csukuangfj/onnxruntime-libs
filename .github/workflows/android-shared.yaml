@@ -1,0 +1,247 @@
+name: android-shared
+
+on:
+  push:
+    branches:
+      - v1.22.0-2
+      - android-shared
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information (e.g., 1.17.1)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+
+jobs:
+  build:
+    name: ${{ matrix.config }} ${{ matrix.abi }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
+        config: [Release]
+
+    steps:
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v4
+        with:
+          key: android-${{ matrix.abi }}-${{ env.ONNXRUNTIME_VERSION }}-cache
+          path: ${{ matrix.abi }}
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
+          cd cmake
+          rm deps.txt
+          wget https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.17.1/deps.txt
+          git diff .
+
+
+      - name: build
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+
+          build_dir=./build-shared/${{ matrix.abi }}
+
+          python3 tools/ci_build/build.py \
+            --build_java \
+            --build_dir $build_dir \
+            --android \
+            --use_nnapi \
+            --android_abi ${{ matrix.abi }} \
+            --android_api 27 \
+            \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+            --cmake_generator 'Ninja' \
+            --config Release \
+            --update \
+            --build \
+            --parallel \
+            --skip_tests \
+            --compile_no_warning_as_error \
+            --build_shared_lib \
+            --skip_submodule_sync \
+            --enable_lto \
+            --cmake_extra_defines CMAKE_SHARED_LINKER_FLAGS="-Wl,-z,max-page-size=16384" \
+            --cmake_extra_defines CMAKE_EXE_LINKER_FLAGS="-Wl,-z,max-page-size=16384"
+
+          ls -lh build-shared/${{ matrix.abi }}
+          ls -lh build-shared/${{ matrix.abi }}/*
+
+          find build-shared/${{ matrix.abi }} -name "*.so"
+          echo "---"
+          find build-shared/${{ matrix.abi }} -name "*.h"
+
+          ls -lh build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
+
+          readelf -l build-shared/${{ matrix.abi }}/Release/libonnxruntime.so
+
+      - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-shared/${{ matrix.abi }}
+
+          sudo chown -R runner $build_dir
+          ls -lh $build_dir
+
+          d=${{ matrix.abi }}
+          mkdir -p $d
+
+          cp -v $build_dir/Release/libonnxruntime.so $d
+          cp -v $build_dir/Release/libonnxruntime4j_jni.so $d
+          cp -v $build_dir/Release/android/headers/*.h $d
+
+          zip -r ${d}.zip $d
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-${{ matrix.abi }}
+          path: ${{ matrix.abi }}
+
+  collect:
+    name: collect
+    needs: [build]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Retrieve artifact from arm64-v8a
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-arm64-v8a
+          path: /tmp/arm64-v8a
+
+      - name: Retrieve artifact from armeabi-v7a
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-armeabi-v7a
+          path: /tmp/armeabi-v7a
+
+      - name: Retrieve artifact from x86
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-x86
+          path: /tmp/x86
+
+      - name: Retrieve artifact from x86_64
+        uses: actions/download-artifact@v4
+        with:
+          name: android-${{ env.ONNXRUNTIME_VERSION }}-x86_64
+          path: /tmp/x86_64
+
+      - name: Download android onnxruntime lib
+        shell: bash
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          d=onnxruntime-android-$version
+          wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/$version/$d.aar
+          mkdir $d
+          pushd $d
+          unzip ../$d.aar
+          ls -lh
+
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            ls -lh ./jni/$abi/
+            ls -l ./jni/$abi/
+            sleep 2
+            cp -fv /tmp/$abi/*.so ./jni/$abi/
+            ls -lh ./jni/$abi/
+            ls -l ./jni/$abi/
+          done
+
+          zip -r ../${d}.zip ./
+
+          popd
+
+          ls -lh
+
+          unzip -l ./${d}.zip
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Publish to huggingface
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+
+            rm -rf huggingface
+            export GIT_LFS_SKIP_SMUDGE=1
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+
+            git clone https://huggingface.co/csukuangfj/android-onnxruntime-libs huggingface
+
+            ls -lh
+            cd huggingface
+            git pull
+
+            version=${{ env.ONNXRUNTIME_VERSION }}
+
+            src=onnxruntime-android-$version
+
+            dst=v$version
+            rm -rf $dst
+            mkdir $dst
+            mv -v ../$src/headers $dst/ || mv -v ../headers $dst/
+            mv -v ../$src/jni $dst/ || mv ../jni $dst/
+
+            git status
+            git add .
+            git commit -m "add $version"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/android-onnxruntime-libs main
