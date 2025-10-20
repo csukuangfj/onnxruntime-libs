@@ -67,6 +67,15 @@ jobs:
           wget https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.17.1/deps.txt
           git diff .
 
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: install cmake 3.x
+        shell: bash
+        run: |
+          pip install "cmake<4"
 
       - name: build
         if: steps.cache-build-result.outputs.cache-hit != 'true'
