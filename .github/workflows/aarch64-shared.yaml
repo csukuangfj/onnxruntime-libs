@@ -93,7 +93,7 @@ jobs:
               find /opt -name "python*"
 
               echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.10.18/bin:$PATH
+              export PATH=/opt/_internal/cpython-3.10.19/bin:$PATH
               which python3
               python3 --version
               python3 -m pip install ninja "cmake<4"
@@ -155,9 +155,9 @@ jobs:
           echo "tag: $tag"
 
           pushd ./tools/ci_build/github/linux
-          rm copy_strip_binary.sh
-          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
-          chmod +x copy_strip_binary.sh
+          # rm copy_strip_binary.sh
+          # wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          # chmod +x copy_strip_binary.sh
           ls -lh
           popd
 
