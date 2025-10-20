@@ -67,7 +67,10 @@ jobs:
         shell: bash
         run: |
           # see ./cmake/deps.txt
-          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[0-3].[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.18.1/protoc-3.18.1-linux-x86_64.zip
+            unzip protoc-3.18.1-linux-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
             unzip protoc-3.20.3-linux-x86_64.zip
           elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
@@ -117,7 +120,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install python3 git-lfs
-          python3 -m pip install cmake
+          python3 -m pip install "cmake<4"
           cmake --version
 
       - name: Install updated CMake
@@ -153,8 +156,12 @@ jobs:
         run: |
           build_dir=./build-arm
 
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+            extra_opts="--compile_no_warning_as_error"
+          fi
+
           python3 ./tools/ci_build/build.py \
-            --compile_no_warning_as_error \
+            $extra_opts \
             --build_dir $build_dir \
             --config Release \
             --build \
@@ -185,9 +192,13 @@ jobs:
           version=${{ env.ONNXRUNTIME_VERSION }}
 
           pushd ./tools/ci_build/github/linux
-          rm copy_strip_binary.sh
-          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
-          chmod +x copy_strip_binary.sh
+
+          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.20.[0-9] ]]; then
+            rm copy_strip_binary.sh
+            wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+            chmod +x copy_strip_binary.sh
+          fi
+
           ls -lh
           popd
 
