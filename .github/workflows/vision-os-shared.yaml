@@ -138,10 +138,10 @@ jobs:
 
           xcodebuild -create-xcframework \
             "${FRAMEWORK_ARGS[@]}" \
-            -output "$OUT_DIR/$XCFRAMEWORK"
+            -output "$OUT_DIR/$XCFRAMEWORK_NAME"
 
           echo "✅ visionOS XCFramework created:"
-          echo "   $OUT_DIR/$XCFRAMEWORK"
+          echo "   $OUT_DIR/$XCFRAMEWORK_NAME"
 
           tree $OUT_DIR/$XCFRAMEWORK_NAME
 
