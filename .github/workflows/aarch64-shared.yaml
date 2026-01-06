@@ -3,11 +3,11 @@ name: aarch64-shared
 on:
   push:
     branches:
-      - v1.22.0-2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.22.0)"
+        description: "Version information (e.g., 1.23.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
   aarch64-shared:
@@ -83,7 +83,10 @@ jobs:
               find /opt -name "python*"
 
               echo "--------------------"
-              export PATH=/opt/_internal/cpython-3.10.18/bin:$PATH
+              PYBIN_DIR=$(find /opt/_internal -type d -path '*/cpython-3.10.*/bin' -print -quit)
+              echo "PYBIN_DIR: $PYBIN_DIR"
+
+              export PATH=$PYBIN_DIR:$PATH
               which python3
               python3 --version
               python3 -m pip install ninja
