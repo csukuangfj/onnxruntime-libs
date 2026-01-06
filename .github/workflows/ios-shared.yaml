@@ -95,6 +95,7 @@ jobs:
 
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
+            --build_dynamic_framework \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
       - name: Collect results (single)
