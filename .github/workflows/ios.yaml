@@ -103,7 +103,6 @@ jobs:
             --target install \
             --parallel \
             --skip_tests \
-            --build_apple_framework \
             --ios \
             --apple_deploy_target '13.0' \
             --use_coreml \
@@ -338,7 +337,6 @@ jobs:
             --target install \
             --parallel \
             --skip_tests \
-            --build_apple_framework \
             --ios \
             --apple_deploy_target '13.0' \
             --use_coreml \
@@ -569,7 +567,6 @@ jobs:
             --target install \
             --parallel \
             --skip_tests \
-            --build_apple_framework \
             --macos MacOSX \
             --apple_deploy_target '13.3' \
             --use_coreml \
