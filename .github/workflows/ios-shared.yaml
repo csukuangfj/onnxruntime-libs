@@ -3,7 +3,7 @@ name: ios-shared
 on:
   push:
     branches:
-      - test-v1.23.2-2-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
@@ -85,7 +85,18 @@ jobs:
 
           git diff .
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
+      - name: Patch 3
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          jq '.build_params.base += ["--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=16.0"]' \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
+
+          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+
+          git diff .
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |

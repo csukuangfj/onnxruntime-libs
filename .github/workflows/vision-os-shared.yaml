@@ -3,7 +3,7 @@ name: vision_os-shared
 on:
   push:
     branches:
-      - test-v1.23.2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
@@ -118,6 +118,8 @@ jobs:
             local platform=$1
             local arch=arm64
             local fw="${BUILD_ROOT}/${platform}_${arch}/${CONFIG}/Release-${platform}/onnxruntime.framework"
+
+            tree $fw
 
             if [[ -d "$fw" ]]; then
               echo "✔ Adding $platform ($arch)"
