@@ -58,9 +58,19 @@ jobs:
           brew install tree
           tree --version
 
-          pip install "cmake<4"
-          which cmake
-          cmake --version
+          brew install jq
+          which jq
+
+      - name: Patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
+            tools/ci_build/github/apple/default_vision_os_framework_build_settings.json > output.json
+
+          mv output.json tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
+
+          git diff .
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -69,6 +79,7 @@ jobs:
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
+
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
             tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
