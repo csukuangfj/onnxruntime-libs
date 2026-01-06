@@ -3,11 +3,11 @@ name: ios
 on:
   push:
     branches:
-      - v1.22.0-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.22.0)"
+        description: "Version information (e.g., 1.23.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
   ios_arm64:
@@ -96,6 +96,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
             --ios \
             --apple_sysroot iphoneos \
             --osx_arch arm64 \
@@ -330,6 +331,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
             --ios \
             --apple_sysroot iphonesimulator \
             --osx_arch ${{ matrix.arch }} \
@@ -488,7 +490,7 @@ jobs:
         include:
           - os: macos-latest
             arch: arm64
-          - os: macos-13
+          - os: macos-15-intel
             arch: x86_64
 
     steps:
@@ -561,6 +563,7 @@ jobs:
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
             --apple_sysroot macosx \
             --osx_arch ${{ matrix.arch }} \
             --target install \
