@@ -107,7 +107,7 @@ jobs:
           CONFIG=Release
           BUILD_ROOT=build/apple_framework/intermediates
           OUT_DIR=dist
-          XCFRAMEWORK=onnxruntime-visionos-shared.xcframework
+          XCFRAMEWORK_NAME=onnxruntime-visionos-shared.xcframework
 
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
