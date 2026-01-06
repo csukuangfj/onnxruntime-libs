@@ -3,7 +3,7 @@ name: vision_os-shared
 on:
   push:
     branches:
-      - v1.22.0-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
@@ -53,9 +53,14 @@ jobs:
         shell: bash
         run: |
           brew install ninja
+          which cmake
           cmake --version
           brew install tree
           tree --version
+
+          pip install "cmake<4"
+          which cmake
+          cmake --version
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'

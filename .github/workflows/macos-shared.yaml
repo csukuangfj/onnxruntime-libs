@@ -3,7 +3,7 @@ name: macos-shared
 on:
   push:
     branches:
-      - test-v1.23.2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
