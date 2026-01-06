@@ -1,9 +1,9 @@
-name: vision_os-shared
+name: ios-shared
 
 on:
   push:
     branches:
-      - test-v1.23.2-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
@@ -19,8 +19,8 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  vision_os-shared:
-    name: vision_os
+  ios-shared:
+    name: ios-shared
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -32,13 +32,13 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-vision_os-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-vision_os-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-ios-shared-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ios-shared-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-vision_os
+          key: ${{ matrix.os }}-ios-shared
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -66,9 +66,9 @@ jobs:
         shell: bash
         run: |
           jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
-            tools/ci_build/github/apple/default_vision_os_framework_build_settings.json > output.json
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
-          mv output.json tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
+          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
           git diff .
 
@@ -79,9 +79,9 @@ jobs:
           # see https://github.com/microsoft/onnxruntime/pull/26380
           #
           jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"]' \
-            tools/ci_build/github/apple/default_vision_os_framework_build_settings.json > output.json
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
-          mv output.json tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
+          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
           git diff .
 
@@ -95,40 +95,102 @@ jobs:
 
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
-            tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-      - name: Collect results
+      - name: Collect results (single)
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
+          CONFIG=Release
 
-          for a in xros xrsimulator; do
-            ls -lh build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework
+          for a in iphoneos iphonesimulator macabi; do
+            for arch in arm64 x86_64; do
+              if [[ "$a" == "iphoneos" && "$arch" == "x86_64" ]]; then
+                continue
+              fi
 
-            artifact=onnxruntime-vision_os-${a}_arm64-$version
-            mkdir -p $artifact//onnxruntime.framework
-            cp -a build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework/* $artifact/onnxruntime.framework/
-            pushd $artifact/onnxruntime.framework/
-            ln -s onnxruntime libonnxruntime.dylib
-            popd
-            tree ./$artifact
-            zip -r ${artifact}.zip ./$artifact
+              FRAMEWORK=build/apple_framework/intermediates/${a}_${arch}/${CONFIG}/Release-${a}/onnxruntime.framework
+              [ -d "$FRAMEWORK" ] || continue
+
+              case "$a" in
+                macabi) platform=macos-catalyst ;;
+                *)      platform=ios ;;
+              esac
+
+              artifact=onnxruntime-${platform}-shared-${a}_${arch}-${version}
+              mkdir -p $artifact/onnxruntime.framework
+              cp -a "$FRAMEWORK/"* "$artifact/onnxruntime.framework/"
+
+              zip -r ${artifact}.zip $artifact
+            done
           done
 
-      - name: Upload artifact xros
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
+      - name: Create onnxruntime XCFramework
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Upload artifact xrsimulator
+          CONFIG=Release
+          BUILD_ROOT=build/apple_framework/intermediates
+          OUT_DIR=dist
+          XCFRAMEWORK_NAME=onnxruntime.xcframework
+
+          rm -rf "$OUT_DIR"
+          mkdir -p "$OUT_DIR"
+
+          declare -a FRAMEWORK_ARGS=()
+
+          add_framework() {
+            local platform=$1
+            local arch=$2
+
+            local fw="${BUILD_ROOT}/${platform}_${arch}/${CONFIG}/Release-${platform}/onnxruntime.framework"
+
+            if [[ -d "$fw" ]]; then
+              echo "✔ Adding $platform $arch"
+              FRAMEWORK_ARGS+=(-framework "$fw")
+            else
+              echo "⚠ Skipping missing $platform $arch"
+            fi
+          }
+
+          # iOS device
+          add_framework iphoneos arm64
+
+          # iOS simulator
+          add_framework iphonesimulator arm64
+          add_framework iphonesimulator x86_64
+
+          # Mac Catalyst
+          add_framework macabi arm64
+          add_framework macabi x86_64
+
+          xcodebuild -create-xcframework \
+            "${FRAMEWORK_ARGS[@]}" \
+            -output "$OUT_DIR/$XCFRAMEWORK_NAME"
+
+          echo "XCFramework created at $OUT_DIR/$XCFRAMEWORK_NAME"
+
+      - name: Zip XCFramework
+        run: |
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          cd dist
+          zip -r onnxruntime.xcframework-$version.zip onnxruntime.xcframework
+
+      - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
+
+      - name: Upload artifact (single)
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-*-shared-*-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-*-shared-*-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -164,11 +226,11 @@ jobs:
 
             cd huggingface
             mkdir -p $version
-            cp -v ../onnxruntime-vision_os*.zip ./$version
+            cp -v ../onnxruntime.xcframework*.zip ./$version
             git status
             git lfs track "*.zip"
 
             git add .
 
-            git commit -m "upload vision_os"
+            git commit -m "upload onnxruntime.xcframework $version"
             git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
