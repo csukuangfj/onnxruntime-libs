@@ -98,35 +98,6 @@ jobs:
             --build_dynamic_framework \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-      - name: Collect results (single)
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          CONFIG=Release
-
-          for a in iphoneos iphonesimulator macabi; do
-            for arch in arm64 x86_64; do
-              if [[ "$a" == "iphoneos" && "$arch" == "x86_64" ]]; then
-                continue
-              fi
-
-              FRAMEWORK=build/apple_framework/intermediates/${a}_${arch}/${CONFIG}/Release-${a}/onnxruntime.framework
-              [ -d "$FRAMEWORK" ] || continue
-
-              case "$a" in
-                macabi) platform=macos-catalyst ;;
-                *)      platform=ios ;;
-              esac
-
-              artifact=onnxruntime-${platform}-shared-${a}_${arch}-${version}
-              mkdir -p $artifact/onnxruntime.framework
-              cp -a "$FRAMEWORK/"* "$artifact/onnxruntime.framework/"
-
-              zip -r ${artifact}.zip $artifact
-            done
-          done
-
       - name: Create onnxruntime XCFramework
         shell: bash
         run: |
@@ -135,7 +106,7 @@ jobs:
           CONFIG=Release
           BUILD_ROOT=build/apple_framework/intermediates
           OUT_DIR=dist
-          XCFRAMEWORK_NAME=onnxruntime.xcframework
+          XCFRAMEWORK_NAME=onnxruntime-ios-shared.xcframework
 
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
@@ -173,25 +144,21 @@ jobs:
 
           echo "XCFramework created at $OUT_DIR/$XCFRAMEWORK_NAME"
 
+          tree $OUT_DIR/$XCFRAMEWORK_NAME
+
       - name: Zip XCFramework
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
           cd dist
-          zip -r onnxruntime.xcframework-$version.zip onnxruntime.xcframework
+          zip -r onnxruntime-ios-shared.xcframework-$version.zip onnxruntime-ios-shared.xcframework
+          mv *.zip ..
 
       - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
-
-      - name: Upload artifact (single)
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-*-shared-*-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-*-shared-*-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-ios-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -227,11 +194,11 @@ jobs:
 
             cd huggingface
             mkdir -p $version
-            cp -v ../onnxruntime.xcframework*.zip ./$version
+            cp -v ../onnxruntime-ios-shared.xcframework*.zip ./$version
             git status
             git lfs track "*.zip"
 
             git add .
 
-            git commit -m "upload onnxruntime.xcframework $version"
+            git commit -m "upload onnxruntime-ios-shared.xcframework $version"
             git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
