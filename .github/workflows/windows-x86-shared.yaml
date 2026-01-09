@@ -3,7 +3,7 @@ name: windows x86 shared
 on:
   push:
     branches:
-      - test-v1.23.2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
@@ -20,6 +20,7 @@ env:
 
 jobs:
   windows_x86_shared:
+    # From onnxruntime 1.23.0, microsoft stops providing shared libs for windows x86
     if: true
     name: Shared lib for windows x86
     runs-on: ${{ matrix.os }}
