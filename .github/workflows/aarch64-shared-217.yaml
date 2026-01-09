@@ -3,7 +3,7 @@ name: aarch64-shared-217
 on:
   push:
     branches:
-      - test-v1.23.2-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
@@ -81,6 +81,7 @@ jobs:
 
               gcc --version
               which python
+              ldd --version
 
               # find /opt -name "python*"
 
@@ -115,6 +116,9 @@ jobs:
               export CC=$GCC_ROOT/bin/gcc
               export CXX=$GCC_ROOT/bin/g++
               export PATH=$GCC_ROOT/bin:$PATH
+
+              export CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS:-} -static-libstdc++ -static-libgcc"
+              export CMAKE_C_FLAGS="${CMAKE_C_FLAGS:-} -static-libgcc"
 
               gcc --version
               which gcc
