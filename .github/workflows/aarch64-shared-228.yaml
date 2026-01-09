@@ -1,4 +1,4 @@
-name: aarch64-shared
+name: aarch64-shared-228
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  aarch64-shared:
+  aarch64-shared-228:
     name: ${{ matrix.config }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,8 +36,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -62,15 +62,12 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
         with:
-            # image: quay.io/pypa/manylinux2014_aarch64
-            #
             # onnxruntime v1.22.0   GCC version must be greater than or equal to 11.1
             # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
             #
             # https://github.com/pypa/manylinux/issues/1266
-            # image: quay.io/pypa/manylinux_2_28_aarch64 # onnxruntime v1.22.0 requires gcc >= 11
+            image: quay.io/pypa/manylinux_2_28_aarch64 # onnxruntime v1.22.0 requires gcc >= 11
             # image: quay.io/pypa/manylinux2014_aarch64 # it has only gcc 10. gcc 11 cannot be installed on it
-            image: ghcr.io/csukuangfj/manylinux2014-aarch64-gcc11:latest # i have built gcc 11 from source
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
@@ -109,12 +106,6 @@ jobs:
               # echo "---$version---"
               # cat ./VERSION_NUMBER
               # echo "---"
-              #
-              # ✅ FORCE GCC 11
-              export GCC_ROOT=/opt/gcc-11.4.0
-              export CC=$GCC_ROOT/bin/gcc
-              export CXX=$GCC_ROOT/bin/g++
-              export PATH=$GCC_ROOT/bin:$PATH
 
               gcc --version
               which gcc
@@ -156,7 +147,7 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           config=${{ matrix.config }}
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -195,8 +186,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -221,7 +212,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
 
             tree ./$artifact
 

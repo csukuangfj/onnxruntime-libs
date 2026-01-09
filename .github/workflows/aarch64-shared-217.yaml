@@ -1,0 +1,249 @@
+name: aarch64-shared-217
+
+on:
+  push:
+    branches:
+      - test-v1.23.2-2
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information (e.g., 1.23.2)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
+
+jobs:
+  aarch64-shared-217:
+    name: ${{ matrix.config }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04-arm]
+        arch: [aarch64]
+        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # config: ['MinSizeRel', 'Release']
+        # config: ['Release']
+
+    steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v4
+        with:
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: addnab/docker-run-action@v3
+        with:
+            # image: quay.io/pypa/manylinux2014_aarch64
+            #
+            # onnxruntime v1.22.0   GCC version must be greater than or equal to 11.1
+            # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
+            #
+            # https://github.com/pypa/manylinux/issues/1266
+            # image: quay.io/pypa/manylinux_2_28_aarch64 # onnxruntime v1.22.0 requires gcc >= 11
+            # image: quay.io/pypa/manylinux2014_aarch64 # it has only gcc 10. gcc 11 cannot be installed on it
+            image: ghcr.io/csukuangfj/manylinux2014-aarch64-gcc11:latest # i have built gcc 11 from source
+            options: |
+              --volume ${{ github.workspace }}/:/shared
+            shell: bash
+            run: |
+              echo "config: ${{ matrix.config }}"
+              uname -a
+              which gcc
+
+              gcc --version
+              which python
+
+              # find /opt -name "python*"
+
+              echo "--------------------"
+              PYBIN_DIR=$(find /opt/_internal -type d -path '*/cpython-3.10.*/bin' -print -quit)
+              echo "PYBIN_DIR: $PYBIN_DIR"
+
+              export PATH=$PYBIN_DIR:$PATH
+              which python3
+              python3 --version
+              python3 -m pip install ninja
+
+              cd /shared
+              ls -lh
+              touch /shared/a.txt
+              mkdir build-shared
+
+              version=${{ env.ONNXRUNTIME_VERSION }}
+              which python
+              # v=$(cat ./VERSION_NUMBER)
+              # if [[ $v == "1.18.0" ]]; then
+              #   echo $version > ./VERSION_NUMBER
+              #   sed -i.bak s/1.18.0/$version/g ./onnxruntime/core/session/onnxruntime_c_api.cc
+              # fi
+
+              # echo "---$version---"
+              # cat ./VERSION_NUMBER
+              # echo "---"
+              #
+              # ✅ FORCE GCC 11
+              export GCC_ROOT=/opt/gcc-11.4.0
+              export CC=$GCC_ROOT/bin/gcc
+              export CXX=$GCC_ROOT/bin/g++
+              export PATH=$GCC_ROOT/bin:$PATH
+
+              gcc --version
+              which gcc
+
+              g++ --version
+              which g++
+
+              which python
+
+              build_dir=/shared/build-shared
+
+              python3 tools/ci_build/build.py \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+                --build_dir $build_dir \
+                --cmake_generator 'Ninja' \
+                --config ${{ matrix.config }} \
+                --update \
+                --build \
+                --parallel \
+                --skip_tests \
+                --compile_no_warning_as_error \
+                --build_shared_lib \
+                --skip_submodule_sync \
+                --enable_lto \
+                --allow_running_as_root
+
+              chmod a=rwx build-shared
+              ls -lh build-shared
+              ls -lh build-shared/*
+
+      - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-shared
+
+          sudo chown -R runner $build_dir
+          ls -lh $build_dir
+
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          config=${{ matrix.config }}
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+
+          tag=$(git rev-parse HEAD)
+          echo "tag: $tag"
+
+          pushd ./tools/ci_build/github/linux
+          rm copy_strip_binary.sh
+          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          chmod +x copy_strip_binary.sh
+          ls -lh
+          popd
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a $artifact \
+            -c $config \
+            -l libonnxruntime.so \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          mv $build_dir/$artifact ./
+          tree ./$artifact
+
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
+
+          zip -r ${artifact}.zip ./$artifact
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            config=${{ matrix.config }}
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_17-$config-$version
+
+            tree ./$artifact
+
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
+
+            cd huggingface
+
+            d=${{ env.ONNXRUNTIME_VERSION }}
+            mkdir -p $d
+
+            # git lfs pull
+            cp -v ../onnxruntime-linux*.zip ./$d/
+
+            git status
+            git lfs track "*.zip"
+
+            git add .
+
+            git commit -m "upload $artifact"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
