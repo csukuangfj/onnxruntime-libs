@@ -1,4 +1,4 @@
-name: aarch64-shared
+name: aarch64-shared-228
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  aarch64-shared:
+  aarch64-shared-228:
     name: ${{ matrix.config }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -62,13 +62,12 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
         with:
-            # image: quay.io/pypa/manylinux2014_aarch64
-            #
             # onnxruntime v1.22.0   GCC version must be greater than or equal to 11.1
             # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
             #
             # https://github.com/pypa/manylinux/issues/1266
             image: quay.io/pypa/manylinux_2_28_aarch64 # onnxruntime v1.22.0 requires gcc >= 11
+            # image: quay.io/pypa/manylinux2014_aarch64 # it has only gcc 10. gcc 11 cannot be installed on it
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
@@ -80,7 +79,7 @@ jobs:
               gcc --version
               which python
 
-              find /opt -name "python*"
+              # find /opt -name "python*"
 
               echo "--------------------"
               PYBIN_DIR=$(find /opt/_internal -type d -path '*/cpython-3.10.*/bin' -print -quit)
@@ -107,6 +106,12 @@ jobs:
               # echo "---$version---"
               # cat ./VERSION_NUMBER
               # echo "---"
+
+              gcc --version
+              which gcc
+
+              g++ --version
+              which g++
 
               which python
 

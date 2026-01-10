@@ -95,40 +95,71 @@ jobs:
 
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
+            --build_dynamic_framework \
             tools/ci_build/github/apple/default_vision_os_framework_build_settings.json
 
-      - name: Collect results
+      - name: Create onnxruntime visionOS XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          set -euo pipefail
+
+          CONFIG=Release
+          BUILD_ROOT=build/apple_framework/intermediates
+          OUT_DIR=dist
+          XCFRAMEWORK_NAME=onnxruntime-visionos-shared.xcframework
+
+          rm -rf "$OUT_DIR"
+          mkdir -p "$OUT_DIR"
+
+          declare -a FRAMEWORK_ARGS=()
+
+          add_framework() {
+            local platform=$1
+            local arch=arm64
+            local fw="${BUILD_ROOT}/${platform}_${arch}/${CONFIG}/Release-${platform}/onnxruntime.framework"
+
+            tree $fw
+
+            if [[ -d "$fw" ]]; then
+              echo "✔ Adding $platform ($arch)"
+              FRAMEWORK_ARGS+=(-framework "$fw")
+            else
+              echo "⚠ Missing $platform ($arch), skipping"
+            fi
+          }
+
+          # visionOS device & simulator
+          add_framework xros
+          add_framework xrsimulator
+
+          if [[ ${#FRAMEWORK_ARGS[@]} -eq 0 ]]; then
+            echo "❌ No visionOS frameworks found"
+            exit 1
+          fi
+
+          xcodebuild -create-xcframework \
+            "${FRAMEWORK_ARGS[@]}" \
+            -output "$OUT_DIR/$XCFRAMEWORK_NAME"
+
+          echo "✅ visionOS XCFramework created:"
+          echo "   $OUT_DIR/$XCFRAMEWORK_NAME"
+
+          tree $OUT_DIR/$XCFRAMEWORK_NAME
+
+      - name: Zip visionOS XCFramework
+        run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
+          cd dist
+          zip -r onnxruntime-visionos-shared.xcframework-$version.zip onnxruntime-visionos-shared.xcframework
+          mv *.zip ..
 
-          for a in xros xrsimulator; do
-            ls -lh build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework
-
-            artifact=onnxruntime-vision_os-${a}_arm64-$version
-            mkdir -p $artifact//onnxruntime.framework
-            cp -a build/apple_framework/intermediates/${a}_arm64/Release/Release-$a/onnxruntime.framework/* $artifact/onnxruntime.framework/
-            pushd $artifact/onnxruntime.framework/
-            ln -s onnxruntime libonnxruntime.dylib
-            popd
-            tree ./$artifact
-            zip -r ${artifact}.zip ./$artifact
-          done
-
-      - name: Upload artifact xros
+      - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-vision_os-xros_arm64-${{ env.ONNXRUNTIME_VERSION }}
-
-      - name: Upload artifact xrsimulator
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-vision_os-xrsimulator_arm64-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-visionos-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-visionos-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -164,11 +195,11 @@ jobs:
 
             cd huggingface
             mkdir -p $version
-            cp -v ../onnxruntime-vision_os*.zip ./$version
+            cp -v ../onnxruntime-visionos-shared.xcframework*.zip ./$version
             git status
             git lfs track "*.zip"
 
             git add .
 
-            git commit -m "upload vision_os"
+            git commit -m "upload onnxruntime-visionos-shared.xcframework $version"
             git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main

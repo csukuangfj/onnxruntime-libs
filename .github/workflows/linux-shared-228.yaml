@@ -1,4 +1,4 @@
-name: linux-shared
+name: linux-shared-228
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  linux-shared:
+  linux-shared-228:
     name: ${{ matrix.config }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,8 +36,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-linux-x64-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-linux-x64-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -62,8 +62,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
         with:
-            image: quay.io/pypa/manylinux2014_x86_64
-            # image: quay.io/pypa/manylinux_2_28_x86_64
+            image: quay.io/pypa/manylinux_2_28_x86_64
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
@@ -74,32 +73,16 @@ jobs:
 
               gcc --version
 
-              echo "update gcc"
-
-              # See https://github.com/nealef/clefos/issues/9
-              echo "multilib_policy=best" >> /etc/yum.conf
-              echo "skip_missing_names_on_install=False" >> /etc/yum.conf
-              sed -i '/^override_install_langs=/d' /etc/yum.conf
-              yum -y update
-              yum -y install yum-utils curl
-              yum-config-manager --enable extras
-              yum -y install centos-release-scl-rh
-              yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
-
-              # see https://stackoverflow.com/questions/72904802/can-not-find-required-gcc-version-after-devtoolset-installation
-              ls -lh /opt/rh/devtoolset-11
-
-              source /opt/rh/devtoolset-11/enable
-
               echo 'which gcc'
               which gcc
 
               echo 'gcc --version'
               gcc --version
+              ldd --version
 
               which python
 
-              find /opt -name "python*"
+              # find /opt -name "python*"
 
               echo "--------------------"
 
@@ -152,7 +135,7 @@ jobs:
 
           version=${{ env.ONNXRUNTIME_VERSION }}
           config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          artifact=onnxruntime-linux-x64-glibc2_28-$config-$version
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -191,8 +174,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-linux-x64-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-x64-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -219,7 +202,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+            artifact=onnxruntime-linux-x64-glibc2_28-$config-$version
 
             tree ./$artifact
 
