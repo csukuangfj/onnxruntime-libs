@@ -3,7 +3,7 @@ name: aarch64-shared-217
 on:
   push:
     branches:
-      - test-v1.23.2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
@@ -132,6 +132,8 @@ jobs:
 
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+                --cmake_extra_defines CMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc" \
+                --cmake_extra_defines CMAKE_C_FLAGS="-static-libgcc" \
                 --build_dir $build_dir \
                 --cmake_generator 'Ninja' \
                 --config ${{ matrix.config }} \
