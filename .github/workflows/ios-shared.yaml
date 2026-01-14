@@ -3,7 +3,7 @@ name: ios-shared
 on:
   push:
     branches:
-      - test-v1.23.2-2
+      - test-v1.23.2
   workflow_dispatch:
     inputs:
       version:
@@ -20,25 +20,26 @@ env:
 
 jobs:
   ios-shared:
-    name: ios-shared
+    name: ios-shared ${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest]
+        link_type: ["shared", "static"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-ios-shared-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-shared-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-ios-shared
+          key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -85,14 +86,27 @@ jobs:
 
           git diff .
 
-      - name: Patch 3
+      # - name: Patch 3
+      #   if: steps.cache-build-result.outputs.cache-hit != 'true'
+      #   shell: bash
+      #   run: |
+      #     jq '.build_params.base += ["--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=16.0"]' \
+      #       tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
+      #
+      #     mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+      #
+      #     git diff .
+
+      - name: Patch 4
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          jq '.build_params.base += ["--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=16.0"]' \
-            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
-
-          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+          jq '
+              del(.build_osx_archs.macabi)
+              | .build_osx_archs.iphonesimulator -= ["x86_64"]
+            ' tools/ci_build/github/apple/default_full_ios_framework_build_settings.json \
+            > tmp.json && mv tmp.json \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
           git diff .
 
@@ -104,10 +118,23 @@ jobs:
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
+          link_type=${{ matrix.link_type }}
+          if [[ $link_type == "shared" ]]; then
+            opts="--build_dynamic_framework"
+          else
+            opts=""
+          fi
+
+          echo "opts: $opts"
+
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
-            --build_dynamic_framework \
+            $opts \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+
+      - name: Setup tmate session
+        if: true
+        uses: mxschmitt/action-tmate@v3
 
       - name: Create onnxruntime XCFramework
         shell: bash
@@ -117,7 +144,7 @@ jobs:
           CONFIG=Release
           BUILD_ROOT=build/apple_framework/intermediates
           OUT_DIR=dist
-          XCFRAMEWORK_NAME=onnxruntime-ios-shared.xcframework
+          XCFRAMEWORK_NAME=onnxruntime-ios-${{ matrix.link_type }}.xcframework
 
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
@@ -127,6 +154,8 @@ jobs:
           add_framework() {
             local platform=$1
             local arch=$2
+
+            tree "${BUILD_ROOT}/iphone*/"
 
             local fw="${BUILD_ROOT}/${platform}_${arch}/${CONFIG}/Release-${platform}/onnxruntime.framework"
 
@@ -146,8 +175,8 @@ jobs:
           add_framework iphonesimulator x86_64
 
           # Mac Catalyst
-          add_framework macabi arm64
-          add_framework macabi x86_64
+          # add_framework macabi arm64
+          # add_framework macabi x86_64
 
           xcodebuild -create-xcframework \
             "${FRAMEWORK_ARGS[@]}" \
@@ -161,15 +190,15 @@ jobs:
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
           cd dist
-          zip -r onnxruntime-ios-shared.xcframework-$version.zip onnxruntime-ios-shared.xcframework
+          zip -r onnxruntime-ios-${{ matrix.link_type }}.xcframework-$version.zip onnxruntime-ios-${{ matrix.link_type }}.xcframework
           mv *.zip ..
 
       - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-ios-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-ios-shared.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
+          name: onnxruntime-ios-${{ matrix.link_type }}.xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-${{ matrix.link_type }}.xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -205,11 +234,11 @@ jobs:
 
             cd huggingface
             mkdir -p $version
-            cp -v ../onnxruntime-ios-shared.xcframework*.zip ./$version
+            cp -v ../onnxruntime-ios-${{ matrix.link_type }}.xcframework*.zip ./$version
             git status
             git lfs track "*.zip"
 
             git add .
 
-            git commit -m "upload onnxruntime-ios-shared.xcframework $version"
+            git commit -m "upload onnxruntime-ios-${{ matrix.link_type }}.xcframework $version"
             git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
