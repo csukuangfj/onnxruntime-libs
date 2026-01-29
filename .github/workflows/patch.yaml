@@ -75,7 +75,7 @@ jobs:
             git config --global user.name "Fangjun Kuang"
 
             export GIT_CLONE_PROTECTION_ACTIVE=false
-            GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/csukuangfj2/onnxruntime-libs huggingface
 
             cd huggingface
             # git lfs pull
@@ -86,4 +86,4 @@ jobs:
             git add .
 
             git commit -m "upload"
-            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+            git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main

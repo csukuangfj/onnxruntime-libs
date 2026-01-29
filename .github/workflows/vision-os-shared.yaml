@@ -191,7 +191,7 @@ jobs:
 
             export GIT_CLONE_PROTECTION_ACTIVE=false
             rm -rf huggingface
-            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
 
             cd huggingface
             mkdir -p $version
@@ -202,4 +202,4 @@ jobs:
             git add .
 
             git commit -m "upload onnxruntime-visionos-shared.xcframework $version"
-            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
+            git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main

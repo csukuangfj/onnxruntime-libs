@@ -1,4 +1,4 @@
-name: windows-x64
+name: windows-x86
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  windows_x64:
+  windows_x86:
     if: true
     name: static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
@@ -35,8 +35,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-win-x64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-win-x64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-win-x86-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-win-x86-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -58,7 +58,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build/windows_x64
+          build_dir=./build/windows_x86
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
             extra_opt="--enable_msvc_static_runtime"
@@ -67,6 +67,7 @@ jobs:
           fi
 
           python3 ./tools/ci_build/build.py \
+            --x86 \
             --build_dir $build_dir \
             --config ${{ matrix.build_type }} \
             --parallel \
@@ -87,7 +88,7 @@ jobs:
         shell: bash
         run: |
 
-          build_dir=./build/windows_x64
+          build_dir=./build/windows_x86
           version=${{ env.ONNXRUNTIME_VERSION }}
 
           mkdir tmp
@@ -101,9 +102,9 @@ jobs:
 
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
-            dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-x86-MT-${{ matrix.build_type }}-$version
           else
-            dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-x86-MD-${{ matrix.build_type }}-$version
           fi
 
           mkdir -p $dst_dir
@@ -138,8 +139,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-win-x86-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-x86-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (onnxruntime-libs)
@@ -152,9 +153,9 @@ jobs:
 
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
-            dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-x86-MT-${{ matrix.build_type }}-$version
           else
-            dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-x86-MD-${{ matrix.build_type }}-$version
           fi
 
           tar cjvf $dst_dir.tar.bz2 $dst_dir
