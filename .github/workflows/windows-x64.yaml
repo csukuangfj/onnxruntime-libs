@@ -1,10 +1,13 @@
 name: windows-x64
 
 on:
+  push:
+    branches:
+      - rocm
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.20.0)"
+        description: "Version information (e.g., 1.23.2)"
         required: true
 
 permissions:
@@ -13,25 +16,26 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.20.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  windows_x64_static:
-    if: false
-    name: Build onnxruntime static lib for Windows x64
+  windows_x64:
+    if: true
+    name: static CRT ${{ matrix.use_static_crt }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest]
+        use_static_crt: ["ON", "OFF"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v2
         with:
-          path: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-win-x64-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-win-x64-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -53,26 +57,43 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build/windows_x64_static
+          build_dir=./build/windows_x64
+          use_static_crt=${{ matrix.use_static_crt }}
+          if [[ $use_static_crt == ON ]];
+            extra_opt="--enable_msvc_static_runtime"
+          else
+            extra_opt=""
+          fi
+
           python3 ./tools/ci_build/build.py \
             --build_dir $build_dir \
             --config Release \
             --parallel \
-            --enable_msvc_static_runtime \
+            $extra_opt \
             --cmake_generator "Visual Studio 17 2022" \
             --skip_tests \
+            --build_shared_lib \
+            --disable_memleak_checker \
             --update \
             --build
-            # --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            # --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF
+
+      - name: Setup tmate session
+        if: true
+        uses: mxschmitt/action-tmate@v3
 
       - name: Copy results
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build/windows_x64_static
+          build_dir=./build/windows_x64
           version=${{ env.ONNXRUNTIME_VERSION }}
-          dst_dir=onnxruntime-win-x64-static-$version
+          use_static_crt=${{ matrix.use_static_crt }}
+
+          if [[ $use_static_crt == ON ]]; then
+            dst_dir=onnxruntime-win-x64-MT-$version
+          else
+            dst_dir=onnxruntime-win-x64-MD-$version
+          fi
 
           mkdir -p $dst_dir
           mkdir -p $dst_dir/lib
@@ -126,8 +147,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-win-x64-static-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-win-x64-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-x64-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface (onnxruntime-libs)
@@ -137,7 +158,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
-          dst_dir=onnxruntime-win-x64-static-$version
+          dst_dir=onnxruntime-win-x64-$version
 
           tar cjvf $dst_dir.tar.bz2 $dst_dir
 
