@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - test-v1.23.2
+      - test-v1.23.2-2
   workflow_dispatch:
     inputs:
       version:
@@ -20,7 +20,7 @@ env:
 
 jobs:
   ios:
-    name: ios${{ matrix.link_type }}
+    name: ios-${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
