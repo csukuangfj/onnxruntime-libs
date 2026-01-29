@@ -19,21 +19,27 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  ios_arm64:
-    name: arm64
+  ios:
+    name: ios-${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest]
+        link_type: ["shared", "static"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
+          path: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -47,843 +53,267 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          # brew install cmake
+          brew install ninja
+          which cmake
           cmake --version
           brew install tree
           tree --version
 
-      - name: Download protoc
+          brew install jq
+          which jq
+
+      - name: Patch 1
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          # see ./cmake/deps.txt
-          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
-            unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
-            unzip protoc-21.12-osx-x86_64.zip
-          fi
+          jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
-          rm -fv protoc*.zip
+          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-          ./bin/protoc --version
+          git diff .
 
-      - name: Set environment variable
+      - name: Patch 2
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
+          # see https://github.com/microsoft/onnxruntime/pull/26380
+          #
+          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"]' \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
-      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
+          mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+
+          git diff .
+
+      # - name: Patch 3
+      #   if: steps.cache-build-result.outputs.cache-hit != 'true'
+      #   shell: bash
+      #   run: |
+      #     jq '.build_params.base += ["--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=16.0"]' \
+      #       tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
+      #
+      #     mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+      #
+      #     git diff .
+
+      - name: Patch 4
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          protoc --version
+          # jq '
+          #     del(.build_osx_archs.macabi)
+          #     | .build_osx_archs.iphonesimulator -= ["x86_64"]
+          #   ' tools/ci_build/github/apple/default_full_ios_framework_build_settings.json \
+          #   > tmp.json && mv tmp.json \
+          #   tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for arm64
+          jq '
+              del(.build_osx_archs.macabi)
+            ' tools/ci_build/github/apple/default_full_ios_framework_build_settings.json \
+            > tmp.json && mv tmp.json \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
+
+          git diff .
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build-ios/arm64
-
-          python3 ./tools/ci_build/build.py \
-            --build_dir $build_dir \
-            --config Release \
-            --update \
-            --build \
-            --use_xcode \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
-            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            --ios \
-            --apple_sysroot iphoneos \
-            --osx_arch arm64 \
-            --target install \
-            --parallel \
-            --skip_tests \
-            --ios \
-            --apple_deploy_target '13.0' \
-            --use_coreml \
-            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
-
-      - name: Display results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          arch=arm64
-
-          echo "---ls -lh build-ios/$arch/Release/static_libraries/lib*.a---"
-          pushd build-ios/$arch/Release/static_libraries/
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          popd
-          echo "---"
-
-          echo "---build-ios/$arch/Release/Release-iphoneos---"
-          pushd build-ios/$arch/Release/Release-iphoneos
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          echo "---"
-          popd
-
-      - name: Copy results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          arch=arm64
-
-          ls -lh build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework
-
-          file build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework/onnxruntime
-
-          tree build-ios/$arch/Release/Release-iphoneos/onnxruntime.framework
-
-          ls -1 build-ios/$arch/Release/static_libraries
-
-          ls -lh build-ios/$arch/Release/static_libraries
-          echo "----------"
-          ls -1 build-ios/$arch/Release/Release-iphoneos
-          ls -lh build-ios/$arch/Release/Release-iphoneos
-
-          libtool -static -o build-ios/$arch/onnxruntime.a \
-            build-ios/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
-            build-ios/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
-            build-ios/$arch/Release/static_libraries/libabsl_base.a \
-            build-ios/$arch/Release/static_libraries/libabsl_city.a \
-            build-ios/$arch/Release/static_libraries/libabsl_civil_time.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cord.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cord_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_functions.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_handle.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_info.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc32c.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_debugging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
-            build-ios/$arch/Release/static_libraries/libabsl_demangle_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_demangle_rust.a \
-            build-ios/$arch/Release/static_libraries/libabsl_examine_stack.a \
-            build-ios/$arch/Release/static_libraries/libabsl_exponential_biased.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_config.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_program_name.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_reflection.a \
-            build-ios/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
-            build-ios/$arch/Release/static_libraries/libabsl_int128.a \
-            build-ios/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_entry.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_globals.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_format.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_message.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_severity.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_sink.a \
-            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_malloc_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
-            build-ios/$arch/Release/static_libraries/libabsl_stacktrace.a \
-            build-ios/$arch/Release/static_libraries/libabsl_str_format_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strerror.a \
-            build-ios/$arch/Release/static_libraries/libabsl_string_view.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strings.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strings_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_symbolize.a \
-            build-ios/$arch/Release/static_libraries/libabsl_synchronization.a \
-            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
-            build-ios/$arch/Release/static_libraries/libabsl_time.a \
-            build-ios/$arch/Release/static_libraries/libabsl_time_zone.a \
-            build-ios/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
-            build-ios/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
-            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
-            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libonnx.a \
-            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
-            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-ios/$arch/Release/static_libraries/libre2.a \
-            \
-            build-ios/$arch/Release/Release-iphoneos/libcoreml_proto.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_common.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_flatbuffers.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_framework.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_graph.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_lora.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_mlas.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_optimizer.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_providers.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_providers_coreml.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_session.a \
-            build-ios/$arch/Release/Release-iphoneos/libonnxruntime_util.a
-
-          # from 1.17.3, libonnxruntime_coreml_proto.a is renamed to libcoreml_proto.a
-
-          dst=onnxruntime-ios-$arch-${{ env.ONNXRUNTIME_VERSION }}
-
-          mkdir -p $dst
-
-          cp -v build-ios/$arch/onnxruntime.a $dst
-
-          cp -v build-ios/arm64/Release/build-ios/arm64/install/bin/onnxruntime.framework/Headers/* $dst/
-
-          ls -lh $dst
-
-      - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-
-  ios_simulator:
-    name: Simulator ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest]
-        arch: [arm64, x86_64]
-
-    steps:
-      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
-        id: cache-build-result
-        uses: actions/cache@v4
-        with:
-          path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
-
-      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/onnxruntime
-          submodules: true
-          ref: v${{ env.ONNXRUNTIME_VERSION }}
-
-      - name: Install dependencies on macos
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # brew install cmake
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
-          brew install tree
-          tree --version
 
-      - name: Download protoc
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # see ./cmake/deps.txt
-          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
-            unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
-            unzip protoc-21.12-osx-x86_64.zip
+          link_type=${{ matrix.link_type }}
+          if [[ $link_type == "shared" ]]; then
+            opts="--build_dynamic_framework"
+          else
+            opts=""
           fi
 
-          ./bin/protoc --version
+          echo "opts: $opts"
 
-      - name: Set environment variable
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
-
-      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          protoc --version
-
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for simulator ${{ matrix.arch }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          build_dir=./build-ios/simulator/${{ matrix.arch }}
-
-          python3 ./tools/ci_build/build.py \
-            --build_dir $build_dir \
+          python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
-            --update \
-            --build \
-            --use_xcode \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
-            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            --ios \
-            --apple_sysroot iphonesimulator \
-            --osx_arch ${{ matrix.arch }} \
-            --target install \
-            --parallel \
-            --skip_tests \
-            --ios \
-            --apple_deploy_target '13.0' \
-            --use_coreml \
-            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
+            $opts \
+            tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-      - name: Display results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+      - name: Setup tmate session
+        if: false
+        uses: mxschmitt/action-tmate@v3
+
+      - name: Create onnxruntime XCFramework
         shell: bash
         run: |
-          arch=simulator/${{ matrix.arch }}
+          set -euo pipefail
 
-          echo "---ls -lh build-ios/$arch/Release/static_libraries/lib*.a---"
-          pushd build-ios/$arch/Release/static_libraries
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          popd
-          echo "---"
+          ls -lh build/apple_framework/intermediates/iphone*/Release/Release-*
+          tree build/apple_framework/intermediates/iphone*/Release/Release-*
 
-          echo "---build-ios/$arch/Release/Release-iphonesimulator---"
-          pushd build-ios/$arch/Release/Release-iphonesimulator/
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          popd
+          BUILD_ROOT=build/apple_framework/framework_out
+          OUT_DIR=
+          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          mkdir -p $OUT_DIR
+          mv -v $BUILD_ROOT/onnxruntime.xcframework $OUT_DIR
 
-      - name: Copy results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
+          tree $OUT_DIR/
+
+      - name: Zip XCFramework
         run: |
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          arch=simulator/${{ matrix.arch }}
+          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
 
-          ls -1 build-ios/$arch/Release/static_libraries
+          zip -r ${OUT_DIR}.zip $OUT_DIR
 
-          ls -lh build-ios/$arch/Release/static_libraries
-
-          echo "----------"
-          ls -1 build-ios/$arch/Release/Release-iphonesimulator
-          ls -lh build-ios/$arch/Release/Release-iphonesimulator
-
-          libtool -static -o build-ios/$arch/onnxruntime.a \
-            build-ios/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
-            build-ios/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
-            build-ios/$arch/Release/static_libraries/libabsl_base.a \
-            build-ios/$arch/Release/static_libraries/libabsl_city.a \
-            build-ios/$arch/Release/static_libraries/libabsl_civil_time.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cord.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cord_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_functions.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_handle.a \
-            build-ios/$arch/Release/static_libraries/libabsl_cordz_info.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc32c.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
-            build-ios/$arch/Release/static_libraries/libabsl_crc_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_debugging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
-            build-ios/$arch/Release/static_libraries/libabsl_demangle_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_demangle_rust.a \
-            build-ios/$arch/Release/static_libraries/libabsl_examine_stack.a \
-            build-ios/$arch/Release/static_libraries/libabsl_exponential_biased.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_config.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_program_name.a \
-            build-ios/$arch/Release/static_libraries/libabsl_flags_reflection.a \
-            build-ios/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
-            build-ios/$arch/Release/static_libraries/libabsl_int128.a \
-            build-ios/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_entry.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_globals.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_format.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_message.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_severity.a \
-            build-ios/$arch/Release/static_libraries/libabsl_log_sink.a \
-            build-ios/$arch/Release/static_libraries/libabsl_low_level_hash.a \
-            build-ios/$arch/Release/static_libraries/libabsl_malloc_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
-            build-ios/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
-            build-ios/$arch/Release/static_libraries/libabsl_stacktrace.a \
-            build-ios/$arch/Release/static_libraries/libabsl_str_format_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strerror.a \
-            build-ios/$arch/Release/static_libraries/libabsl_string_view.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strings.a \
-            build-ios/$arch/Release/static_libraries/libabsl_strings_internal.a \
-            build-ios/$arch/Release/static_libraries/libabsl_symbolize.a \
-            build-ios/$arch/Release/static_libraries/libabsl_synchronization.a \
-            build-ios/$arch/Release/static_libraries/libabsl_throw_delegate.a \
-            build-ios/$arch/Release/static_libraries/libabsl_time.a \
-            build-ios/$arch/Release/static_libraries/libabsl_time_zone.a \
-            build-ios/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
-            build-ios/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
-            build-ios/$arch/Release/static_libraries/libcpuinfo.a \
-            build-ios/$arch/Release/static_libraries/libflatbuffers.a \
-            build-ios/$arch/Release/static_libraries/libonnx.a \
-            build-ios/$arch/Release/static_libraries/libonnx_proto.a \
-            build-ios/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-ios/$arch/Release/static_libraries/libre2.a \
-            \
-            build-ios/$arch/Release/Release-iphonesimulator/libcoreml_proto.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_common.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_flatbuffers.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_framework.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_graph.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_lora.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_mlas.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_optimizer.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_providers.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_providers_coreml.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_session.a \
-            build-ios/$arch/Release/Release-iphonesimulator/libonnxruntime_util.a
-
-          dst=onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          mkdir -p $dst
-
-          cp build-ios/$arch/onnxruntime.a $dst
-
-          ls -lh $dst
-
-      - name: Upload artifact
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
+      - name: Upload artifact xcframework
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-ios-simulator-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-
-  macOS:
-    name: macOS ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # os: [macos-latest]
-        # arch: [arm64, x86_64]
-        include:
-          - os: macos-latest
-            arch: arm64
-          - os: macos-15-intel
-            arch: x86_64
-
-    steps:
-      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
-        id: cache-build-result
-        uses: actions/cache@v4
-        with:
-          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
-
-      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/onnxruntime
-          submodules: true
-          ref: v${{ env.ONNXRUNTIME_VERSION }}
-
-      - name: Install dependencies on macos
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # brew install cmake
-          cmake --version
-          brew install tree
-          tree --version
-
-      - name: Download protoc
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # see ./cmake/deps.txt
-          if [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.14.[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
-            unzip protoc-3.20.3-osx-x86_64.zip
-          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-osx-x86_64.zip
-            unzip protoc-21.12-osx-x86_64.zip
-          fi
-
-          ./bin/protoc --version
-
-      - name: Set environment variable
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          echo "$GITHUB_WORKSPACE/bin"  >> "$GITHUB_PATH"
-
-      - name: Display protoc info for ${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          protoc --version
-
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS ${{ matrix.arch }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          # For apple_sysroot, see
-          # /Applications/Xcode.app/Contents/Developer/Platforms
-          build_dir=./build-macos/${{ matrix.arch }}
-
-          python3 ./tools/ci_build/build.py \
-            --build_dir $build_dir \
-            --config Release \
-            --update \
-            --build \
-            --use_xcode \
-            --compile_no_warning_as_error \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
-            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            --apple_sysroot macosx \
-            --osx_arch ${{ matrix.arch }} \
-            --target install \
-            --parallel \
-            --skip_tests \
-            --macos MacOSX \
-            --apple_deploy_target '13.3' \
-            --use_coreml \
-            --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc
-
-      - name: Display results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          arch=${{ matrix.arch }}
-
-          echo "---ls -lh build-macos/$arch/Release/static_libraries/lib*.a---"
-          pushd build-macos/$arch/Release/static_libraries
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          popd
-          echo "---"
-
-          echo "---build-macos/$arch/Release/Release-iphonesimulator---"
-          pushd build-macos/$arch/Release/Release
-          ls -lh lib*.a
-          echo "---"
-          ls -1 lib*.a
-          echo "---"
-          popd
-
-      - name: Copy results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          arch=${{ matrix.arch }}
-
-          ls -1 build-macos/$arch/Release/static_libraries
-
-          ls -lh build-macos/$arch/Release/static_libraries
-
-          echo "----------"
-          ls -1 build-macos/$arch/Release/Release
-          ls -lh build-macos/$arch/Release/Release
-
-          libtool -static -o build-macos/$arch/onnxruntime.a \
-            build-macos/$arch/Release/static_libraries/libabsl_bad_optional_access.a \
-            build-macos/$arch/Release/static_libraries/libabsl_bad_variant_access.a \
-            build-macos/$arch/Release/static_libraries/libabsl_base.a \
-            build-macos/$arch/Release/static_libraries/libabsl_city.a \
-            build-macos/$arch/Release/static_libraries/libabsl_civil_time.a \
-            build-macos/$arch/Release/static_libraries/libabsl_cord.a \
-            build-macos/$arch/Release/static_libraries/libabsl_cord_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_cordz_functions.a \
-            build-macos/$arch/Release/static_libraries/libabsl_cordz_handle.a \
-            build-macos/$arch/Release/static_libraries/libabsl_cordz_info.a \
-            build-macos/$arch/Release/static_libraries/libabsl_crc32c.a \
-            build-macos/$arch/Release/static_libraries/libabsl_crc_cord_state.a \
-            build-macos/$arch/Release/static_libraries/libabsl_crc_cpu_detect.a \
-            build-macos/$arch/Release/static_libraries/libabsl_crc_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_debugging_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_decode_rust_punycode.a \
-            build-macos/$arch/Release/static_libraries/libabsl_demangle_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_demangle_rust.a \
-            build-macos/$arch/Release/static_libraries/libabsl_examine_stack.a \
-            build-macos/$arch/Release/static_libraries/libabsl_exponential_biased.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_commandlineflag.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_commandlineflag_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_config.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_marshalling.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_private_handle_accessor.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_program_name.a \
-            build-macos/$arch/Release/static_libraries/libabsl_flags_reflection.a \
-            build-macos/$arch/Release/static_libraries/libabsl_graphcycles_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_hash.a \
-            build-macos/$arch/Release/static_libraries/libabsl_hashtablez_sampler.a \
-            build-macos/$arch/Release/static_libraries/libabsl_int128.a \
-            build-macos/$arch/Release/static_libraries/libabsl_kernel_timeout_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_entry.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_globals.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_check_op.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_conditions.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_fnmatch.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_format.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_globals.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_log_sink_set.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_message.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_nullguard.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_internal_proto.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_severity.a \
-            build-macos/$arch/Release/static_libraries/libabsl_log_sink.a \
-            build-macos/$arch/Release/static_libraries/libabsl_low_level_hash.a \
-            build-macos/$arch/Release/static_libraries/libabsl_malloc_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_raw_hash_set.a \
-            build-macos/$arch/Release/static_libraries/libabsl_raw_logging_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_spinlock_wait.a \
-            build-macos/$arch/Release/static_libraries/libabsl_stacktrace.a \
-            build-macos/$arch/Release/static_libraries/libabsl_str_format_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_strerror.a \
-            build-macos/$arch/Release/static_libraries/libabsl_string_view.a \
-            build-macos/$arch/Release/static_libraries/libabsl_strings.a \
-            build-macos/$arch/Release/static_libraries/libabsl_strings_internal.a \
-            build-macos/$arch/Release/static_libraries/libabsl_symbolize.a \
-            build-macos/$arch/Release/static_libraries/libabsl_synchronization.a \
-            build-macos/$arch/Release/static_libraries/libabsl_throw_delegate.a \
-            build-macos/$arch/Release/static_libraries/libabsl_time.a \
-            build-macos/$arch/Release/static_libraries/libabsl_time_zone.a \
-            build-macos/$arch/Release/static_libraries/libabsl_utf8_for_code_point.a \
-            build-macos/$arch/Release/static_libraries/libabsl_vlog_config_internal.a \
-            build-macos/$arch/Release/static_libraries/libcpuinfo.a \
-            build-macos/$arch/Release/static_libraries/libflatbuffers.a \
-            build-macos/$arch/Release/static_libraries/libonnx.a \
-            build-macos/$arch/Release/static_libraries/libonnx_proto.a \
-            build-macos/$arch/Release/static_libraries/libprotobuf-lite.a \
-            build-macos/$arch/Release/static_libraries/libre2.a \
-            \
-            build-macos/$arch/Release/Release/libcoreml_proto.a \
-            build-macos/$arch/Release/Release/libonnxruntime_common.a \
-            build-macos/$arch/Release/Release/libonnxruntime_flatbuffers.a \
-            build-macos/$arch/Release/Release/libonnxruntime_framework.a \
-            build-macos/$arch/Release/Release/libonnxruntime_graph.a \
-            build-macos/$arch/Release/Release/libonnxruntime_lora.a \
-            build-macos/$arch/Release/Release/libonnxruntime_mlas.a \
-            build-macos/$arch/Release/Release/libonnxruntime_optimizer.a \
-            build-macos/$arch/Release/Release/libonnxruntime_providers.a \
-            build-macos/$arch/Release/Release/libonnxruntime_providers_coreml.a \
-            build-macos/$arch/Release/Release/libonnxruntime_session.a \
-            build-macos/$arch/Release/Release/libonnxruntime_util.a
-
-          dst=onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          mkdir -p $dst
-
-          cp build-macos/$arch/onnxruntime.a $dst
-
-          ls -lh $dst
-
-      - name: Upload artifact
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-macos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-
-  create_xcframework:
-    name: Create xcframework
-    runs-on: macos-latest
-    needs: [ios_arm64, ios_simulator, macOS]
-    steps:
-      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
-        id: cache-build-result
-        uses: actions/cache@v4
-        with:
-          path: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
-          key: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
-
-      - name: Retrieve artifact for ios_arm64
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: onnxruntime-ios-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./onnxruntime-ios-arm64/
-
-      - name: Retrieve artifact for simulator arm64
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: onnxruntime-ios-simulator-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./onnxruntime-ios-simulator-arm64/
-
-      - name: Retrieve artifact for simulator x86_64
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: onnxruntime-ios-simulator-x86_64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./onnxruntime-ios-simulator-x86_64/
-
-      - name: Retrieve artifact for macOS arm64
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: onnxruntime-macos-arm64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./onnxruntime-macos-arm64/
-
-      - name: Retrieve artifact for macOS x86_64
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: onnxruntime-macos-x86_64-${{ env.ONNXRUNTIME_VERSION }}
-          path: ./onnxruntime-macos-x86_64/
-
-      - name: Install utilities
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          brew install tree
-
-      - name: Display artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          ls -lh
-          ls -lh */
-          tree -L 2 .
-
-      - name: Create xcframework
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          mkdir ./simulator
-          lipo -create onnxruntime-ios-simulator-x86_64/onnxruntime.a \
-                       onnxruntime-ios-simulator-arm64/onnxruntime.a \
-               -output ./simulator/onnxruntime.a
-
-          file ./simulator/onnxruntime.a
-          ls -lh ./simulator/onnxruntime.a
-
-          mkdir ./macos
-          lipo -create onnxruntime-macos-arm64/onnxruntime.a  \
-                       onnxruntime-macos-x86_64/onnxruntime.a \
-               -output ./macos/onnxruntime.a
-
-          file ./macos/onnxruntime.a
-          ls -lh ./macos/onnxruntime.a
-
-          xcodebuild -create-xcframework \
-              -library ./onnxruntime-ios-arm64/onnxruntime.a \
-              -library ./simulator/onnxruntime.a \
-              -library ./macos/onnxruntime.a \
-              -output onnxruntime.xcframework
-
-          mkdir -p onnxruntime.xcframework/Headers
-
-          cp -v onnxruntime-ios-arm64/*.h onnxruntime.xcframework/Headers
-
-          tree onnxruntime.xcframework
-
-          pushd onnxruntime.xcframework/ios-arm64
-          ln -s onnxruntime.a libonnxruntime.a
-
-          cd ../ios-arm64_x86_64-simulator
-          ln -s onnxruntime.a libonnxruntime.a
-
-          cd ../macos-arm64_x86_64
-          ln -s onnxruntime.a libonnxruntime.a
-
-          popd
-
-          tar cjvf onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 ./onnxruntime.xcframework
-
-          ls -lh onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
-          file: "./*.tar.bz2"
+          file: "./*.zip"
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
-      - name: Upload artifact
-        # if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime.xcframework
-
       # https://huggingface.co/docs/hub/spaces-github-actions
-      - name: Publish to huggingface (onnxruntime-libs)
+      - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git config --global user.email "csukuangfj@gmail.com"
-          git config --global user.name "Fangjun Kuang"
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            rm -rf huggingface
 
-          export GIT_CLONE_PROTECTION_ACTIVE=false
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
 
-          cd huggingface
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
 
-          d=${{ env.ONNXRUNTIME_VERSION }}
-          mkdir -p $d
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs huggingface
 
-          cp -v ../onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2 ./$d/
-          git status
-          git lfs track "*.bz2"
+            cd huggingface
+            mkdir -p $version
+            cp -v ../onnxruntime-ios-${{ matrix.link_type }}.xcframework*.zip ./$version
+            git status
+            git lfs track "*.zip"
 
-          git add .
+            git add .
 
-          git commit -m "upload onnxruntime.xcframework-${{ env.ONNXRUNTIME_VERSION}}.tar.bz2"
-          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
-          cd ..
-          rm -rf huggingface
+            git commit -m "upload onnxruntime-ios-${{ matrix.link_type }}.xcframework $version"
+            git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/onnxruntime-libs main
 
-      # https://huggingface.co/docs/hub/spaces-github-actions
-      - name: Publish to huggingface (ios-onnxruntime)
-        if: github.repository_owner == 'csukuangfj'  && steps.cache-build-result.outputs.cache-hit != 'true'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git config --global user.email "csukuangfj@gmail.com"
-          git config --global user.name "Fangjun Kuang"
-
-          export GIT_CLONE_PROTECTION_ACTIVE=false
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime huggingface
-          version=${{ env.ONNXRUNTIME_VERSION}}
-
-          cd huggingface
-
-          mkdir -p $version
-          mv -v ../onnxruntime.xcframework $version/
-
-          git status
-          git lfs track "*.a"
-
-          git add .
-
-          git commit -m "Add onnxruntime.xcframework $version"
-          git push https://csukuangfj:$HF_TOKEN@huggingface.co/csukuangfj/ios-onnxruntime main
-          cd ..
-          rm -rf huggingface
+# ===========static==========
+# /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework/intermediates/iphoneos_arm64/Release/Release-iphoneos
+# .
+# ├── libcoreml_proto.a
+# ├── libonnxruntime_common.a
+# ├── libonnxruntime_flatbuffers.a
+# ├── libonnxruntime_framework.a
+# ├── libonnxruntime_graph.a
+# ├── libonnxruntime_lora.a
+# ├── libonnxruntime_mlas.a
+# ├── libonnxruntime_optimizer.a
+# ├── libonnxruntime_providers_coreml.a
+# ├── libonnxruntime_providers_xnnpack.a
+# ├── libonnxruntime_providers.a
+# ├── libonnxruntime_session.a
+# ├── libonnxruntime_util.a
+# ├── onnxruntime_mlas_q4dq.app
+# │   ├── Info.plist
+# │   ├── onnxruntime_mlas_q4dq
+# │   └── PkgInfo
+# ├── onnxruntime.framework
+# │   ├── Headers
+# │   │   ├── coreml_provider_factory.h
+# │   │   ├── cpu_provider_factory.h
+# │   │   ├── onnxruntime_c_api.h
+# │   │   ├── onnxruntime_cxx_api.h
+# │   │   ├── onnxruntime_cxx_inline.h
+# │   │   ├── onnxruntime_ep_c_api.h
+# │   │   ├── onnxruntime_ep_device_ep_metadata_keys.h
+# │   │   ├── onnxruntime_float16.h
+# │   │   ├── onnxruntime_lite_custom_op.h
+# │   │   ├── onnxruntime_run_options_config_keys.h
+# │   │   └── onnxruntime_session_options_config_keys.h
+# │   ├── Info.plist
+# │   └── onnxruntime
+# └── static_framework
+#     └── onnxruntime.framework
+#         ├── Headers
+#         │   ├── coreml_provider_factory.h
+#         │   ├── cpu_provider_factory.h
+#         │   ├── onnxruntime_c_api.h
+#         │   ├── onnxruntime_cxx_api.h
+#         │   ├── onnxruntime_cxx_inline.h
+#         │   ├── onnxruntime_ep_c_api.h
+#         │   ├── onnxruntime_ep_device_ep_metadata_keys.h
+#         │   ├── onnxruntime_float16.h
+#         │   ├── onnxruntime_lite_custom_op.h
+#         │   ├── onnxruntime_run_options_config_keys.h
+#         │   └── onnxruntime_session_options_config_keys.h
+#         ├── Info.plist
+#         └── onnxruntime
+#
+# 7 directories, 42 files
+#
+# bash-3.2$ file static_framework/onnxruntime.framework/onnxruntime
+# static_framework/onnxruntime.framework/onnxruntime: current ar archive random library
+# bash-3.2$ ls -lh static_framework/onnxruntime.framework/onnxruntime
+# -rw-r--r--  1 runner  staff    37M Jan 14 07:03 static_framework/onnxruntime.framework/onnxruntime
+#
+# bash-3.2$ file onnxruntime.framework/onnxruntime
+# onnxruntime.framework/onnxruntime: Mach-O 64-bit dynamically linked shared library arm64
+# bash-3.2$ ls -lh onnxruntime.framework/onnxruntime
+# -rwxr-xr-x  1 runner  staff    24M Jan 14 07:03 onnxruntime.framework/onnxruntime
+#
+#
+# ===========shared==========
+#
+#
+# bash-3.2$ pwd
+# /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework
+# bash-3.2$ ls
+# framework_out           intermediates           xcframework_info.json
+# /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework/framework_out/onnxruntime.xcframework
+# bash-3.2$ pwd
+# /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework/framework_out/onnxruntime.xcframework
+# bash-3.2$ ls -lh
+# total 8
+# -rw-r--r--  1 runner  staff   1.1K Jan 14 07:31 Info.plist
+# drwxr-xr-x  3 runner  staff    96B Jan 14 07:31 ios-arm64
+# drwxr-xr-x  3 runner  staff    96B Jan 14 07:31 ios-arm64-simulator
+# bash-3.2$ ls -lh ios-arm64/onnxruntime.framework/
+# total 50104
+# drwxr-xr-x  13 runner  staff   416B Jan 14 07:13 Headers
+# -rw-r--r--   1 runner  staff   670B Jan 14 07:13 Info.plist
+# -rwxr-xr-x   1 runner  staff    24M Jan 14 07:13 onnxruntime
+# bash-3.2$ file ios-arm64/onnxruntime.framework/onnxruntime
+# ios-arm64/onnxruntime.framework/onnxruntime: Mach-O universal binary with 1 architecture: [arm64:Mach-O 64-bit dynamically linked shared library arm64]
+# ios-arm64/onnxruntime.framework/onnxruntime (for architecture arm64):   Mach-O 64-bit dynamically linked shared library arm64
+# bash-3.2$ ls -lh ios-arm64-simulator/onnxruntime.framework/
+# total 50040
+# drwxr-xr-x  13 runner  staff   416B Jan 14 07:31 Headers
+# -rw-r--r--   1 runner  staff   670B Jan 14 07:31 Info.plist
+# -rwxr-xr-x   1 runner  staff    24M Jan 14 07:31 onnxruntime
+# bash-3.2$ file  ios-arm64-simulator/onnxruntime.framework/onnxruntime
+# ios-arm64-simulator/onnxruntime.framework/onnxruntime: Mach-O universal binary with 1 architecture: [arm64:Mach-O 64-bit dynamically linked shared library arm64]
+# ios-arm64-simulator/onnxruntime.framework/onnxruntime (for architecture arm64): Mach-O 64-bit dynamically linked shared library arm64
+#
+# bash-3.2$ rm -rf iphoneos_arm64/Release/_deps/
+# bash-3.2$ rm -rf iphoneos_arm64/Release/build
+# bash-3.2$ cd iphoneos_arm64/
+# bash-3.2$ pwd
+# /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework/intermediates/iphoneos_arm64
+#  rm -rf static_libraries/temp
