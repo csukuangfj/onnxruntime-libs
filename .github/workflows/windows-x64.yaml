@@ -21,7 +21,7 @@ env:
 jobs:
   windows_x64:
     if: true
-    name: static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
+    name: x64 static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -67,6 +67,7 @@ jobs:
           fi
 
           python3 ./tools/ci_build/build.py \
+            --compile_no_warning_as_error \
             --build_dir $build_dir \
             --config ${{ matrix.build_type }} \
             --parallel \

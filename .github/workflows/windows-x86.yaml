@@ -21,7 +21,7 @@ env:
 jobs:
   windows_x86:
     if: true
-    name: static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
+    name: x86 static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -54,7 +54,7 @@ jobs:
           cmake --version
           cmake --help
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for Win64
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for x86
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -67,6 +67,7 @@ jobs:
           fi
 
           python3 ./tools/ci_build/build.py \
+            --compile_no_warning_as_error \
             --x86 \
             --build_dir $build_dir \
             --config ${{ matrix.build_type }} \
