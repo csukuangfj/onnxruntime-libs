@@ -59,7 +59,7 @@ jobs:
         run: |
           build_dir=./build/windows_x64
           use_static_crt=${{ matrix.use_static_crt }}
-          if [[ $use_static_crt == ON ]];
+          if [[ $use_static_crt == ON ]]; then
             extra_opt="--enable_msvc_static_runtime"
           else
             extra_opt=""
