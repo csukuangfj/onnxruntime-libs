@@ -3,7 +3,7 @@ name: windows-x64
 on:
   push:
     branches:
-      - rocm
+      - win-crt
   workflow_dispatch:
     inputs:
       version:
