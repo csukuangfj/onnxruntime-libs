@@ -139,11 +139,18 @@ jobs:
           cp -v $src/VERSION_NUMBER $dst_dir/
 
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'ON'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-win-x86-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-win-x86-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-x64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'OFF'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-x64-MD-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
