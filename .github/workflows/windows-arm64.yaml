@@ -197,3 +197,12 @@ jobs:
             git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
             cd ..
             rm -rf huggingface
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.tar.bz2"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}

@@ -151,6 +151,7 @@ jobs:
           name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-win-x64-MD-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
+
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
@@ -195,6 +196,12 @@ jobs:
             cd ..
             rm -rf huggingface
 
-      - name: Setup tmate session
-        if: true
-        uses: mxschmitt/action-tmate@v3
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.tar.bz2"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
