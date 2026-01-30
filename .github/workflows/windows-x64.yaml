@@ -145,39 +145,45 @@ jobs:
           path: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
-      - name: Publish to huggingface (onnxruntime-libs)
+      - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          version=${{ env.ONNXRUNTIME_VERSION }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            rm -rf huggingface
+            version=${{ env.ONNXRUNTIME_VERSION }}
 
-          use_static_crt=${{ matrix.use_static_crt }}
-          if [[ $use_static_crt == ON ]]; then
-            dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
-          else
-            dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
-          fi
+            use_static_crt=${{ matrix.use_static_crt }}
+            if [[ $use_static_crt == ON ]]; then
+              dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
+            else
+              dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
+            fi
 
-          tar cjvf $dst_dir.tar.bz2 $dst_dir
+            tar cjvf $dst_dir.tar.bz2 $dst_dir
 
-          ls -lh
+            ls -lh
 
-          git config --global user.email "csukuangfj@gmail.com"
-          git config --global user.name "Fangjun Kuang"
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
 
-          export GIT_CLONE_PROTECTION_ACTIVE=false
-          GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
 
-          cd huggingface
-          cp -v ../$dst_dir.tar.bz2 ./
-          git status
-          git lfs track "*.bz2"
+            cd huggingface
+            mkdir -p $version
+            cp -v ../$dst_dir.tar.bz2 ./$version
+            git status
+            git lfs track "*.bz2"
 
-          git add .
+            git add .
 
-          git commit -m "upload $dst_dir.tar.bz2"
-          git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
-          cd ..
-          rm -rf huggingface
+            git commit -m "upload $dst_dir.tar.bz2"
+            git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
+            cd ..
+            rm -rf huggingface
