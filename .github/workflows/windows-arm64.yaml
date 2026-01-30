@@ -1,4 +1,4 @@
-name: windows-x64
+name: windows-arm64
 
 on:
   push:
@@ -19,9 +19,9 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.23.2' }}
 
 jobs:
-  windows_x64:
+  windows_arm64:
     if: true
-    name: x64 static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
+    name: arm64 static CRT ${{ matrix.use_static_crt }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -35,8 +35,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-win-x64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-win-x64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-win-arm64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-win-arm64-static-crt-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -54,11 +54,11 @@ jobs:
           cmake --version
           cmake --help
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for Win64
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for arm64
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          build_dir=./build/windows_x64
+          build_dir=./build/windows_arm64
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
             extra_opt="--enable_msvc_static_runtime"
@@ -68,6 +68,7 @@ jobs:
 
           python3 ./tools/ci_build/build.py \
             --compile_no_warning_as_error \
+            --arm64 \
             --build_dir $build_dir \
             --config ${{ matrix.build_type }} \
             --parallel \
@@ -88,7 +89,7 @@ jobs:
         shell: bash
         run: |
 
-          build_dir=./build/windows_x64
+          build_dir=./build/windows_arm64
           version=${{ env.ONNXRUNTIME_VERSION }}
 
           mkdir tmp
@@ -102,9 +103,9 @@ jobs:
 
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
-            dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-arm64-MT-${{ matrix.build_type }}-$version
           else
-            dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
+            dst_dir=onnxruntime-win-arm64-MD-${{ matrix.build_type }}-$version
           fi
 
           mkdir -p $dst_dir
@@ -141,18 +142,18 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'ON'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-win-x64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-win-arm64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-arm64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'OFF'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-win-x64-MD-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
-
+          name: onnxruntime-win-arm64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-win-arm64-MD-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
+
       - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
@@ -164,13 +165,14 @@ jobs:
           shell: bash
           command: |
             rm -rf huggingface
+
             version=${{ env.ONNXRUNTIME_VERSION }}
 
             use_static_crt=${{ matrix.use_static_crt }}
             if [[ $use_static_crt == ON ]]; then
-              dst_dir=onnxruntime-win-x64-MT-${{ matrix.build_type }}-$version
+              dst_dir=onnxruntime-win-arm64-MT-${{ matrix.build_type }}-$version
             else
-              dst_dir=onnxruntime-win-x64-MD-${{ matrix.build_type }}-$version
+              dst_dir=onnxruntime-win-arm64-MD-${{ matrix.build_type }}-$version
             fi
 
             tar cjvf $dst_dir.tar.bz2 $dst_dir
@@ -195,7 +197,6 @@ jobs:
             git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
             cd ..
             rm -rf huggingface
-
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
