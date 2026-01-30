@@ -3,7 +3,7 @@ name: windows-arm64
 on:
   push:
     branches:
-      - win-crt-2
+      - win-crt
   workflow_dispatch:
     inputs:
       version:
@@ -94,12 +94,12 @@ jobs:
 
           mkdir tmp
           cd tmp
-          wget https://github.com/microsoft/onnxruntime/releases/download/v$version/onnxruntime-win-x64-$version.zip
+          curl -SL -O https://github.com/microsoft/onnxruntime/releases/download/v$version/onnxruntime-win-x64-$version.zip
           unzip onnxruntime-win-x64-$version.zip
           ls -lh onnxruntime-win-x64-$version
           cd ..
 
-          src=$tmp/onnxruntime-win-x64-$version
+          src=tmp/onnxruntime-win-x64-$version
 
           use_static_crt=${{ matrix.use_static_crt }}
           if [[ $use_static_crt == ON ]]; then
@@ -120,6 +120,8 @@ jobs:
           cp -v $build_dir/${{ matrix.build_type }}/${{ matrix.build_type }}/onnxruntime_providers_shared.dll $dst_dir/lib
           cp -v $build_dir/${{ matrix.build_type }}/${{ matrix.build_type }}/onnxruntime_providers_shared.lib $dst_dir/lib
           cp -v $build_dir/${{ matrix.build_type }}/${{ matrix.build_type }}/onnxruntime_providers_shared.exp $dst_dir/lib
+
+          ls -lh $dst_dir/lib
 
           echo "copy headers"
 
