@@ -3,11 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - harmony-os
+      - update-ohos
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.16.3)"
+        description: "Version information (e.g., 1.26.0)"
         required: true
 
 permissions:
@@ -20,7 +20,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.16.3' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.26.0' }}
 
 jobs:
   harmony-os-shared:
@@ -51,7 +51,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: command-line-tools
-          key: commandline-tools-linux-x64-5.0.5.200.zip
+          # key: commandline-tools-linux-x64-5.0.5.200.zip
+          key: commandline-tools-linux-x64-6.0.1.251.zip
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -66,9 +67,9 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-5.0.5.200.zip
-          unzip commandline-tools-linux-x64-5.0.5.200.zip
-          rm commandline-tools-linux-x64-5.0.5.200.zip
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-6.0.1.251.zip
+          unzip commandline-tools-linux-x64-6.0.1.251.zip
+          rm commandline-tools-linux-x64-6.0.1.251.zip
 
       - name: Set environment variable
         shell: bash
@@ -151,7 +152,7 @@ jobs:
           echo 'set(CMAKE_SYSTEM_NAME Linux CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
           mv a.txt CMakeLists.txt
 
-          sed -i.bak 's/"Enable link time optimization" OFF/"Enable link time optimization" ON/' ./CMakeLists.txt
+          # sed -i.bak 's/"Enable link time optimization" OFF/"Enable link time optimization" ON/' ./CMakeLists.txt
           sed -i.bak 's/"Build ONNXRuntime unit tests" ON/"Build ONNXRuntime unit tests" OFF/' ./CMakeLists.txt
           sed -i.bak 's/"Build a shared library" OFF/"Build a shared library" ON/' ./CMakeLists.txt
 
