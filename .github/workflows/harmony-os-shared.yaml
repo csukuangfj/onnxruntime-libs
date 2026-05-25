@@ -166,16 +166,15 @@ jobs:
           sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
           popd
 
-          # clang 15.0.4 in OHOS toolchain does not support bfloat16_t or
-          # fp16 NEON intrinsics used by MLAS. Exclude bf16/fp16 code paths.
-          find onnxruntime/core/mlas -name '*.h' -o -name '*.cpp' -o -name '*.cc' | \
-            xargs sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g'
+          # clang 15.0.4 in OHOS toolchain does not support fp16 NEON intrinsics.
+          # Disable fp16 code paths. bf16 is supported via __bf16.
 
+          # 1. Prevent MLAS_F16VEC_INTRINSICS_SUPPORTED from being defined
           pushd onnxruntime/core/mlas/inc
           sed -i.bak 's/#if !defined(__APPLE__)/#if !defined(\__APPLE__) \&\& !defined(__OHOS__)/g' mlas.h
           popd
 
-          # Remove fp16/bf16 source files from cmake to prevent compilation
+          # 2. Remove fp16-only source files from cmake
           pushd cmake
           sed -i.bak '/hqnbitgemm_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/hqnbitgemm_kernel_neon_fp16_8bit\.cpp/d' onnxruntime_mlas.cmake
@@ -186,18 +185,16 @@ jobs:
           sed -i.bak '/erf_neon_fp16\./d' onnxruntime_mlas.cmake
           sed -i.bak '/gelu_neon_fp16\./d' onnxruntime_mlas.cmake
           sed -i.bak '/activate_fp16\.cpp/d' onnxruntime_mlas.cmake
-          sed -i.bak '/dwconv\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/pooling_fp16\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/cast_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
-          sed -i.bak '/sbgemm_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
-          sed -i.bak '/sbconv_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/HalfGemmKernelNeon\.S/d' onnxruntime_mlas.cmake
-          sed -i.bak '/SbgemmKernelNeon\.S/d' onnxruntime_mlas.cmake
-          sed -i.bak '/SconvDepthwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
-          sed -i.bak '/SconvKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
-          sed -i.bak '/SconvPointwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
-          sed -i.bak '/HAS_ARM64_BFLOAT16\|HAS_ARM64_FLOAT16/d' onnxruntime_mlas.cmake
-          sed -i.bak '/message.*FATAL.*BFLOAT16\|message.*FATAL.*FLOAT16/d' onnxruntime_mlas.cmake
+          # Remove x86_64 fp16 assembly (AVX-512 FP16 not supported)
+          sed -i.bak '/cvtfp16Avx\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/cvtfp16a\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/cvtfp16Avx\.asm/d' onnxruntime_mlas.cmake
+          # Remove HAS_ARM64_FLOAT16 check (fp16 not supported)
+          sed -i.bak '/HAS_ARM64_FLOAT16/d' onnxruntime_mlas.cmake
+          sed -i.bak '/message.*FATAL.*FLOAT16/d' onnxruntime_mlas.cmake
           popd
 
           git diff
@@ -241,6 +238,9 @@ jobs:
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
             CMAKE_CXX_COMPILER=armv7-unknown-linux-ohos-clang++
             CMAKE_SYSTEM_PROCESSOR=armv7
+            # OHOS armeabi-v7a uses soft-float ABI by default; enable NEON
+            export CFLAGS="-mfpu=neon -mfloat-abi=hard"
+            export CXXFLAGS="-mfpu=neon -mfloat-abi=hard"
           elif [[ $arch == "x86_64" ]]; then
             CMAKE_C_COMPILER=x86_64-unknown-linux-ohos-clang
             CMAKE_ASM_COMPILER=$CMAKE_C_COMPILER
