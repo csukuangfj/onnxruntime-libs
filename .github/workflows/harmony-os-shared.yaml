@@ -175,6 +175,31 @@ jobs:
           sed -i.bak 's/#if !defined(__APPLE__)/#if !defined(\__APPLE__) \&\& !defined(__OHOS__)/g' mlas.h
           popd
 
+          # Remove fp16/bf16 source files from cmake to prevent compilation
+          pushd cmake
+          sed -i.bak '/hqnbitgemm_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/hqnbitgemm_kernel_neon_fp16_8bit\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/rotary_embedding_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/halfgemm_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/softmax_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/eltwise_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/erf_neon_fp16\./d' onnxruntime_mlas.cmake
+          sed -i.bak '/gelu_neon_fp16\./d' onnxruntime_mlas.cmake
+          sed -i.bak '/activate_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/dwconv\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/pooling_fp16\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/cast_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/sbgemm_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/sbconv_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/HalfGemmKernelNeon\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SbgemmKernelNeon\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvDepthwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvPointwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/HAS_ARM64_BFLOAT16\|HAS_ARM64_FLOAT16/d' onnxruntime_mlas.cmake
+          sed -i.bak '/message.*FATAL.*BFLOAT16\|message.*FATAL.*FLOAT16/d' onnxruntime_mlas.cmake
+          popd
+
           git diff
 
           sudo apt-get install -y patchelf
