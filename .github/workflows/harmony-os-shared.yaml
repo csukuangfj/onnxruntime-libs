@@ -125,15 +125,15 @@ jobs:
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
 
           arch=${{ matrix.arch }}
-          if [[ $arch != armeabi-v7a ]]; then
-            echo "list(APPEND onnxruntime_EXTERNAL_LIBRARIES cpuinfo::cpuinfo cpuinfo::clog)" >> ./onnxruntime_common.cmake
-          fi
+          # if [[ $arch != armeabi-v7a ]]; then
+          #   echo "list(APPEND onnxruntime_EXTERNAL_LIBRARIES cpuinfo::cpuinfo cpuinfo::clog)" >> ./onnxruntime_common.cmake
+          # fi
 
-          echo 'set(ABSL_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
-          mv a.txt CMakeLists.txt
+          # echo 'set(ABSL_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
+          # mv a.txt CMakeLists.txt
 
-          echo 'set(CPUINFO_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
-          mv a.txt CMakeLists.txt
+          # echo 'set(CPUINFO_ENABLE_INSTALL ON)' | cat - CMakeLists.txt > a.txt
+          # mv a.txt CMakeLists.txt
 
           if [[ $arch == arm64-v8a ]]; then
             echo 'set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE STRING "" FORCE)' | cat - CMakeLists.txt > a.txt
