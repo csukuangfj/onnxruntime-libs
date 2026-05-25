@@ -166,15 +166,19 @@ jobs:
           sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
           popd
 
-          # clang 15.0.4 in OHOS toolchain does not support fp16 NEON intrinsics.
-          # Disable fp16 code paths. bf16 is supported via __bf16.
+          # clang 15.0.4 in OHOS toolchain does not support bfloat16_t or
+          # fp16 NEON intrinsics. Exclude all bf16/fp16 code paths.
 
-          # 1. Prevent MLAS_F16VEC_INTRINSICS_SUPPORTED from being defined
+          # 1. Guard bf16 code in MLAS source files
+          find onnxruntime/core/mlas -name '*.h' -o -name '*.cpp' -o -name '*.cc' | \
+            xargs sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g'
+
+          # 2. Prevent MLAS_F16VEC_INTRINSICS_SUPPORTED from being defined
           pushd onnxruntime/core/mlas/inc
           sed -i.bak 's/#if !defined(__APPLE__)/#if !defined(\__APPLE__) \&\& !defined(__OHOS__)/g' mlas.h
           popd
 
-          # 2. Remove fp16-only source files from cmake
+          # 3. Remove fp16-only source files from cmake
           pushd cmake
           sed -i.bak '/hqnbitgemm_kernel_neon_fp16\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/hqnbitgemm_kernel_neon_fp16_8bit\.cpp/d' onnxruntime_mlas.cmake
@@ -188,14 +192,32 @@ jobs:
           sed -i.bak '/pooling_fp16\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/cast_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
           sed -i.bak '/HalfGemmKernelNeon\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/sbgemm_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/sbconv_kernel_neon\.cpp/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SbgemmKernelNeon\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvDepthwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/SconvPointwiseKernelNeonBf16\.S/d' onnxruntime_mlas.cmake
+          sed -i.bak '/HAS_ARM64_BFLOAT16\|HAS_ARM64_FLOAT16/d' onnxruntime_mlas.cmake
+          sed -i.bak '/message.*FATAL.*BFLOAT16\|message.*FATAL.*FLOAT16/d' onnxruntime_mlas.cmake
           # Remove x86_64 fp16 assembly (AVX-512 FP16 not supported)
           sed -i.bak '/cvtfp16Avx\.S/d' onnxruntime_mlas.cmake
           sed -i.bak '/cvtfp16a\.S/d' onnxruntime_mlas.cmake
           sed -i.bak '/cvtfp16Avx\.asm/d' onnxruntime_mlas.cmake
-          # Remove HAS_ARM64_FLOAT16 check (fp16 not supported)
-          sed -i.bak '/HAS_ARM64_FLOAT16/d' onnxruntime_mlas.cmake
-          sed -i.bak '/message.*FATAL.*FLOAT16/d' onnxruntime_mlas.cmake
           popd
+
+          # 4. Patch matmul to disable bf16 acceleration
+          sed -i.bak 's/use_fastmath_mode_ = (config_ops == "1") \&\& MlasBf16AccelerationSupported();/use_fastmath_mode_ = false;/' \
+            onnxruntime/core/providers/cpu/math/matmul.h
+
+          # 5. Add MLAS_SBGEMM stubs for OHOS (bf16 not fully supported)
+          printf '\n#ifdef __OHOS__\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'static inline size_t MlasSBGemmPackBSize(int,int,bool,size_t,size_t,void*){return 0;}\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'static inline void MlasSBGemmConvertPackB(int,int,bool,size_t,size_t,const float*,float*,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'struct MLAS_SBGEMM_DATA_PARAMS{const float*A;const void*B;float*C;float*Bias;void*OutputProcessor;bool AIsfp32;bool BIsfp32;};\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'static inline void MlasSBGemmBatch(int,int,int,size_t,size_t,size_t,float,const MLAS_SBGEMM_DATA_PARAMS*,size_t,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '#endif\n' >> onnxruntime/core/mlas/inc/mlas.h
 
           git diff
 
