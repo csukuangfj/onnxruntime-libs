@@ -166,6 +166,14 @@ jobs:
           sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
           popd
 
+          # clang 15.0.4 in OHOS toolchain does not support bfloat16_t and
+          # fp16 NEON intrinsics used by MLAS. Exclude the bf16/fp16 code paths.
+          pushd onnxruntime/core/mlas/lib
+          sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g' mlasi.h
+          sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g' fp16_common.h 2>/dev/null || true
+          sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g' erf_neon_fp16.h 2>/dev/null || true
+          popd
+
           git diff
 
           sudo apt-get install -y patchelf
