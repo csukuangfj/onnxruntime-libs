@@ -41,10 +41,10 @@ jobs:
 
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
         id: cache-build-result
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
 
       - name: cache-toolchain (CPU)
         id: cache-toolchain
@@ -377,6 +377,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
+        if: false
         # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
