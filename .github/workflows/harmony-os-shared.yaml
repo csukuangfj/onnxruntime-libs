@@ -166,10 +166,12 @@ jobs:
           sed -i.bak 's/#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(__wasm__) && !defined(_AIX)/#if 0/'g ./env.cc
           popd
 
-          # clang 15.0.4 in OHOS toolchain does not support fp16 NEON
-          # intrinsics used by MLAS. Exclude fp16 code paths.
+          # clang 15.0.4 in OHOS toolchain does not support bfloat16_t or
+          # fp16 NEON intrinsics used by MLAS. Exclude bf16/fp16 code paths.
+          find onnxruntime/core/mlas -name '*.h' -o -name '*.cpp' -o -name '*.cc' | \
+            xargs sed -i.bak 's/#if defined(__aarch64__) \&\& defined(__linux__)/#if defined(__aarch64__) \&\& defined(__linux__) \&\& !defined(__OHOS__)/g'
+
           pushd onnxruntime/core/mlas/inc
-          # Patch mlas.h: prevent MLAS_F16VEC_INTRINSICS_SUPPORTED on OHOS
           sed -i.bak 's/#if !defined(__APPLE__)/#if !defined(\__APPLE__) \&\& !defined(__OHOS__)/g' mlas.h
           popd
 
