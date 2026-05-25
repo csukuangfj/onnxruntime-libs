@@ -212,10 +212,16 @@ jobs:
 
           # 5. Add MLAS_SBGEMM stubs for OHOS (bf16 not fully supported)
           printf '\n#ifdef __OHOS__\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'struct MLAS_SBGEMM_POSTPROCESSOR {};\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'struct MLAS_SBGEMM_DATA_PARAMS{\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '  const void*A=nullptr;const void*B=nullptr;const float*Bias=nullptr;float*C=nullptr;\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '  size_t lda=0;size_t ldb=0;size_t ldc=0;\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '  const MLAS_SBGEMM_POSTPROCESSOR*OutputProcessor=nullptr;\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '  bool AIsfp32=false;bool BIsfp32=false;bool ZeroMode=true;bool BIsPacked=false;\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf '};\n' >> onnxruntime/core/mlas/inc/mlas.h
           printf 'static inline size_t MlasSBGemmPackBSize(int,int,bool,size_t,size_t,void*){return 0;}\n' >> onnxruntime/core/mlas/inc/mlas.h
           printf 'static inline void MlasSBGemmConvertPackB(int,int,bool,size_t,size_t,const float*,float*,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'struct MLAS_SBGEMM_DATA_PARAMS{const float*A;const void*B;float*C;float*Bias;void*OutputProcessor;bool AIsfp32;bool BIsfp32;};\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'static inline void MlasSBGemmBatch(int,int,int,size_t,size_t,size_t,float,const MLAS_SBGEMM_DATA_PARAMS*,size_t,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
+          printf 'static inline void MlasSBGemmBatch(int,int,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,void*,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
           printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> onnxruntime/core/mlas/inc/mlas.h
           printf '#endif\n' >> onnxruntime/core/mlas/inc/mlas.h
 
@@ -290,8 +296,8 @@ jobs:
             -DCMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
             -DOHOS_ARCH=$arch \
-            -DCMAKE_C_FLAGS="-D__OHOS__" \
-            -DCMAKE_CXX_FLAGS="-D__OHOS__" \
+            -DCMAKE_C_FLAGS="-D__OHOS__ $CFLAGS" \
+            -DCMAKE_CXX_FLAGS="-D__OHOS__ $CXXFLAGS" \
             -DCMAKE_TLS_VERIFY=ON \
             -Donnxruntime_BUILD_UNIT_TESTS=OFF \
             -DFETCHCONTENT_QUIET=OFF \
