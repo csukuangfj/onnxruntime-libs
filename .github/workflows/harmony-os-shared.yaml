@@ -44,15 +44,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2
+          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v906
 
       - name: cache-toolchain (CPU)
         id: cache-toolchain
         uses: actions/cache@v4
         with:
           path: command-line-tools
+          key: commandline-tools-linux-x64-5.0.3.906.zip
           # key: commandline-tools-linux-x64-5.0.5.200.zip
-          key: commandline-tools-linux-x64-6.0.1.251.zip
+          # key: commandline-tools-linux-x64-6.0.1.251.zip
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -67,9 +68,11 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-6.0.1.251.zip
-          unzip commandline-tools-linux-x64-6.0.1.251.zip
-          rm commandline-tools-linux-x64-6.0.1.251.zip
+          v=6.0.1.251
+          v=5.0.3.906
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-$v.zip
+          unzip commandline-tools-linux-x64-$v.zip
+          rm commandline-tools-linux-x64-$v.zip
 
       - name: Set environment variable
         shell: bash
