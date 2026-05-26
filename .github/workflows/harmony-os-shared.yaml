@@ -206,6 +206,9 @@ jobs:
           sed -i.bak '/cvtfp16Avx\.asm/d' onnxruntime_mlas.cmake
           popd
 
+          # Patch platform.cpp to skip x86 fp16 kernel references on OHOS
+          sed -i.bak 's/this->CastF16ToF32Kernel = \&MlasCastF16ToF32KernelSse;/this->CastF16ToF32Kernel = nullptr;/' onnxruntime/core/mlas/lib/platform.cpp
+
           # 4. Patch matmul to disable bf16 acceleration
           sed -i.bak 's/use_fastmath_mode_ = (config_ops == "1") \&\& MlasBf16AccelerationSupported();/use_fastmath_mode_ = false;/' \
             onnxruntime/core/providers/cpu/math/matmul.h
@@ -233,6 +236,9 @@ jobs:
         shell: bash
         run: |
           sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Linux/g $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+          # Add __OHOS__ define to the toolchain so all source files see it
+          sed -i.bak 's/set(CMAKE_C_FLAGS "${OHOS_C_COMPILER_FLAGS} ${CMAKE_C_FLAGS} -D__MUSL__")/set(CMAKE_C_FLAGS "${OHOS_C_COMPILER_FLAGS} ${CMAKE_C_FLAGS} -D__MUSL__ -D__OHOS__")/' $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+          sed -i.bak 's/set(CMAKE_CXX_FLAGS "${OHOS_CXX_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS} -D__MUSL__")/set(CMAKE_CXX_FLAGS "${OHOS_CXX_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS} -D__MUSL__ -D__OHOS__")/' $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
 
           echo "---"
           cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
@@ -296,8 +302,8 @@ jobs:
             -DCMAKE_ASM_COMPILER=$CMAKE_ASM_COMPILER \
             -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER \
             -DOHOS_ARCH=$arch \
-            -DCMAKE_C_FLAGS="-D__OHOS__ $CFLAGS" \
-            -DCMAKE_CXX_FLAGS="-D__OHOS__ $CXXFLAGS" \
+            -DCMAKE_C_FLAGS="$CFLAGS" \
+            -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
             -DCMAKE_TLS_VERIFY=ON \
             -Donnxruntime_BUILD_UNIT_TESTS=OFF \
             -DFETCHCONTENT_QUIET=OFF \
