@@ -214,19 +214,23 @@ jobs:
             onnxruntime/core/providers/cpu/math/matmul.h
 
           # 5. Add MLAS_SBGEMM stubs for OHOS (bf16 not fully supported)
-          printf '\n#ifdef __OHOS__\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'struct MLAS_SBGEMM_POSTPROCESSOR {};\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'struct MLAS_SBGEMM_DATA_PARAMS{\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '  const void*A=nullptr;const void*B=nullptr;const float*Bias=nullptr;float*C=nullptr;\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '  size_t lda=0;size_t ldb=0;size_t ldc=0;\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '  const MLAS_SBGEMM_POSTPROCESSOR*OutputProcessor=nullptr;\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '  bool AIsfp32=false;bool BIsfp32=false;bool ZeroMode=true;bool BIsPacked=false;\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '};\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'static inline size_t MlasSBGemmPackBSize(int,int,bool,size_t,size_t,void*){return 0;}\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'static inline void MlasSBGemmConvertPackB(int,int,bool,size_t,size_t,const float*,float*,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'static inline void MlasSBGemmBatch(int,int,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,void*,void*){}\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> onnxruntime/core/mlas/inc/mlas.h
-          printf '#endif\n' >> onnxruntime/core/mlas/inc/mlas.h
+          # Write stubs using printf to avoid YAML heredoc issues.
+          # These must use the correct types to match call sites in matmul.cc.
+          f=onnxruntime/core/mlas/inc/mlas.h
+          printf '\n#ifdef __OHOS__\n' >> $f
+          printf '// bf16/sbgemm stubs for OHOS\n' >> $f
+          printf 'struct MLAS_SBGEMM_POSTPROCESSOR {};\n' >> $f
+          printf 'struct MLAS_SBGEMM_DATA_PARAMS {\n' >> $f
+          printf '  const void *A; const void *B; const float *Bias; float *C;\n' >> $f
+          printf '  size_t lda; size_t ldb; size_t ldc;\n' >> $f
+          printf '  const MLAS_SBGEMM_POSTPROCESSOR *OutputProcessor;\n' >> $f
+          printf '  bool AIsfp32; bool BIsfp32; bool ZeroMode; bool BIsPacked;\n' >> $f
+          printf '};\n' >> $f
+          printf 'static inline size_t MlasSBGemmPackBSize(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){return 0;}\n' >> $f
+          printf 'static inline void MlasSBGemmConvertPackB(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const float*,float*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
+          printf 'static inline void MlasSBGemmBatch(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,MLAS_THREADPOOL*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
+          printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> $f
+          printf '#endif\n' >> $f
 
           git diff
 
