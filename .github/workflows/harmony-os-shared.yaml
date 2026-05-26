@@ -227,7 +227,7 @@ jobs:
           printf '  bool AIsfp32; bool BIsfp32; bool ZeroMode; bool BIsPacked;\n' >> $f
           printf '};\n' >> $f
           printf 'static inline size_t MlasSBGemmPackBSize(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){return 0;}\n' >> $f
-          printf 'static inline void MlasSBGemmConvertPackB(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const float*,float*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
+          printf 'static inline void MlasSBGemmConvertPackB(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const float*,size_t,void*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline void MlasSBGemmBatch(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,MLAS_THREADPOOL*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> $f
           printf '#endif\n' >> $f
