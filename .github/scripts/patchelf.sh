@@ -3,8 +3,9 @@
 set -ex
 
 version=$ONNXRUNTIME_VERSION
+cuda_version=$CUDA_VERSION
 
-f=onnxruntime-linux-x64-gpu-$ONNXRUNTIME_VERSION
+f=onnxruntime-linux-x64-gpu_cuda${cuda_version}-$version
 curl -SL -O https://github.com/microsoft/onnxruntime/releases/download/v$ONNXRUNTIME_VERSION/$f.tgz
 tar xvf $f.tgz
 rm $f.tgz

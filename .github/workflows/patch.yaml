@@ -26,6 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        cuda: ["12", "13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +42,7 @@ jobs:
         shell: bash
         run: |
           cd .github/scripts
+          export CUDA_VERSION=${{ matrix.cuda }}
           ./patchelf.sh
 
       - name: Show sha256sum
