@@ -172,7 +172,8 @@ jobs:
         run: |
           version=${{ env.ONNXRUNTIME_VERSION }}
           d=onnxruntime-android-$version
-          wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/$version/$d.aar
+          wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/$version/$d.aar || \
+          wget -q https://repo1.maven.org/maven2/com/microsoft/onnxruntime/onnxruntime-android/1.26.0/onnxruntime-android-1.26.0.aar
           mkdir $d
           pushd $d
           unzip ../$d.aar
