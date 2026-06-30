@@ -292,6 +292,25 @@ jobs:
 
           sudo apt-get install -y patchelf
 
+      - name: Patch model_editor_c_api for Clang 15
+        shell: bash
+        run: |
+          target_file=$GITHUB_WORKSPACE/onnxruntime/onnxruntime/core/session/model_editor_c_api.cc
+
+          echo "--- Patching model_editor_c_api.cc ---"
+
+          # 1. 修复 OrtModelEditorAPI::AddInitializerToGraph 中的结构化绑定 (约332行-348行)
+          sed -i 's/auto \[ptr_it, ptr_inserted\] = graph->initializer_ptrs.insert(tensor);/auto insert_res_1 = graph->initializer_ptrs.insert(tensor); auto ptr_it = insert_res_1.first; auto ptr_inserted = insert_res_1.second;/g' $target_file
+
+          # 2. 修复 OrtModelEditorAPI::AddNodeToGraph 中的结构化绑定 (约384行-399行)
+          sed -i 's/auto \[ptr_it, ptr_inserted\] = graph->node_ptrs.insert(node);/auto insert_res_2 = graph->node_ptrs.insert(node); auto ptr_it = insert_res_2.first; auto ptr_inserted = insert_res_2.second;/g' $target_file
+
+          echo "--- Patch applied successfully ---"
+
+          cd onnxruntime
+
+          git diff .
+
       - name: Patch toolchain file
         shell: bash
         run: |
