@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.26.0)"
+        description: "Version information (e.g., 1.27.0)"
         required: true
 
 permissions:
@@ -16,11 +16,12 @@ permissions:
 # commandline-tools-linux-x64-5.0.3.906.zip supports only onnxruntime<=1.16.3
 # since its clang is 15.0.4 and does not support bfloat16_t
 #
+# See https://github.com/openharmony-rs/ohos-sdk/releases
 
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.26.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.0' }}
 
 jobs:
   harmony-os-shared:
@@ -30,8 +31,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        arch: [arm64-v8a, armeabi-v7a, x86_64]
-        # arch: [arm64-v8a]
+        # arch: [arm64-v8a, armeabi-v7a, x86_64]
+        arch: [armeabi-v7a]
 
     steps:
       - name: Setup Python 3.10
@@ -44,9 +45,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v906
+          key: onnxruntime-ohos-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v2026-06-30
 
       - name: cache-toolchain (CPU)
+        if: false
         id: cache-toolchain
         uses: actions/cache@v4
         with:
@@ -54,6 +56,65 @@ jobs:
           key: commandline-tools-linux-x64-5.0.3.906.zip
           # key: commandline-tools-linux-x64-5.0.5.200.zip
           # key: commandline-tools-linux-x64-6.0.1.251.zip
+
+      - name: Download toolchain
+        if: false
+        # if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          v=6.0.1.251
+          v=5.0.3.906
+          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-$v.zip
+          unzip commandline-tools-linux-x64-$v.zip
+          rm commandline-tools-linux-x64-$v.zip
+
+      - name: cache-toolchain (CPU)
+        id: cache-toolchain-2
+        uses: actions/cache@v4
+        with:
+          path: command-line-tools
+          key: ohos-sdk-windows_linux-public-5.0.0
+          # key: commandline-tools-linux-x64-5.0.5.200.zip
+          # key: commandline-tools-linux-x64-6.0.1.251.zip
+
+      - name: Download toolchain
+        if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v5.0.0/ohos-sdk-windows_linux-public.tar.gz.aa
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v5.0.0/ohos-sdk-windows_linux-public.tar.gz.ab
+
+          cat ohos-sdk-windows_linux-public.tar.gz.aa ohos-sdk-windows_linux-public.tar.gz.ab > ohos-sdk-windows_linux-public.tar.gz
+          tar -xzf ohos-sdk-windows_linux-public.tar.gz
+          rm ohos-sdk-windows_linux-public.tar.gz*
+
+          echo "---linux---"
+          ls -lh linux
+
+          echo "---windows---"
+          ls -lh windows
+
+          pushd linux/
+          unzip native-linux-x64-5.0.0.71-Release.zip
+          ls -lh native
+          popd
+
+          dst=command-line-tools/sdk/default/openharmony
+          mkdir -p $dst
+
+          mv linux/native $dst
+
+          rm -rf linux windows
+
+          ls
+
+          echo "---"
+
+          ls -lh $dst/
+
+      - name: Setup tmate session
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -63,16 +124,6 @@ jobs:
           submodules: true
           ref: v${{ env.ONNXRUNTIME_VERSION }}
           path: ./onnxruntime
-
-      - name: Download toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          v=6.0.1.251
-          v=5.0.3.906
-          curl -SL -O https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-$v.zip
-          unzip commandline-tools-linux-x64-$v.zip
-          rm commandline-tools-linux-x64-$v.zip
 
       - name: Set environment variable
         shell: bash
