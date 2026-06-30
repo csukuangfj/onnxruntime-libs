@@ -296,7 +296,7 @@ jobs:
         shell: bash
         run: |
           toolchain_file=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
-          sed -i.bak s/FROCE/FORCE/g $toolchain_file
+          sed -i.bak 's/set(UNIX TRUE CACHE BOOL FROCE)/set(UNIX TRUE CACHE BOOL "Force UNIX" FORCE)/g' $toolchain_file
 
           sed -i.bak s/CMAKE_SYSTEM_NAME\ OHOS/CMAKE_SYSTEM_NAME\ Linux/g $toolchain_file
           # Add __OHOS__ define to the toolchain so all source files see it
@@ -320,19 +320,21 @@ jobs:
           arch=${{ matrix.arch }}
           if [[ $arch == "arm64-v8a" ]]; then
             CMAKE_SYSTEM_PROCESSOR=aarch64
+
+            export CFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
+            export CXXFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
           elif [[ $arch == "armeabi-v7a" ]]; then
             CMAKE_SYSTEM_PROCESSOR=armv7
-            # 【注意】我们不再使用 -mfloat-abi=hard 覆盖，让工具链自行组合最佳浮点行为。
-            # 如果你有其它专门的无害全局优化标志，可以写在这
-            export CFLAGS="-O3"
-            export CXXFLAGS="-O3"
+            export CFLAGS="-O3 -mfloat-abi=softfp -mfpu=neon -Wno-unused-parameter -Wno-unused-command-line-argument"
+            export CXXFLAGS="-O3 -mfloat-abi=softfp -mfpu=neon -Wno-unused-parameter -Wno-unused-command-line-argument"
           elif [[ $arch == "x86_64" ]]; then
             CMAKE_SYSTEM_PROCESSOR=x86_64
+            export CFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
+            export CXXFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
           fi
 
           cd $build_dir
 
-          # 精简 CMake 的配置传递：不再与工具链硬碰硬抢夺编译器路径控制权
           cmake \
             -DCMAKE_TOOLCHAIN_FILE=$OHOS_SDK_NATIVE_DIR/build/cmake/ohos.toolchain.cmake \
             -DOHOS_ARCH=$arch \
