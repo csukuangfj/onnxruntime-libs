@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - update-ohos
+      - onnxruntime-1.27.0
   workflow_dispatch:
     inputs:
       version:
@@ -31,8 +32,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        # arch: [arm64-v8a, armeabi-v7a, x86_64]
-        arch: [armeabi-v7a]
+        arch: [arm64-v8a, armeabi-v7a, x86_64]
+        # arch: [armeabi-v7a]
 
     steps:
       - name: Setup Python 3.10
@@ -592,10 +593,16 @@ jobs:
           tree ./$artifact
 
           file ./$artifact/lib/libonnxruntime.so
+          ls -lh ./$artifact/lib/libonnxruntime.so
 
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          echo "---after patchelf"
+
+          readelf -d ./$artifact/lib/libonnxruntime.so
+          ls -lh ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
           mv *.zip ../
@@ -620,7 +627,7 @@ jobs:
 
       # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: false
+        if: true
         # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
