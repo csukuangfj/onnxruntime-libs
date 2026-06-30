@@ -306,7 +306,7 @@ jobs:
           echo "---"
           cat $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
 
-- name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         shell: bash
         run: |
           cd onnxruntime
