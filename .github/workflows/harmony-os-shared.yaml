@@ -243,9 +243,6 @@ jobs:
           # 先恢复可能被污染的文件（Actions中重新运行时安全）
           git checkout -- "$FETCH_CONTENT_PATH" 2>/dev/null || true
 
-          # 终极全量拦截：直接在 FetchContent.cmake 的最后，追加一段自定义的宏重写逻辑。
-          # 只要外部调用 FetchContent_Populate(xxx)，在它执行完后，我们立刻强行扫描整个 _deps 目录，
-          # 把所有刚解压出来的 CMakeLists.txt 里面的 3.18 / 3.28 强行降级为 3.16。
           cat << 'EOF' >> "$FETCH_CONTENT_PATH"
 
           # === 强制注入的全局降级清洗钩子 ===
@@ -253,17 +250,18 @@ jobs:
               # 先调用原本系统的真实 Populate 逻辑
               _FetchContent_Populate(${contentName} ${ARGN})
 
-              # 真实逻辑执行完后，源码必定已经落盘。我们直接对 build 目录下的 _deps 展开地毯式清洗
+              # 真实逻辑执行完后，源码必定已经落盘
               message(STATUS "=== Global Hook: Cleaning up version limits for ${contentName} ===")
 
-              # 无论是 3.18, 3.22 还是 3.28，全部强制抹回 3.16
-              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/VERSION 3.[1-9][0-9]/VERSION 3.16/g' 2>/dev/null || true")
-              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/3.[1-9][0-9].../3.16.../g' 2>/dev/null || true")
+              # 【精准匹配】只修改含有 cmake_minimum_required 的行，把里面的 3.18 到 3.35 统统安全改回 3.16
+              # 这样绝对不会误伤文件后面 114、115 行等普通逻辑中的数字或范围
+              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i '/cmake_minimum_required/s/3\.[1-9][0-9]/3.16/g' 2>/dev/null || true")
+              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i '/cmake_minimum_required/s/3\.[1-9][0-9]\.\.\./3.16.../g' 2>/dev/null || true")
           endmacro()
           EOF
 
-          echo "=== FetchContent.cmake successfully high-jacked ==="
-          tail -n 20 "$FETCH_CONTENT_PATH"
+          echo "=== FetchContent.cmake successfully high-jacked with precise matching ==="
+          tail -n 25 "$FETCH_CONTENT_PATH"
 
       - name: Globally strip CMake block/endblock syntax
         run: |
