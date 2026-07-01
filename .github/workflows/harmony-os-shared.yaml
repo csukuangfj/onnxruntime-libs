@@ -248,19 +248,19 @@ jobs:
           # 把所有刚解压出来的 CMakeLists.txt 里面的 3.18 / 3.28 强行降级为 3.16。
           cat << 'EOF' >> "$FETCH_CONTENT_PATH"
 
-# === 强制注入的全局降级清洗钩子 ===
-macro(FetchContent_Populate contentName)
-    # 先调用原本系统的真实 Populate 逻辑
-    _FetchContent_Populate(${contentName} ${ARGN})
+          # === 强制注入的全局降级清洗钩子 ===
+          macro(FetchContent_Populate contentName)
+              # 先调用原本系统的真实 Populate 逻辑
+              _FetchContent_Populate(${contentName} ${ARGN})
 
-    # 真实逻辑执行完后，源码必定已经落盘。我们直接对 build 目录下的 _deps 展开地毯式清洗
-    message(STATUS "=== Global Hook: Cleaning up version limits for ${contentName} ===")
+              # 真实逻辑执行完后，源码必定已经落盘。我们直接对 build 目录下的 _deps 展开地毯式清洗
+              message(STATUS "=== Global Hook: Cleaning up version limits for ${contentName} ===")
 
-    # 无论是 3.18, 3.22 还是 3.28，全部强制抹回 3.16
-    execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/VERSION 3.[1-9][0-9]/VERSION 3.16/g' 2>/dev/null || true")
-    execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/3.[1-9][0-9].../3.16.../g' 2>/dev/null || true")
-endmacro()
-EOF
+              # 无论是 3.18, 3.22 还是 3.28，全部强制抹回 3.16
+              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/VERSION 3.[1-9][0-9]/VERSION 3.16/g' 2>/dev/null || true")
+              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/3.[1-9][0-9].../3.16.../g' 2>/dev/null || true")
+          endmacro()
+          EOF
 
           echo "=== FetchContent.cmake successfully high-jacked ==="
           tail -n 20 "$FETCH_CONTENT_PATH"
