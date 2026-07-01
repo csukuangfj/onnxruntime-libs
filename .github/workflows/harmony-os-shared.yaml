@@ -74,20 +74,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: command-line-tools
-          key: ohos-sdk-windows_linux-public-5.0.0
-          # key: commandline-tools-linux-x64-5.0.5.200.zip
-          # key: commandline-tools-linux-x64-6.0.1.251.zip
+          key: ohos-sdk-windows_linux-public-4.0.0
+          # key: ohos-sdk-windows_linux-public-5.0.0
 
       - name: Download toolchain
         if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v5.0.0/ohos-sdk-windows_linux-public.tar.gz.aa
-          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v5.0.0/ohos-sdk-windows_linux-public.tar.gz.ab
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1.0/ohos-sdk-windows_linux-public.tar.gz.aa
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1.0/ohos-sdk-windows_linux-public.tar.gz.ab
 
           cat ohos-sdk-windows_linux-public.tar.gz.aa ohos-sdk-windows_linux-public.tar.gz.ab > ohos-sdk-windows_linux-public.tar.gz
           tar -xzf ohos-sdk-windows_linux-public.tar.gz
           rm ohos-sdk-windows_linux-public.tar.gz*
+
+          cd ohos-sdk
 
           echo "---linux---"
           ls -lh linux
@@ -96,16 +97,19 @@ jobs:
           ls -lh windows
 
           pushd linux/
-          unzip native-linux-x64-5.0.0.71-Release.zip
+          # unzip native-linux-x64-5.0.0.71-Release.zip
+          unzip native-linux-x64-4.1.7.5-Release.zip
           ls -lh native
           popd
+
+          cd ..
 
           dst=command-line-tools/sdk/default/openharmony
           mkdir -p $dst
 
-          mv linux/native $dst
+          mv ohos-sdk/linux/native $dst
 
-          rm -rf linux windows
+          rm -rf ohos-sdk
 
           ls
 
