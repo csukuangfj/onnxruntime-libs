@@ -81,8 +81,11 @@ jobs:
         if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1.0/ohos-sdk-windows_linux-public.tar.gz.aa
-          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1.0/ohos-sdk-windows_linux-public.tar.gz.ab
+          # https://laval.csdn.net/67d247833b685529b70a2a54.html
+          # https://github.com/openharmony-rs/ohos-sdk/releases
+
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1/ohos-sdk-windows_linux-public.tar.gz.aa
+          curl -L -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.1/ohos-sdk-windows_linux-public.tar.gz.ab
 
           cat ohos-sdk-windows_linux-public.tar.gz.aa ohos-sdk-windows_linux-public.tar.gz.ab > ohos-sdk-windows_linux-public.tar.gz
           tar -xzf ohos-sdk-windows_linux-public.tar.gz
@@ -181,6 +184,9 @@ jobs:
         run: |
           cd onnxruntime
           pushd cmake
+
+          sed -i.bak 's/cmake_minimum_required(VERSION 3.28)/cmake_minimum_required(VERSION 3.16)/' CMakeLists.txt
+
           sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
 
@@ -356,6 +362,8 @@ jobs:
             export CFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
             export CXXFLAGS="-O3 -Wno-unused-parameter -Wno-unused-command-line-argument"
           fi
+
+          which cmake
 
           cd $build_dir
 
