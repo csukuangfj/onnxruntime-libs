@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.24.4)"
+        description: "Version information (e.g., 1.27.0)"
         required: true
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.24.4' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.0' }}
 
 jobs:
   harmony-os-shared:
@@ -136,9 +136,6 @@ jobs:
       - name: Set environment variable
         shell: bash
         run: |
-          echo "$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build-tools/cmake/bin"  >> "$GITHUB_PATH"
-          which cmake
-
           cmake --version
 
           ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
@@ -342,7 +339,7 @@ jobs:
 
           # 暴露好环境变量，让项目查找依赖或自定义逻辑能直接找到底层工具
           export OHOS_SDK_NATIVE_DIR=$GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native
-          export PATH=$OHOS_SDK_NATIVE_DIR/llvm/bin:$OHOS_SDK_NATIVE_DIR/build-tools/cmake/bin:$PATH
+          which cmake
 
           arch=${{ matrix.arch }}
           if [[ $arch == "arm64-v8a" ]]; then
