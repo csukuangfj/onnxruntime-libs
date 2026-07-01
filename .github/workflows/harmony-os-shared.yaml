@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - update-ohos
-      - onnxruntime-1.27.0
+      - sdk-4.1
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.0)"
+        description: "Version information (e.g., 1.24.4)"
         required: true
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.24.4' }}
 
 jobs:
   harmony-os-shared:
@@ -177,202 +177,12 @@ jobs:
           x86_64-unknown-linux-ohos-clang++ --version
           x86_64-unknown-linux-ohos-clang --version
 
-      - name: Fix Abseil patch syntax for CMake 3.16
-        if: false
-        run: |
-          cd onnxruntime
-
-          # 1. 备份原始文件（安全第一）
-          cp cmake/external/abseil-cpp.cmake cmake/external/abseil-cpp.cmake.bak
-
-          # 2. 用 Python 或更稳妥的脚本直接切除 if(Patch_FOUND) 到 endif() 之间的混乱逻辑
-          # 直接将 ABSL_PATCH_COMMAND 强制定义为空，并干掉原本可能引发解析断层的块
-          python3 -c '
-          path = "cmake/external/abseil-cpp.cmake"
-          with open(path, "r") as f:
-              content = f.read()
-
-          # 定位 if(Patch_FOUND) 到对应的 endif() 并替换
-          import re
-          # 匹配 if(Patch_FOUND) ... endif() 这一整段逻辑
-          pattern = r"if\(Patch_FOUND\).*?endif\(\)"
-          replacement = "set(ABSL_PATCH_COMMAND \"\")"
-
-          # 执行替换，同时确保 FetchContent 里的 PATCH_COMMAND 行也被安全移除
-          modified = re.sub(pattern, replacement, content, flags=re.DOTALL)
-          modified = modified.replace("PATCH_COMMAND ${ABSL_PATCH_COMMAND}", "")
-
-          with open(path, "w") as f:
-              f.write(modified)
-          '
-
-          # 3. 打印修改后的前 50 行确认一下，防止再次发生意外
-          head -n 50 cmake/external/abseil-cpp.cmake
-
-      - name: Globally bypass CMake 3.16 patch parsing bug
-        run: |
-          # 创建一个用于存放假命令的目录
-          mkdir -p $HOME/fake-bin
-
-          # 写入假 patch 脚本
-          cat << 'EOF' > $HOME/fake-bin/patch
-          #!/bin/bash
-          echo "=== Fake patch interceptor invoked ==="
-          echo "Original args: $@"
-
-          # 如果参数里包含 NAMES（说明触发了 CMake 3.16 缝合 Bug），直接假装成功返回 0
-          if [[ "$*" == *"NAMES"* ]]; then
-              echo "Detected CMake 3.16 internal mangled arguments. Bypassing safely."
-              exit 0
-          fi
-
-          # 如果是正常的 patch 请求，则转发给系统真正的 patch 工具
-          /usr/bin/patch "$@"
-          EOF
-
-          # 赋予执行权限
-          chmod +x $HOME/fake-bin/patch
-
-          # 将该目录强行注入到 GitHub Actions 环境的最前面
-          echo "$HOME/fake-bin" >> $GITHUB_PATH
-
-      - name: Hack OpenHarmony CMake FetchContent globally via Python
-        shell: bash
-        run: |
-          # 1. 定义要修改的系统 CMake 文件路径
-          FETCH_CONTENT_PATH="command-line-tools/sdk/default/openharmony/native/build-tools/cmake/share/cmake-3.16/Modules/FetchContent.cmake"
-
-          # 2. 还原可能被上一次运行污染的文件
-          git checkout -- "$FETCH_CONTENT_PATH" 2>/dev/null || true
-
-          # 3. 直接用一行 python 脚本安全追加劫持逻辑
-          python3 -c "
-          path = '$FETCH_CONTENT_PATH'
-          with open(path, 'a', encoding='utf-8') as f:
-              f.write('\n\n# === Global Python Hook for Version Lowering ===\n')
-              f.write('macro(FetchContent_Populate contentName)\n')
-              f.write('    _FetchContent_Populate(\${contentName} \${ARGN})\n')
-              f.write('    message(STATUS \"=== Global Hook: [Python] Cleaning up version limits for \${contentName} ===\")\n')
-              f.write('    execute_process(\n')
-              f.write('        COMMAND python3 -c \"\n')
-              f.write('import os, re\n')
-              f.write('deps_dir = os.path.join(\'\${CMAKE_BINARY_DIR}\', \'_deps\')\n')
-              f.write('if os.path.exists(deps_dir):\n')
-              f.write('    for root, dirs, files in os.walk(deps_dir):\n')
-              f.write('        if \'CMakeLists.txt\' in files:\n')
-              f.write('            f_path = os.path.join(root, \'CMakeLists.txt\')\n')
-              f.write('            try:\n')
-              f.write('                with open(f_path, \'r\', encoding=\'utf-8\', errors=\'ignore\') as f_in:\n')
-              f.write('                    lines = f_in.readlines()\n')
-              f.write('                if lines and any(k in lines[0].lower() or k in lines[1].lower() for k in [\'cmake_minimum_required\']):\n')
-              f.write('                    for i in range(min(5, len(lines))):\n')
-              f.write('                        if \'cmake_minimum_required\' in lines[i].lower():\n')
-              f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9](\\\.\\\.\\\.)?\', \'3.16...\', lines[i])\n')
-              f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9]\', \'3.16\', lines[i])\n')
-              f.write('                    with open(f_path, \'w\', encoding=\'utf-8\') as f_out:\n')
-              f.write('                        f_out.writelines(lines)\n')
-              f.write('            except Exception as e: print(e)\n')
-              f.write('\")\n')
-              f.write('endmacro()\n')
-          "
-          echo "=== FetchContent.cmake successfully high-jacked with pure Python step ==="
-          tail -n 35 "$FETCH_CONTENT_PATH"
-
-      - name: Globally strip CMake block/endblock syntax
-        run: |
-          cd onnxruntime
-
-          # 1. 移除不带参数或带参数的 block() 行（直接删掉该行，或者只留空）
-          # 匹配类似 block() 或 block(PROPAGATE ...) 这样的行并整行删除
-          find cmake/ CMakeLists.txt -type f -name "*.cmake" -o -name "CMakeLists.txt" | xargs sed -i '/^[[:space:]]*block(.*)/d'
-
-          # 2. 移除对应的 endblock() 行
-          find cmake/ CMakeLists.txt -type f -name "*.cmake" -o -name "CMakeLists.txt" | xargs sed -i '/^[[:space:]]*endblock()/d'
-
-          echo "=== All block() and endblock() syntaxes stripped ==="
-
-
-      - name: Globally strip and replace cmake_path for CMake 3.16
-        shell: bash
-        run: |
-          cd onnxruntime
-          python3 -c "
-          import os, re
-
-          for root, dirs, files in os.walk('.'):
-              for file in files:
-                  if file.endswith('.cmake') or file == 'CMakeLists.txt':
-                      file_path = os.path.join(root, file)
-                      try:
-                          with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                              content = f.read()
-
-                          original = content
-
-                          # 1. 干掉引起麻烦的 source_group(TREE ...)
-                          if 'source_group(TREE' in content:
-                              content = re.sub(r'source_group\s*\(TREE\s+[^)]+\)', '# source_group removed for 3.16', content)
-
-                          # 2. 闭合 cmake_path 变量逻辑
-                          if 'set(in_mlas_root TRUE)' in content:
-                              content = content.replace('set(in_mlas_root TRUE)', 'set(in_mlas_root FALSE)')
-                          content = re.sub(r'cmake_path\(IS_PREFIX\s+\S+\s+\S+\s+(\S+)\)', r'set(\1 FALSE)', content)
-
-                          # 3. 拦截 CheckLinkerFlag 并降级
-                          if 'include(CheckLinkerFlag)' in content:
-                              content = content.replace('include(CheckLinkerFlag)', 'include(CheckCXXCompilerFlag)')
-                          if 'check_linker_flag' in content:
-                              content = re.sub(r'check_linker_flag\s*\(\s*CXX\s+[\"\']?([^\"\'\)]+)[\"\']?\s+(\S+)\s*\)', r'check_cxx_compiler_flag("\1" \2)', content)
-                              content = re.sub(r'check_linker_flag\s*\(\s*C\s+[\"\']?([^\"\'\)]+)[\"\']?\s+(\S+)\s*\)', r'check_c_compiler_flag("\1" \2)', content)
-
-                          # 4. 【终极绝杀】无差别将所有的 FATAL_ERROR 降级为 WARNING
-                          # 这样不论它是因为 rpath、linker 还是其他乱七八糟的平台检测不过强行中断，都会被转为警告并继续
-                          if 'FATAL_ERROR' in content:
-                              content = content.replace('FATAL_ERROR', 'WARNING')
-
-                          if content != original:
-                              with open(file_path, 'w', encoding='utf-8') as f:
-                                  f.write(content)
-                              print(f'Successfully hot-fixed: {file_path}')
-                      except Exception as e:
-                          print(f'Failed to process {file_path}: {e}')
-          "
-
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cd onnxruntime
           pushd cmake
-
-          sed -i.bak 's/cmake_minimum_required(VERSION 3.28)/cmake_minimum_required(VERSION 3.16)/' CMakeLists.txt
-
-          if true; then
-            # 移除 block(PROPAGATE ...) 行
-            sed -i.bak '/block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
-
-            # 移除 unset(...) 行，避免干扰污染
-            sed -i.bak '/unset(onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
-
-            # 移除最后的 endblock() 行
-            sed -i.bak '/endblock()/d' detect_onnxruntime_target_platform.cmake
-          else
-            # 1. 删除开头 block(PROPAGATE onnxruntime_target_platform)
-            sed -i.bak '/^block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
-
-            # 2. 删除末尾 endblock()
-            sed -i.bak '/^endblock()/d' detect_onnxruntime_target_platform.cmake
-
-            # 3. 所有 set(onnxruntime_target_platform xxx) 末尾加上 PARENT_SCOPE
-            sed -i.bak 's/set(onnxruntime_target_platform \(.*\))/set(onnxruntime_target_platform \1 PARENT_SCOPE)/g' detect_onnxruntime_target_platform.cmake
-
-            # 4. 把中间整个 else() 分支（GCC -dumpmachine 那段）包进 if(TRUE) 隔离临时变量
-            # 先匹配 else() 那一行插入 if(TRUE)，最后一个 endif() 后插入 endif()
-            sed -i.bak '/^else()/,/set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/{
-                /^else()/aif(TRUE)
-                /set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/aendif()
-            }' detect_onnxruntime_target_platform.cmake
-          fi
 
           sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
