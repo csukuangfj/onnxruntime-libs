@@ -129,7 +129,7 @@ jobs:
           # https://laval.csdn.net/67d247833b685529b70a2a54.html
           # https://github.com/openharmony-rs/ohos-sdk/releases
           #
-          wget wget https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.0/ohos-sdk-windows_linux-public.tar.gz
+          curl -SL -O https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.0/ohos-sdk-windows_linux-public.tar.gz
           tar -xzf ohos-sdk-windows_linux-public.tar.gz
           rm ohos-sdk-windows_linux-public.tar.gz*
 
