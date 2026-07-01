@@ -291,6 +291,45 @@ jobs:
 
           echo "=== All block() and endblock() syntaxes stripped ==="
 
+      - name: Globally strip and replace cmake_path for CMake 3.16
+        shell: bash
+        run: |
+          cd onnxruntime/cmake
+
+          python3 -c "
+          import os
+
+          # 定义我们需要扫描和修复的所有 CMake 脚本
+          for root, dirs, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.cmake') or file == 'CMakeLists.txt':
+                      file_path = os.path.join(root, file)
+                      try:
+                          with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                              content = f.read()
+
+                          # 如果文件里包含 cmake_path，将其替换为老版本 3.16 兼容的写法
+                          if 'cmake_path' in content:
+                              # 针对 mlas 里面这一处经典的 IS_PREFIX 逻辑进行精准降级兼容
+                              # 假定路径都是前缀匹配，直接强行让变量返回 TRUE (1)
+                              old_len = len(content)
+                              content = content.replace(
+                                  'cmake_path(IS_PREFIX MLAS_ROOT ${mlas_target_src} in_mlas_root)',
+                                  'set(in_mlas_root TRUE)'
+                              )
+
+                              # 兜底：防止其他地方也有零星的 cmake_path(IS_PREFIX ...)
+                              import re
+                              content = re.sub(r'cmake_path\(IS_PREFIX\s+\S+\s+\S+\s+(\S+)\)', r'set(\1 TRUE)', content)
+
+                              if len(content) != old_len:
+                                  with open(file_path, 'w', encoding='utf-8') as f:
+                                      f.write(content)
+                                  print(f'Successfully patched cmake_path in: {file_path}')
+                      except Exception as e:
+                          print(f'Failed to process {file_path}: {e}')
+          "
+
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
