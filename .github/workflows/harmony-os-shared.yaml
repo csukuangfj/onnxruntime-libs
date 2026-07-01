@@ -189,7 +189,7 @@ jobs:
 
           ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/
           echo "--"
-          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/*unknown*
+          ls -lh $GITHUB_WORKSPACE/command-line-tools/sdk/default/openharmony/native/llvm/bin/*unknown* || true
 
           cat $GITHUB_PATH
 
