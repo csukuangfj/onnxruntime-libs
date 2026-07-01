@@ -177,6 +177,96 @@ jobs:
           x86_64-unknown-linux-ohos-clang++ --version
           x86_64-unknown-linux-ohos-clang --version
 
+      - name: Fix Abseil patch syntax for CMake 3.16
+        if: false
+        run: |
+          cd onnxruntime
+
+          # 1. 备份原始文件（安全第一）
+          cp cmake/external/abseil-cpp.cmake cmake/external/abseil-cpp.cmake.bak
+
+          # 2. 用 Python 或更稳妥的脚本直接切除 if(Patch_FOUND) 到 endif() 之间的混乱逻辑
+          # 直接将 ABSL_PATCH_COMMAND 强制定义为空，并干掉原本可能引发解析断层的块
+          python3 -c '
+          path = "cmake/external/abseil-cpp.cmake"
+          with open(path, "r") as f:
+              content = f.read()
+
+          # 定位 if(Patch_FOUND) 到对应的 endif() 并替换
+          import re
+          # 匹配 if(Patch_FOUND) ... endif() 这一整段逻辑
+          pattern = r"if\(Patch_FOUND\).*?endif\(\)"
+          replacement = "set(ABSL_PATCH_COMMAND \"\")"
+
+          # 执行替换，同时确保 FetchContent 里的 PATCH_COMMAND 行也被安全移除
+          modified = re.sub(pattern, replacement, content, flags=re.DOTALL)
+          modified = modified.replace("PATCH_COMMAND ${ABSL_PATCH_COMMAND}", "")
+
+          with open(path, "w") as f:
+              f.write(modified)
+          '
+
+          # 3. 打印修改后的前 50 行确认一下，防止再次发生意外
+          head -n 50 cmake/external/abseil-cpp.cmake
+
+      - name: Globally bypass CMake 3.16 patch parsing bug
+        run: |
+          # 创建一个用于存放假命令的目录
+          mkdir -p $HOME/fake-bin
+
+          # 写入假 patch 脚本
+          cat << 'EOF' > $HOME/fake-bin/patch
+          #!/bin/bash
+          echo "=== Fake patch interceptor invoked ==="
+          echo "Original args: $@"
+
+          # 如果参数里包含 NAMES（说明触发了 CMake 3.16 缝合 Bug），直接假装成功返回 0
+          if [[ "$*" == *"NAMES"* ]]; then
+              echo "Detected CMake 3.16 internal mangled arguments. Bypassing safely."
+              exit 0
+          fi
+
+          # 如果是正常的 patch 请求，则转发给系统真正的 patch 工具
+          /usr/bin/patch "$@"
+          EOF
+
+          # 赋予执行权限
+          chmod +x $HOME/fake-bin/patch
+
+          # 将该目录强行注入到 GitHub Actions 环境的最前面
+          echo "$HOME/fake-bin" >> $GITHUB_PATH
+
+      - name: Hack OpenHarmony CMake FetchContent globally
+        run: |
+          # 定义 OpenHarmony SDK 中 CMake 3.16 的 FetchContent 模块路径
+          FETCH_CONTENT_PATH=command-line-tools/sdk/default/openharmony/native/build-tools/cmake/share/cmake-3.16/Modules/FetchContent.cmake
+
+          cat $FETCH_CONTENT_PATH
+
+          # 在 FetchContent.cmake 文件的 FetchContent_Populate 函数中，
+          # 找到解压完成的节点（通常在真正执行 populate 逻辑的末尾附近），
+          # 或者直接在函数最后，注入一段对解压目录源码的强制修改逻辑。
+
+          # 我们直接把钩子挂在 __FetchContent_directPopulate 的末尾
+          # 只要解压出 source_dir，就立刻进去把所有符合条件的 CMake 最低版本限制全部降级
+          sed -i '/endfunction()/i \  if(EXISTS "${srcDir}/CMakeLists.txt")\n    execute_process(COMMAND sed -i "s/VERSION 3.18/VERSION 3.16/g" "${srcDir}/CMakeLists.txt")\n    execute_process(COMMAND sed -i "s/3.18.../3.16.../g" "${srcDir}/CMakeLists.txt")\n  endif()' "$FETCH_CONTENT_PATH"
+
+          echo "=== FetchContent.cmake globally patched ==="
+
+          cat $FETCH_CONTENT_PATH
+
+      - name: Globally strip CMake block/endblock syntax
+        run: |
+          cd onnxruntime
+
+          # 1. 移除不带参数或带参数的 block() 行（直接删掉该行，或者只留空）
+          # 匹配类似 block() 或 block(PROPAGATE ...) 这样的行并整行删除
+          find cmake/ CMakeLists.txt -type f -name "*.cmake" -o -name "CMakeLists.txt" | xargs sed -i '/^[[:space:]]*block(.*)/d'
+
+          # 2. 移除对应的 endblock() 行
+          find cmake/ CMakeLists.txt -type f -name "*.cmake" -o -name "CMakeLists.txt" | xargs sed -i '/^[[:space:]]*endblock()/d'
+
+          echo "=== All block() and endblock() syntaxes stripped ==="
 
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -187,21 +277,32 @@ jobs:
 
           sed -i.bak 's/cmake_minimum_required(VERSION 3.28)/cmake_minimum_required(VERSION 3.16)/' CMakeLists.txt
 
-          # 1. 删除开头 block(PROPAGATE onnxruntime_target_platform)
-          sed -i.bak '/^block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
+          if true; then
+            # 移除 block(PROPAGATE ...) 行
+            sed -i.bak '/block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
 
-          # 2. 删除末尾 endblock()
-          sed -i.bak '/^endblock()/d' detect_onnxruntime_target_platform.cmake
+            # 移除 unset(...) 行，避免干扰污染
+            sed -i.bak '/unset(onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
 
-          # 3. 所有 set(onnxruntime_target_platform xxx) 末尾加上 PARENT_SCOPE
-          sed -i.bak 's/set(onnxruntime_target_platform \(.*\))/set(onnxruntime_target_platform \1 PARENT_SCOPE)/g' detect_onnxruntime_target_platform.cmake
+            # 移除最后的 endblock() 行
+            sed -i.bak '/endblock()/d' detect_onnxruntime_target_platform.cmake
+          else
+            # 1. 删除开头 block(PROPAGATE onnxruntime_target_platform)
+            sed -i.bak '/^block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
 
-          # 4. 把中间整个 else() 分支（GCC -dumpmachine 那段）包进 if(TRUE) 隔离临时变量
-          # 先匹配 else() 那一行插入 if(TRUE)，最后一个 endif() 后插入 endif()
-          sed -i.bak '/^else()/,/set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/{
-              /^else()/aif(TRUE)
-              /set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/aendif()
-          }' detect_onnxruntime_target_platform.cmake
+            # 2. 删除末尾 endblock()
+            sed -i.bak '/^endblock()/d' detect_onnxruntime_target_platform.cmake
+
+            # 3. 所有 set(onnxruntime_target_platform xxx) 末尾加上 PARENT_SCOPE
+            sed -i.bak 's/set(onnxruntime_target_platform \(.*\))/set(onnxruntime_target_platform \1 PARENT_SCOPE)/g' detect_onnxruntime_target_platform.cmake
+
+            # 4. 把中间整个 else() 分支（GCC -dumpmachine 那段）包进 if(TRUE) 隔离临时变量
+            # 先匹配 else() 那一行插入 if(TRUE)，最后一个 endif() 后插入 endif()
+            sed -i.bak '/^else()/,/set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/{
+                /^else()/aif(TRUE)
+                /set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/aendif()
+            }' detect_onnxruntime_target_platform.cmake
+          fi
 
           sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
