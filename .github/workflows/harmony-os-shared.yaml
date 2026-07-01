@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - update-ohos
-      - sdk-4.1
+      - sdk-4.0
   workflow_dispatch:
     inputs:
       version:
@@ -77,8 +77,9 @@ jobs:
           key: ohos-sdk-windows_linux-public-4.0.0
           # key: ohos-sdk-windows_linux-public-5.0.0
 
-      - name: Download toolchain
-        if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
+      - name: Download toolchain 4.1.0
+        if: false
+        # if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # https://laval.csdn.net/67d247833b685529b70a2a54.html
@@ -102,6 +103,46 @@ jobs:
           pushd linux/
           # unzip native-linux-x64-5.0.0.71-Release.zip
           unzip native-linux-x64-4.1.7.5-Release.zip
+          ls -lh native
+          popd
+
+          cd ..
+
+          dst=command-line-tools/sdk/default/openharmony
+          mkdir -p $dst
+
+          mv ohos-sdk/linux/native $dst
+
+          rm -rf ohos-sdk
+
+          ls
+
+          echo "---"
+
+          ls -lh $dst/
+
+      - name: Download toolchain 4.0.0
+        if: true
+        # if: steps.cache-toolchain-2.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # https://laval.csdn.net/67d247833b685529b70a2a54.html
+          # https://github.com/openharmony-rs/ohos-sdk/releases
+          #
+          wget wget https://github.com/openharmony-rs/ohos-sdk/releases/download/v4.0/ohos-sdk-windows_linux-public.tar.gz
+          tar -xzf ohos-sdk-windows_linux-public.tar.gz
+          rm ohos-sdk-windows_linux-public.tar.gz*
+
+          cd ohos-sdk
+
+          echo "---linux---"
+          ls -lh linux
+
+          echo "---windows---"
+          ls -lh windows
+
+          pushd linux/
+          unzip native-linux-x64-4.0.10.13-Release.zip
           ls -lh native
           popd
 
