@@ -187,6 +187,22 @@ jobs:
 
           sed -i.bak 's/cmake_minimum_required(VERSION 3.28)/cmake_minimum_required(VERSION 3.16)/' CMakeLists.txt
 
+          # 1. 删除开头 block(PROPAGATE onnxruntime_target_platform)
+          sed -i.bak '/^block(PROPAGATE onnxruntime_target_platform)/d' detect_onnxruntime_target_platform.cmake
+
+          # 2. 删除末尾 endblock()
+          sed -i.bak '/^endblock()/d' detect_onnxruntime_target_platform.cmake
+
+          # 3. 所有 set(onnxruntime_target_platform xxx) 末尾加上 PARENT_SCOPE
+          sed -i.bak 's/set(onnxruntime_target_platform \(.*\))/set(onnxruntime_target_platform \1 PARENT_SCOPE)/g' detect_onnxruntime_target_platform.cmake
+
+          # 4. 把中间整个 else() 分支（GCC -dumpmachine 那段）包进 if(TRUE) 隔离临时变量
+          # 先匹配 else() 那一行插入 if(TRUE)，最后一个 endif() 后插入 endif()
+          sed -i.bak '/^else()/,/set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/{
+              /^else()/aif(TRUE)
+              /set(onnxruntime_target_platform \${CMAKE_SYSTEM_PROCESSOR})/aendif()
+          }' detect_onnxruntime_target_platform.cmake
+
           sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
 
