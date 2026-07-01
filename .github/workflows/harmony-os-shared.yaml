@@ -236,32 +236,47 @@ jobs:
           # 将该目录强行注入到 GitHub Actions 环境的最前面
           echo "$HOME/fake-bin" >> $GITHUB_PATH
 
-      - name: Hack OpenHarmony CMake FetchContent globally
+      - name: Hack OpenHarmony CMake FetchContent globally via Python
+        shell: bash
         run: |
-          FETCH_CONTENT_PATH=command-line-tools/sdk/default/openharmony/native/build-tools/cmake/share/cmake-3.16/Modules/FetchContent.cmake
+          # 1. 定义要修改的系统 CMake 文件路径
+          FETCH_CONTENT_PATH="command-line-tools/sdk/default/openharmony/native/build-tools/cmake/share/cmake-3.16/Modules/FetchContent.cmake"
 
-          # 先恢复可能被污染的文件（Actions中重新运行时安全）
+          # 2. 还原可能被上一次运行污染的文件
           git checkout -- "$FETCH_CONTENT_PATH" 2>/dev/null || true
 
-          cat << 'EOF' >> "$FETCH_CONTENT_PATH"
-
-          # === 强制注入的全局降级清洗钩子 ===
-          macro(FetchContent_Populate contentName)
-              # 先调用原本系统的真实 Populate 逻辑
-              _FetchContent_Populate(${contentName} ${ARGN})
-
-              # 真实逻辑执行完后，源码必定已经落盘
-              message(STATUS "=== Global Hook: Cleaning up version limits for ${contentName} ===")
-
-              # 【精准匹配】只修改含有 cmake_minimum_required 的行，把里面的 3.18 到 3.35 统统安全改回 3.16
-              # 这样绝对不会误伤文件后面 114、115 行等普通逻辑中的数字或范围
-              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i '/cmake_minimum_required/s/3\.[1-9][0-9]/3.16/g' 2>/dev/null || true")
-              execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i '/cmake_minimum_required/s/3\.[1-9][0-9]\.\.\./3.16.../g' 2>/dev/null || true")
-          endmacro()
-          EOF
-
-          echo "=== FetchContent.cmake successfully high-jacked with precise matching ==="
-          tail -n 25 "$FETCH_CONTENT_PATH"
+          # 3. 直接用一行 python 脚本安全追加劫持逻辑
+          python3 -c "
+path = '$FETCH_CONTENT_PATH'
+with open(path, 'a', encoding='utf-8') as f:
+    f.write('\n\n# === Global Python Hook for Version Lowering ===\n')
+    f.write('macro(FetchContent_Populate contentName)\n')
+    f.write('    _FetchContent_Populate(\${contentName} \${ARGN})\n')
+    f.write('    message(STATUS \"=== Global Hook: [Python] Cleaning up version limits for \${contentName} ===\")\n')
+    f.write('    execute_process(\n')
+    f.write('        COMMAND python3 -c \"\n')
+    f.write('import os, re\n')
+    f.write('deps_dir = os.path.join(\'\${CMAKE_BINARY_DIR}\', \'_deps\')\n')
+    f.write('if os.path.exists(deps_dir):\n')
+    f.write('    for root, dirs, files in os.walk(deps_dir):\n')
+    f.write('        if \'CMakeLists.txt\' in files:\n')
+    f.write('            f_path = os.path.join(root, \'CMakeLists.txt\')\n')
+    f.write('            try:\n')
+    f.write('                with open(f_path, \'r\', encoding=\'utf-8\', errors=\'ignore\') as f_in:\n')
+    f.write('                    lines = f_in.readlines()\n')
+    f.write('                if lines and any(k in lines[0].lower() or k in lines[1].lower() for k in [\'cmake_minimum_required\']):\n')
+    f.write('                    for i in range(min(5, len(lines))):\n')
+    f.write('                        if \'cmake_minimum_required\' in lines[i].lower():\n')
+    f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9](\\\.\\\.\\\.)?\', \'3.16...\', lines[i])\n')
+    f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9]\', \'3.16\', lines[i])\n')
+    f.write('                    with open(f_path, \'w\', encoding=\'utf-8\') as f_out:\n')
+    f.write('                        f_out.writelines(lines)\n')
+    f.write('            except Exception as e: print(e)\n')
+    f.write('\")\n')
+    f.write('endmacro()\n')
+"
+          echo "=== FetchContent.cmake successfully high-jacked with pure Python step ==="
+          tail -n 35 "$FETCH_CONTENT_PATH"
 
       - name: Globally strip CMake block/endblock syntax
         run: |
