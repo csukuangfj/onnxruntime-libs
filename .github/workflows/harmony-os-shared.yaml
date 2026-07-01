@@ -247,34 +247,34 @@ jobs:
 
           # 3. 直接用一行 python 脚本安全追加劫持逻辑
           python3 -c "
-path = '$FETCH_CONTENT_PATH'
-with open(path, 'a', encoding='utf-8') as f:
-    f.write('\n\n# === Global Python Hook for Version Lowering ===\n')
-    f.write('macro(FetchContent_Populate contentName)\n')
-    f.write('    _FetchContent_Populate(\${contentName} \${ARGN})\n')
-    f.write('    message(STATUS \"=== Global Hook: [Python] Cleaning up version limits for \${contentName} ===\")\n')
-    f.write('    execute_process(\n')
-    f.write('        COMMAND python3 -c \"\n')
-    f.write('import os, re\n')
-    f.write('deps_dir = os.path.join(\'\${CMAKE_BINARY_DIR}\', \'_deps\')\n')
-    f.write('if os.path.exists(deps_dir):\n')
-    f.write('    for root, dirs, files in os.walk(deps_dir):\n')
-    f.write('        if \'CMakeLists.txt\' in files:\n')
-    f.write('            f_path = os.path.join(root, \'CMakeLists.txt\')\n')
-    f.write('            try:\n')
-    f.write('                with open(f_path, \'r\', encoding=\'utf-8\', errors=\'ignore\') as f_in:\n')
-    f.write('                    lines = f_in.readlines()\n')
-    f.write('                if lines and any(k in lines[0].lower() or k in lines[1].lower() for k in [\'cmake_minimum_required\']):\n')
-    f.write('                    for i in range(min(5, len(lines))):\n')
-    f.write('                        if \'cmake_minimum_required\' in lines[i].lower():\n')
-    f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9](\\\.\\\.\\\.)?\', \'3.16...\', lines[i])\n')
-    f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9]\', \'3.16\', lines[i])\n')
-    f.write('                    with open(f_path, \'w\', encoding=\'utf-8\') as f_out:\n')
-    f.write('                        f_out.writelines(lines)\n')
-    f.write('            except Exception as e: print(e)\n')
-    f.write('\")\n')
-    f.write('endmacro()\n')
-"
+          path = '$FETCH_CONTENT_PATH'
+          with open(path, 'a', encoding='utf-8') as f:
+              f.write('\n\n# === Global Python Hook for Version Lowering ===\n')
+              f.write('macro(FetchContent_Populate contentName)\n')
+              f.write('    _FetchContent_Populate(\${contentName} \${ARGN})\n')
+              f.write('    message(STATUS \"=== Global Hook: [Python] Cleaning up version limits for \${contentName} ===\")\n')
+              f.write('    execute_process(\n')
+              f.write('        COMMAND python3 -c \"\n')
+              f.write('import os, re\n')
+              f.write('deps_dir = os.path.join(\'\${CMAKE_BINARY_DIR}\', \'_deps\')\n')
+              f.write('if os.path.exists(deps_dir):\n')
+              f.write('    for root, dirs, files in os.walk(deps_dir):\n')
+              f.write('        if \'CMakeLists.txt\' in files:\n')
+              f.write('            f_path = os.path.join(root, \'CMakeLists.txt\')\n')
+              f.write('            try:\n')
+              f.write('                with open(f_path, \'r\', encoding=\'utf-8\', errors=\'ignore\') as f_in:\n')
+              f.write('                    lines = f_in.readlines()\n')
+              f.write('                if lines and any(k in lines[0].lower() or k in lines[1].lower() for k in [\'cmake_minimum_required\']):\n')
+              f.write('                    for i in range(min(5, len(lines))):\n')
+              f.write('                        if \'cmake_minimum_required\' in lines[i].lower():\n')
+              f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9](\\\.\\\.\\\.)?\', \'3.16...\', lines[i])\n')
+              f.write('                            lines[i] = re.sub(r\'3\\\.[1-9][0-9]\', \'3.16\', lines[i])\n')
+              f.write('                    with open(f_path, \'w\', encoding=\'utf-8\') as f_out:\n')
+              f.write('                        f_out.writelines(lines)\n')
+              f.write('            except Exception as e: print(e)\n')
+              f.write('\")\n')
+              f.write('endmacro()\n')
+          "
           echo "=== FetchContent.cmake successfully high-jacked with pure Python step ==="
           tail -n 35 "$FETCH_CONTENT_PATH"
 
