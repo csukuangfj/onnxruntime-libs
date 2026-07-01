@@ -203,17 +203,17 @@ jobs:
           aarch64-unknown-linux-ohos-clang++ --version || true
           aarch64-unknown-linux-ohos-clang --version || true
 
-          which armv7-unknown-linux-ohos-clang++
-          which armv7-unknown-linux-ohos-clang
+          which armv7-unknown-linux-ohos-clang++ || true
+          which armv7-unknown-linux-ohos-clang || true
 
-          armv7-unknown-linux-ohos-clang++ --version
-          armv7-unknown-linux-ohos-clang --version
+          armv7-unknown-linux-ohos-clang++ --version || true
+          armv7-unknown-linux-ohos-clang --version || true
 
-          which x86_64-unknown-linux-ohos-clang++
-          which x86_64-unknown-linux-ohos-clang
+          which x86_64-unknown-linux-ohos-clang++ || true
+          which x86_64-unknown-linux-ohos-clang || true
 
-          x86_64-unknown-linux-ohos-clang++ --version
-          x86_64-unknown-linux-ohos-clang --version
+          x86_64-unknown-linux-ohos-clang++ --version || true
+          x86_64-unknown-linux-ohos-clang --version || true
 
       - name: patch
         # if: steps.cache-build-result.outputs.cache-hit != 'true'
