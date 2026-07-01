@@ -238,22 +238,32 @@ jobs:
 
       - name: Hack OpenHarmony CMake FetchContent globally
         run: |
-          # 定义 OpenHarmony SDK 中 CMake 3.16 的 FetchContent 模块路径
           FETCH_CONTENT_PATH=command-line-tools/sdk/default/openharmony/native/build-tools/cmake/share/cmake-3.16/Modules/FetchContent.cmake
 
-          cat $FETCH_CONTENT_PATH
+          # 先恢复可能被污染的文件（Actions中重新运行时安全）
+          git checkout -- "$FETCH_CONTENT_PATH" 2>/dev/null || true
 
-          # 在 FetchContent.cmake 文件的 FetchContent_Populate 函数中，
-          # 找到解压完成的节点（通常在真正执行 populate 逻辑的末尾附近），
-          # 或者直接在函数最后，注入一段对解压目录源码的强制修改逻辑。
+          # 终极全量拦截：直接在 FetchContent.cmake 的最后，追加一段自定义的宏重写逻辑。
+          # 只要外部调用 FetchContent_Populate(xxx)，在它执行完后，我们立刻强行扫描整个 _deps 目录，
+          # 把所有刚解压出来的 CMakeLists.txt 里面的 3.18 / 3.28 强行降级为 3.16。
+          cat << 'EOF' >> "$FETCH_CONTENT_PATH"
 
-          # 我们直接把钩子挂在 __FetchContent_directPopulate 的末尾
-          # 只要解压出 source_dir，就立刻进去把所有符合条件的 CMake 最低版本限制全部降级
-          sed -i '/endfunction()/i \  if(EXISTS "${srcDir}/CMakeLists.txt")\n    execute_process(COMMAND sed -i "s/VERSION 3.18/VERSION 3.16/g" "${srcDir}/CMakeLists.txt")\n    execute_process(COMMAND sed -i "s/3.18.../3.16.../g" "${srcDir}/CMakeLists.txt")\n  endif()' "$FETCH_CONTENT_PATH"
+# === 强制注入的全局降级清洗钩子 ===
+macro(FetchContent_Populate contentName)
+    # 先调用原本系统的真实 Populate 逻辑
+    _FetchContent_Populate(${contentName} ${ARGN})
 
-          echo "=== FetchContent.cmake globally patched ==="
+    # 真实逻辑执行完后，源码必定已经落盘。我们直接对 build 目录下的 _deps 展开地毯式清洗
+    message(STATUS "=== Global Hook: Cleaning up version limits for ${contentName} ===")
 
-          cat $FETCH_CONTENT_PATH
+    # 无论是 3.18, 3.22 还是 3.28，全部强制抹回 3.16
+    execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/VERSION 3.[1-9][0-9]/VERSION 3.16/g' 2>/dev/null || true")
+    execute_process(COMMAND bash -c "find ${CMAKE_BINARY_DIR}/_deps -name CMakeLists.txt | xargs sed -i 's/3.[1-9][0-9].../3.16.../g' 2>/dev/null || true")
+endmacro()
+EOF
+
+          echo "=== FetchContent.cmake successfully high-jacked ==="
+          tail -n 20 "$FETCH_CONTENT_PATH"
 
       - name: Globally strip CMake block/endblock syntax
         run: |
