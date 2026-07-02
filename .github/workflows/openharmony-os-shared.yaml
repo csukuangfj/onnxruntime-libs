@@ -3,7 +3,7 @@ name: openharmony-os-shared
 on:
   push:
     branches:
-      - sdk-4.0-2
+      - sdk-4.0
   workflow_dispatch:
     inputs:
       version:
@@ -152,6 +152,9 @@ jobs:
 
           sed -i.bak '/SOVERSION/d' ./onnxruntime.cmake
           sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./onnxruntime.cmake
+          # Remove symbol versioning - OHOS linker may not handle it correctly
+          sed -i.bak '/VERSION_SCRIPT/d' ./onnxruntime.cmake
+          sed -i.bak '/version_script/d' ./onnxruntime.cmake
 
           arch=${{ matrix.arch }}
 
