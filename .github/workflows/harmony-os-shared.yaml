@@ -3,12 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - update-ohos
-      - sdk-4.1
+      - release-v1.27.1-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.0)"
+        description: "Version information (e.g., 1.27.1)"
         required: true
 
 permissions:
@@ -22,7 +21,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
 
 jobs:
   harmony-os-shared:

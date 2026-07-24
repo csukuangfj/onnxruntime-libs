@@ -3,12 +3,11 @@ name: android-shared
 on:
   push:
     branches:
-      - v1.22.0-2
-      - android-shared
+      - release-v1.27.1
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.17.1)"
+        description: "Version information (e.g., 1.27.1)"
         required: true
 
 permissions:
@@ -17,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.17.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
 
 jobs:
   build:
