@@ -82,7 +82,7 @@ jobs:
             # sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
           fi
 
-          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak -E '/SOVERSION|VERSION \$/d' ./cmake/onnxruntime.cmake
 
           git diff
 
@@ -144,20 +144,17 @@ jobs:
             mv -v install/include/onnxruntime/* $ARTIFACT_NAME/include/
 
             mkdir -p $ARTIFACT_NAME/lib
-            cp -v install/lib/libonnxruntime.*.dylib $ARTIFACT_NAME/lib
+            cp -v install/lib/libonnxruntime.dylib $ARTIFACT_NAME/lib
 
             pushd $ARTIFACT_NAME/lib
-            name=$(ls libonnxruntime.*.dylib)
 
             # Strip debug symbols
-            strip -S $name
+            strip -S libonnxruntime.dylib
 
             # Re-sign with ad-hoc signature after stripping (strip invalidates the signature)
             codesign --force --sign - --timestamp=none \
-              --preserve-metadata=identifier,entitlements,flags,runtime "$name"
-            codesign --verify --strict --verbose=2 "$name"
-
-            ln -s $name libonnxruntime.dylib
+              --preserve-metadata=identifier,entitlements,flags,runtime libonnxruntime.dylib
+            codesign --verify --strict --verbose=2 libonnxruntime.dylib
 
             popd
 
