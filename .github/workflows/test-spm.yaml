@@ -8,21 +8,49 @@ on:
 
 jobs:
   test-spm:
-    name: Test SPM package
+    name: Test SPM (${{ matrix.platform }})
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS
+            destination: "platform=macOS"
+            run: true
+          - platform: iOS
+            destination: "platform=iOS Simulator,name=iPhone 16"
+            run: false
+          - platform: visionOS
+            destination: "platform=visionOS Simulator,name=Apple Vision Pro"
+            run: false
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Test VersionDemo
+      - name: List available simulators
+        shell: bash
+        run: xcrun simctl list devices available
+
+      - name: Resolve dependencies
         shell: bash
         run: |
-          set -euo pipefail
-
           cd spm-examples/VersionDemo
+          swift package resolve
+          swift package show-dependencies
 
-          echo "=== Building VersionDemo ==="
-          swift build
+      - name: Build for ${{ matrix.platform }}
+        shell: bash
+        run: |
+          cd spm-examples/VersionDemo
+          xcodebuild -scheme VersionDemo \
+            -destination '${{ matrix.destination }}' \
+            -skipPackagePluginValidation \
+            build 2>&1
 
-          echo "=== Running VersionDemo ==="
+      - name: Run on ${{ matrix.platform }}
+        if: matrix.run
+        shell: bash
+        run: |
+          cd spm-examples/VersionDemo
           swift run VersionDemo

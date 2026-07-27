@@ -3,7 +3,7 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - release-v1.27.1
+      - release-v1.27.1-2
   workflow_dispatch:
     inputs:
       version:
