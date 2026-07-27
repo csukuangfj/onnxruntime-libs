@@ -1,4 +1,4 @@
-import onnxruntime_visionos
+import onnxruntime
 
 let base = OrtGetApiBase()!
 let version = String(cString: base.pointee.GetVersionString!())
