@@ -98,9 +98,37 @@ jobs:
 
           echo "opts: $opts"
 
+          # Build each sysroot/arch separately, then assemble xcframework.
+          # macOS Xcode places framework output in Release/Release/ instead of
+          # Release/Release-macosx/ (unlike iOS which uses Release-iphoneos/).
+          # We create symlinks so build_apple_framework.py can find them.
+
+          INTERMEDIATES=build/apple_framework/intermediates
+
+          for arch in arm64 x86_64; do
+            python3 tools/ci_build/github/apple/build_apple_framework.py \
+              --config Release \
+              $opts \
+              --only_build_single_sysroot_arch_framework macosx $arch \
+              macos_build_settings.json
+
+            # Create symlink if the framework is at Release/Release/ instead of Release/Release-macosx/
+            ARCH_DIR=$INTERMEDIATES/macosx_${arch}/Release
+            if [[ -d "$ARCH_DIR/Release/onnxruntime.framework" && ! -d "$ARCH_DIR/Release-macosx/onnxruntime.framework" ]]; then
+              echo "Creating symlink: Release-macosx -> Release"
+              ln -sf Release "$ARCH_DIR/Release-macosx"
+              # Also copy framework_info.json if needed
+              if [[ -f "$ARCH_DIR/Release/framework_info.json" && ! -f "$ARCH_DIR/Release-macosx/framework_info.json" ]]; then
+                cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json"
+              fi
+            fi
+          done
+
+          # Now assemble the xcframework from the per-arch builds
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
             $opts \
+            --only_assemble_xcframework \
             macos_build_settings.json
 
       - name: Create onnxruntime macOS XCFramework
