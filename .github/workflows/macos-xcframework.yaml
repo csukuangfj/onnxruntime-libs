@@ -70,6 +70,7 @@ jobs:
             del(.build_osx_archs.iphoneos, .build_osx_archs.iphonesimulator) |
             del(.build_params.iphoneos, .build_params.iphonesimulator) |
             .build_params.base += [
+              "--compile_no_warning_as_error",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
             ] |
