@@ -46,7 +46,7 @@ jobs:
 
           echo "=== Building for iOS Simulator ==="
           xcodebuild -scheme VersionDemo \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -destination "generic/platform=iOS Simulator" \
             -skipPackagePluginValidation \
             build 2>&1
 
@@ -70,7 +70,7 @@ jobs:
 
           echo "=== Building for visionOS Simulator ==="
           xcodebuild -scheme VersionDemo \
-            -destination "platform=visionOS Simulator,name=Apple Vision Pro" \
+            -destination "generic/platform=visionOS Simulator" \
             -skipPackagePluginValidation \
             build 2>&1
 

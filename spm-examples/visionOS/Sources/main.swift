@@ -1,7 +1,8 @@
 import onnxruntime
 
 let base = OrtGetApiBase()!
-let version = String(cString: base.pointee.GetVersionString!())
+let getVersionString = base.pointee.GetVersionString!
+let version = String(cString: getVersionString())
 let apiVersion = ORT_API_VERSION
 
 print("ONNX Runtime version: \(version)")
