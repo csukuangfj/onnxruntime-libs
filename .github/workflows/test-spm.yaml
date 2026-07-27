@@ -7,30 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-spm:
-    name: Test SPM (${{ matrix.platform }})
+  test-spm-macos:
+    name: Test SPM (macOS)
     runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macOS
-            destination: "platform=macOS"
-            run: true
-          - platform: iOS
-            destination: "platform=iOS Simulator,name=iPhone 16"
-            run: false
-          - platform: visionOS
-            destination: "platform=visionOS Simulator,name=Apple Vision Pro"
-            run: false
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: List available simulators
-        shell: bash
-        run: xcrun simctl list devices available
 
       - name: Resolve dependencies
         shell: bash
@@ -39,18 +21,118 @@ jobs:
           swift package resolve
           swift package show-dependencies
 
-      - name: Build for ${{ matrix.platform }}
+      - name: Build and run (macOS)
         shell: bash
         run: |
           cd spm-examples/VersionDemo
+          swift build 2>&1
+          swift run VersionDemo
+
+  test-spm-ios:
+    name: Test SPM (iOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build for iOS Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Create iOS-only Package.swift to avoid xcodebuild validating
+          # unused macOS/visionOS xcframeworks
+          cd spm-examples/VersionDemo
+          cat > Package.swift << 'SWIFT'
+          // swift-tools-version: 5.9
+          import PackageDescription
+          let package = Package(
+              name: "VersionDemo",
+              platforms: [.iOS(.v15)],
+              dependencies: [
+                  .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "release-v1.27.1"),
+              ],
+              targets: [
+                  .executableTarget(
+                      name: "VersionDemo",
+                      dependencies: [
+                          .product(name: "onnxruntime-ios", package: "onnxruntime-libs"),
+                      ]
+                  ),
+              ]
+          )
+          SWIFT
+
+          # Update source to import the iOS module directly
+          cat > Sources/main.swift << 'SWIFT'
+          import onnxruntime_ios
+
+          let base = OrtGetApiBase()!
+          let version = String(cString: base.pointee.GetVersionString!())
+          print("ONNX Runtime version: \(version)")
+          SWIFT
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for iOS Simulator ==="
           xcodebuild -scheme VersionDemo \
-            -destination '${{ matrix.destination }}' \
+            -destination "platform=iOS Simulator,name=iPhone 16" \
             -skipPackagePluginValidation \
             build 2>&1
 
-      - name: Run on ${{ matrix.platform }}
-        if: matrix.run
+          echo "=== iOS build succeeded ==="
+
+  test-spm-visionos:
+    name: Test SPM (visionOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build for visionOS Simulator
         shell: bash
         run: |
+          set -euo pipefail
+
+          # Create visionOS-only Package.swift
           cd spm-examples/VersionDemo
-          swift run VersionDemo
+          cat > Package.swift << 'SWIFT'
+          // swift-tools-version: 5.9
+          import PackageDescription
+          let package = Package(
+              name: "VersionDemo",
+              platforms: [.visionOS(.v1)],
+              dependencies: [
+                  .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "release-v1.27.1"),
+              ],
+              targets: [
+                  .executableTarget(
+                      name: "VersionDemo",
+                      dependencies: [
+                          .product(name: "onnxruntime-visionos", package: "onnxruntime-libs"),
+                      ]
+                  ),
+              ]
+          )
+          SWIFT
+
+          # Update source to import the visionOS module directly
+          cat > Sources/main.swift << 'SWIFT'
+          import onnxruntime_visionos
+
+          let base = OrtGetApiBase()!
+          let version = String(cString: base.pointee.GetVersionString!())
+          print("ONNX Runtime version: \(version)")
+          SWIFT
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for visionOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "platform=visionOS Simulator,name=Apple Vision Pro" \
+            -skipPackagePluginValidation \
+            build 2>&1
+
+          echo "=== visionOS build succeeded ==="

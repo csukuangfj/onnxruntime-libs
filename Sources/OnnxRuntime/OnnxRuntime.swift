@@ -1,4 +1,10 @@
-import onnxruntime
+#if canImport(onnxruntime_macos)
+import onnxruntime_macos
+#elseif canImport(onnxruntime_ios)
+import onnxruntime_ios
+#elseif canImport(onnxruntime_visionos)
+import onnxruntime_visionos
+#endif
 
 /// Swift wrapper for ONNX Runtime C API
 public enum OnnxRuntime {
