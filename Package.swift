@@ -9,10 +9,15 @@ let package = Package(
         .visionOS(.v1),
     ],
     products: [
+        // High-level Swift wrapper (works on all platforms)
         .library(
             name: "OnnxRuntime",
             targets: ["OnnxRuntime"]
         ),
+        // Per-platform binary targets for direct use
+        .library(name: "onnxruntime-macos", targets: ["onnxruntime-macos"]),
+        .library(name: "onnxruntime-ios", targets: ["onnxruntime-ios"]),
+        .library(name: "onnxruntime-visionos", targets: ["onnxruntime-visionos"]),
     ],
     targets: [
         // Binary targets for pre-built xcframeworks
