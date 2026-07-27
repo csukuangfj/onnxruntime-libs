@@ -72,6 +72,7 @@ jobs:
           xcodebuild -scheme VersionDemo \
             -destination "generic/platform=visionOS Simulator" \
             -skipPackagePluginValidation \
+            EXCLUDED_ARCHS=x86_64 \
             build 2>&1
 
           echo "=== visionOS build succeeded ==="
