@@ -18,7 +18,7 @@ jobs:
         shell: bash
         run: |
           cd spm-examples/macOS
-          rm -rf .build
+          rm -rf .build ~/Library/Caches/org.swift.swiftpm/repositories
           swift package resolve
           swift package show-dependencies
           swift build 2>&1
