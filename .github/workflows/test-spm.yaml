@@ -14,17 +14,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve dependencies
-        shell: bash
-        run: |
-          cd spm-examples/macOS
-          swift package resolve
-          swift package show-dependencies
-
       - name: Build and run (macOS)
         shell: bash
         run: |
           cd spm-examples/macOS
+          rm -rf .build
+          swift package resolve
+          swift package show-dependencies
           swift build 2>&1
           swift run VersionDemo
 
