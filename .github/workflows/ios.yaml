@@ -160,8 +160,10 @@ jobs:
 
           cd build/apple_framework/framework_out
 
-          zip -r onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip \
-            onnxruntime.xcframework
+          XCFRAMEWORK_NAME=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework
+          mv onnxruntime.xcframework "$XCFRAMEWORK_NAME"
+
+          zip -r "${XCFRAMEWORK_NAME}.zip" "$XCFRAMEWORK_NAME"
 
           ls -lh *.zip
           mv *.zip $GITHUB_WORKSPACE/
