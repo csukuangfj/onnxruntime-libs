@@ -5,7 +5,7 @@ let package = Package(
     name: "VersionDemo",
     platforms: [.iOS(.v15)],
     dependencies: [
-        .package(path: "../.."),
+        .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "release-v1.27.1"),
     ],
     targets: [
         .executableTarget(
