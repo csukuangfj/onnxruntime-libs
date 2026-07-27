@@ -1,0 +1,28 @@
+name: test-spm
+
+on:
+  push:
+    branches:
+      - release-v1.27.1
+  workflow_dispatch:
+
+jobs:
+  test-spm:
+    name: Test SPM package
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test VersionDemo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd spm-examples/VersionDemo
+
+          echo "=== Building VersionDemo ==="
+          swift build
+
+          echo "=== Running VersionDemo ==="
+          swift run VersionDemo
