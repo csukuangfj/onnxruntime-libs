@@ -151,18 +151,20 @@ jobs:
           tree build/apple_framework/intermediates/iphone*/Release/Release-*
 
           BUILD_ROOT=build/apple_framework/framework_out
-          OUT_DIR=
-          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          mkdir -p $OUT_DIR
-          mv -v $BUILD_ROOT/onnxruntime.xcframework $OUT_DIR
-
-          tree $OUT_DIR/
+          ls -lh $BUILD_ROOT
+          tree $BUILD_ROOT
 
       - name: Zip XCFramework
         run: |
-          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          set -euo pipefail
 
-          zip -r ${OUT_DIR}.zip $OUT_DIR
+          cd build/apple_framework/framework_out
+
+          zip -r onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip \
+            onnxruntime.xcframework
+
+          ls -lh *.zip
+          mv *.zip $GITHUB_WORKSPACE/
 
       - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
