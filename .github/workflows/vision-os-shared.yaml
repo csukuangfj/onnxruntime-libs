@@ -116,10 +116,9 @@ jobs:
 
           cd build/apple_framework/framework_out
 
-          XCFRAMEWORK_NAME=onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework
-          mv onnxruntime.xcframework "$XCFRAMEWORK_NAME"
-
-          zip -r "${XCFRAMEWORK_NAME}.zip" "$XCFRAMEWORK_NAME"
+          # Keep onnxruntime.xcframework name for SPM compatibility
+          zip -r onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
+            onnxruntime.xcframework
 
           ls -lh *.zip
           mv *.zip $GITHUB_WORKSPACE/
