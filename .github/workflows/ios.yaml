@@ -154,6 +154,27 @@ jobs:
           ls -lh $BUILD_ROOT
           tree $BUILD_ROOT
 
+      - name: Add modulemap for SPM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MODULEMAP='module onnxruntime {
+              umbrella header "Headers/onnxruntime_c_api.h"
+              export *
+              module * { export * }
+          }'
+
+          # Add modulemap to each platform slice's framework
+          FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
+          for slice in "$FW_ROOT"/*/; do
+            if [[ -d "$slice/onnxruntime.framework/Headers" ]]; then
+              mkdir -p "$slice/onnxruntime.framework/Modules"
+              echo "$MODULEMAP" > "$slice/onnxruntime.framework/Modules/module.modulemap"
+              echo "Added modulemap to $slice"
+            fi
+          done
+
       - name: Zip XCFramework
         run: |
           set -euo pipefail
