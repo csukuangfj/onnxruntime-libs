@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - release-v1.27.1
+      - release-v1.27.1-2
   workflow_dispatch:
     inputs:
       version:
@@ -151,18 +151,43 @@ jobs:
           tree build/apple_framework/intermediates/iphone*/Release/Release-*
 
           BUILD_ROOT=build/apple_framework/framework_out
-          OUT_DIR=
-          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          mkdir -p $OUT_DIR
-          mv -v $BUILD_ROOT/onnxruntime.xcframework $OUT_DIR
+          ls -lh $BUILD_ROOT
+          tree $BUILD_ROOT
 
-          tree $OUT_DIR/
+      - name: Add modulemap for SPM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MODULEMAP='module onnxruntime {
+              umbrella header "Headers/onnxruntime_c_api.h"
+              export *
+              module * { export * }
+          }'
+
+          # Add modulemap to each platform slice's framework
+          FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
+          for slice in "$FW_ROOT"/*/; do
+            if [[ -d "$slice/onnxruntime.framework/Headers" ]]; then
+              mkdir -p "$slice/onnxruntime.framework/Modules"
+              echo "$MODULEMAP" > "$slice/onnxruntime.framework/Modules/module.modulemap"
+              echo "Added modulemap to $slice"
+            fi
+          done
 
       - name: Zip XCFramework
         run: |
-          OUT_DIR=onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          set -euo pipefail
 
-          zip -r ${OUT_DIR}.zip $OUT_DIR
+          cd build/apple_framework/framework_out
+
+          # Keep onnxruntime.xcframework name for SPM compatibility
+          # (SPM requires xcframework name to match the framework bundle identifier)
+          zip -r onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
+            onnxruntime.xcframework
+
+          ls -lh *.zip
+          mv *.zip $GITHUB_WORKSPACE/
 
       - name: Upload artifact xcframework
         if: steps.cache-build-result.outputs.cache-hit != 'true'

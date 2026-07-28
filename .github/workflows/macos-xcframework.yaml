@@ -1,4 +1,4 @@
-name: vision_os-xcframework
+name: macos-xcframework
 
 on:
   push:
@@ -19,8 +19,8 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
 
 jobs:
-  vision_os-xcframework:
-    name: visionos-${{ matrix.link_type }}
+  macos-xcframework:
+    name: macos-${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,13 +33,13 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-vision_os-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-vision_os-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-macos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-macos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-vision_os-${{ matrix.link_type }}
+          key: ${{ matrix.os }}-macos-xcframework-${{ matrix.link_type }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -62,22 +62,26 @@ jobs:
           brew install jq
           which jq
 
-      - name: Patch build settings
+      - name: Patch build settings for macOS only
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           jq '
+            del(.build_osx_archs.iphoneos, .build_osx_archs.iphonesimulator) |
+            del(.build_params.iphoneos, .build_params.iphonesimulator) |
             .build_params.base += [
+              "--compile_no_warning_as_error",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
-            ]
-          ' tools/ci_build/github/apple/default_vision_os_framework_build_settings.json \
-            > visionos_build_settings.json
+            ] |
+            .build_params.macosx = ["--macos=MacOSX", "--apple_deploy_target=10.15"]
+          ' tools/ci_build/github/apple/default_full_apple_framework_build_settings.json \
+            > macos_build_settings.json
 
-          cat visionos_build_settings.json
+          cat macos_build_settings.json
           git diff .
 
-      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for visionOS
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -94,12 +98,40 @@ jobs:
 
           echo "opts: $opts"
 
+          # Build each sysroot/arch separately, then assemble xcframework.
+          # macOS Xcode places framework output in Release/Release/ instead of
+          # Release/Release-macosx/ (unlike iOS which uses Release-iphoneos/).
+          # We create symlinks so build_apple_framework.py can find them.
+
+          INTERMEDIATES=build/apple_framework/intermediates
+
+          for arch in arm64 x86_64; do
+            python3 tools/ci_build/github/apple/build_apple_framework.py \
+              --config Release \
+              $opts \
+              --only_build_single_sysroot_arch_framework macosx $arch \
+              macos_build_settings.json
+
+            # Create symlink if the framework is at Release/Release/ instead of Release/Release-macosx/
+            ARCH_DIR=$INTERMEDIATES/macosx_${arch}/Release
+            if [[ -d "$ARCH_DIR/Release/onnxruntime.framework" && ! -d "$ARCH_DIR/Release-macosx/onnxruntime.framework" ]]; then
+              echo "Creating symlink: Release-macosx -> Release"
+              ln -sf Release "$ARCH_DIR/Release-macosx"
+              # Also copy framework_info.json if needed
+              if [[ -f "$ARCH_DIR/Release/framework_info.json" && ! -f "$ARCH_DIR/Release-macosx/framework_info.json" ]]; then
+                cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json"
+              fi
+            fi
+          done
+
+          # Now assemble the xcframework from the per-arch builds
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
             $opts \
-            visionos_build_settings.json
+            --only_assemble_xcframework \
+            macos_build_settings.json
 
-      - name: Check output
+      - name: Create onnxruntime macOS XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -138,7 +170,7 @@ jobs:
           cd build/apple_framework/framework_out
 
           # Keep onnxruntime.xcframework name for SPM compatibility
-          zip -r onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
+          zip -r onnxruntime-macos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
             onnxruntime.xcframework
 
           ls -lh *.zip
@@ -148,8 +180,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
+          name: onnxruntime-macos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-macos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -185,11 +217,11 @@ jobs:
 
             cd huggingface
             mkdir -p $version
-            cp -v ../onnxruntime-visionos-${{ matrix.link_type }}-xcframework*.zip ./$version
+            cp -v ../onnxruntime-macos-${{ matrix.link_type }}-xcframework*.zip ./$version
             git status
             git lfs track "*.zip"
 
             git add .
 
-            git commit -m "upload onnxruntime-visionos-${{ matrix.link_type }}.xcframework $version"
+            git commit -m "upload onnxruntime-macos-${{ matrix.link_type }}.xcframework $version"
             git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
