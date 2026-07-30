@@ -124,23 +124,12 @@ jobs:
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
 
-          echo "=== Copying framework to simulator ==="
-          SIM_DATA=$(xcrun simctl list devices -j | python3 -c "
-          import json, sys
-          devices = json.load(sys.stdin)['devices']
-          for key in devices:
-              for d in devices[key]:
-                  if d['udid'] == '$DEVICE':
-                      print(d['dataPath'])
-          ")
-          echo "Simulator data: $SIM_DATA"
-
-          # Copy framework to simulator's usr/lib/swift/
+          echo "=== Copying framework to PackageFrameworks ==="
           FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
-          SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
-          mkdir -p "$SIM_FRAMEWORK_DIR"
-          cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
-          echo "Copied framework to $SIM_FRAMEWORK_DIR"
+          PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          mkdir -p "$PRODUCTS_DIR/PackageFrameworks"
+          cp -R "$FRAMEWORK_SRC/" "$PKG_FRAMEWORKS/"
+          echo "Copied framework to $PKG_FRAMEWORKS"
 
           echo "=== Running on iOS Simulator ==="
           xcrun simctl spawn "$DEVICE" "$BINARY"
@@ -230,23 +219,12 @@ jobs:
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
 
-          echo "=== Copying framework to simulator ==="
-          SIM_DATA=$(xcrun simctl list devices -j | python3 -c "
-          import json, sys
-          devices = json.load(sys.stdin)['devices']
-          for key in devices:
-              for d in devices[key]:
-                  if d['udid'] == '$DEVICE':
-                      print(d['dataPath'])
-          ")
-          echo "Simulator data: $SIM_DATA"
-
-          # Copy framework to simulator's usr/lib/swift/
+          echo "=== Copying framework to PackageFrameworks ==="
           FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
-          SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
-          mkdir -p "$SIM_FRAMEWORK_DIR"
-          cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
-          echo "Copied framework to $SIM_FRAMEWORK_DIR"
+          PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          mkdir -p "$PRODUCTS_DIR/PackageFrameworks"
+          cp -R "$FRAMEWORK_SRC/" "$PKG_FRAMEWORKS/"
+          echo "Copied framework to $PKG_FRAMEWORKS"
 
           echo "=== Running on visionOS Simulator ==="
           xcrun simctl spawn "$DEVICE" "$BINARY"
