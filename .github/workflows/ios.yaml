@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - fix-macos-2
   workflow_dispatch:
     inputs:
       version:
@@ -26,7 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        link_type: ["shared", "static"]
+        # link_type: ["shared", "static"]
+        link_type: ["static"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}

@@ -12,9 +12,6 @@ let package = Package(
             name: "VersionDemo",
             dependencies: [
                 .product(name: "OnnxRuntime", package: "onnxruntime-libs"),
-            ],
-            linkerSettings: [
-                .linkedLibrary("c++"),
             ]
         ),
     ]
