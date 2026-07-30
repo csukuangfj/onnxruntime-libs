@@ -1,9 +1,9 @@
-name: vision_os-xcframework
+name: visionos-xcframework
 
 on:
   push:
     branches:
-      - fix-macos-2
+      - fix-macos
   workflow_dispatch:
     inputs:
       version:
@@ -19,7 +19,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
 
 jobs:
-  vision_os-xcframework:
+  visionos-xcframework:
     name: visionos-${{ matrix.link_type }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -34,13 +34,13 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-vision_os-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-vision_os-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-visionos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          key: onnxruntime-visionos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-vision_os-${{ matrix.link_type }}
+          key: ${{ matrix.os }}-visionos-xcframework-${{ matrix.link_type }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -82,6 +82,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
+          set -euo pipefail
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
@@ -95,12 +96,26 @@ jobs:
 
           echo "opts: $opts"
 
+          INTERMEDIATES=build/apple_framework/intermediates
+
+          # visionOS has two sysroots: xros (device) and xrsimulator, each arm64 only
+          for sysroot in xros xrsimulator; do
+            echo "=== Building $sysroot/arm64 ==="
+            python3 tools/ci_build/github/apple/build_apple_framework.py \
+              --config Release \
+              $opts \
+              --only_build_single_sysroot_arch_framework $sysroot arm64 \
+              visionos_build_settings.json
+          done
+
+          echo "=== Assembling xcframework ==="
           python3 tools/ci_build/github/apple/build_apple_framework.py \
             --config Release \
             $opts \
+            --only_assemble_xcframework \
             visionos_build_settings.json
 
-      - name: Check output
+      - name: Create onnxruntime visionOS XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
@@ -112,17 +127,15 @@ jobs:
           tree $BUILD_ROOT
 
       - name: Add modulemap for SPM
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          set -euo pipefail
-
           MODULEMAP='module onnxruntime {
               umbrella header "Headers/onnxruntime_c_api.h"
               export *
               module * { export * }
           }'
 
-          # Add modulemap to each platform slice's framework
           FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
           for slice in "$FW_ROOT"/*/; do
             if [[ -d "$slice/onnxruntime.framework/Headers" ]]; then
@@ -133,15 +146,12 @@ jobs:
           done
 
       - name: Zip XCFramework
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-
           cd build/apple_framework/framework_out
-
-          # Keep onnxruntime.xcframework name for SPM compatibility
           zip -r onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
             onnxruntime.xcframework
-
           ls -lh *.zip
           mv *.zip $GITHUB_WORKSPACE/
 
@@ -161,7 +171,6 @@ jobs:
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
-      # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
         if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
         env:
@@ -172,25 +181,16 @@ jobs:
           timeout_seconds: 200
           shell: bash
           command: |
-            rm -rf huggingface
-
-            ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
-
             git config --global user.email "csukuangfj@gmail.com"
             git config --global user.name "Fangjun Kuang"
-
             export GIT_CLONE_PROTECTION_ACTIVE=false
             rm -rf huggingface
             GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
-
             cd huggingface
             mkdir -p $version
             cp -v ../onnxruntime-visionos-${{ matrix.link_type }}-xcframework*.zip ./$version
-            git status
             git lfs track "*.zip"
-
             git add .
-
             git commit -m "upload onnxruntime-visionos-${{ matrix.link_type }}.xcframework $version"
             git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
