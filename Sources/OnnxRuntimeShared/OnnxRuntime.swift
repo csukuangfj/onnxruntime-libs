@@ -1,1 +1,0 @@
-../OnnxRuntime/OnnxRuntime.swift

@@ -11,7 +11,7 @@ let package = Package(
         .executableTarget(
             name: "VersionDemo",
             dependencies: [
-                .product(name: "OnnxRuntime", package: "onnxruntime-libs"),
+                .product(name: "onnxruntime-visionos", package: "onnxruntime-libs"),
             ]
         ),
     ]

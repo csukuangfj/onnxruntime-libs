@@ -10,10 +10,10 @@ let package = Package(
     ],
     products: [
         // Static xcframework (default)
-        .library(name: "OnnxRuntime", targets: ["OnnxRuntime"]),
+        .library(name: "OnnxRuntimeKit", targets: ["OnnxRuntimeKit"]),
         // Shared/dynamic xcframework
-        .library(name: "OnnxRuntime-Shared", targets: ["OnnxRuntimeShared"]),
-        // Per-platform binary targets for direct use (bypasses wrapper)
+        .library(name: "OnnxRuntimeSharedKit", targets: ["OnnxRuntimeSharedKit"]),
+        // Per-platform binary targets for direct use
         .library(name: "onnxruntime-macos", targets: ["OnnxruntimeMacOS"]),
         .library(name: "onnxruntime-ios", targets: ["OnnxruntimeIOS"]),
         .library(name: "onnxruntime-visionos", targets: ["OnnxruntimeVisionOS"]),
@@ -58,7 +58,7 @@ let package = Package(
 
         // --- Static wrapper (default) ---
         .target(
-            name: "OnnxRuntime",
+            name: "OnnxRuntimeKit",
             dependencies: [
                 .target(name: "OnnxruntimeMacOS", condition: .when(platforms: [.macOS])),
                 .target(name: "OnnxruntimeIOS", condition: .when(platforms: [.iOS])),
@@ -73,13 +73,13 @@ let package = Package(
 
         // --- Shared wrapper ---
         .target(
-            name: "OnnxRuntimeShared",
+            name: "OnnxRuntimeSharedKit",
             dependencies: [
                 .target(name: "OnnxruntimeMacOSShared", condition: .when(platforms: [.macOS])),
                 .target(name: "OnnxruntimeIOSShared", condition: .when(platforms: [.iOS])),
                 .target(name: "OnnxruntimeVisionOSShared", condition: .when(platforms: [.visionOS])),
             ],
-            path: "Sources/OnnxRuntimeShared",
+            path: "Sources/OnnxRuntimeSharedKit",
             linkerSettings: [
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
@@ -90,7 +90,7 @@ let package = Package(
         // Demo
         .executableTarget(
             name: "VersionDemo",
-            dependencies: ["OnnxRuntime"],
+            dependencies: ["OnnxRuntimeKit"],
             path: "Examples/VersionDemo"
         ),
     ]
