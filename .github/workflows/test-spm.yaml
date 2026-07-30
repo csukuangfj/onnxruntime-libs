@@ -136,7 +136,7 @@ jobs:
           echo "Simulator data: $SIM_DATA"
 
           # Copy framework to simulator's usr/lib/swift/
-          FRAMEWORK_SRC="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
           SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
           mkdir -p "$SIM_FRAMEWORK_DIR"
           cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
@@ -242,7 +242,7 @@ jobs:
           echo "Simulator data: $SIM_DATA"
 
           # Copy framework to simulator's usr/lib/swift/
-          FRAMEWORK_SRC="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
           SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
           mkdir -p "$SIM_FRAMEWORK_DIR"
           cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
