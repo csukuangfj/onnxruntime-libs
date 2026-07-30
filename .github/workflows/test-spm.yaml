@@ -3,7 +3,7 @@ name: test-spm
 on:
   push:
     branches:
-      - fix-macos
+      - master
   workflow_dispatch:
 
 jobs:
@@ -124,6 +124,11 @@ jobs:
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
 
+          # When xcodebuild builds a shared xcframework, it extracts the framework
+          # to Build/Products/<platform>/onnxruntime.framework but does NOT copy it
+          # to PackageFrameworks/. The binary's rpath includes PackageFrameworks/,
+          # so dyld can't find the dynamic library at runtime with simctl spawn.
+          # We copy it manually so dyld can resolve @rpath/onnxruntime.framework.
           echo "=== Copying framework to PackageFrameworks ==="
           FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
           PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
@@ -219,6 +224,11 @@ jobs:
           echo "Device: $DEVICE"
           xcrun simctl boot "$DEVICE" 2>/dev/null || true
 
+          # When xcodebuild builds a shared xcframework, it extracts the framework
+          # to Build/Products/<platform>/onnxruntime.framework but does NOT copy it
+          # to PackageFrameworks/. The binary's rpath includes PackageFrameworks/,
+          # so dyld can't find the dynamic library at runtime with simctl spawn.
+          # We copy it manually so dyld can resolve @rpath/onnxruntime.framework.
           echo "=== Copying framework to PackageFrameworks ==="
           FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
           PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
