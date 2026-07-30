@@ -2,20 +2,20 @@
 import PackageDescription
 
 let package = Package(
-  name: "VersionDemo",
-  platforms: [.visionOS(.v1)],
-  dependencies: [
-    .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")
-  ],
-  targets: [
-    .executableTarget(
-      name: "VersionDemo",
-      dependencies: [
-        .product(name: "onnxruntime-visionos", package: "onnxruntime-libs")
-      ],
-      linkerSettings: [
-        .linkedLibrary("c++")
-      ]
-    )
-  ]
+    name: "VersionDemo",
+    platforms: [.visionOS(.v1)],
+    dependencies: [
+        .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "fix-macos"),
+    ],
+    targets: [
+        .executableTarget(
+            name: "VersionDemo",
+            dependencies: [
+                .product(name: "OnnxRuntime", package: "onnxruntime-libs"),
+            ],
+            linkerSettings: [
+                .linkedLibrary("c++"),
+            ]
+        ),
+    ]
 )
