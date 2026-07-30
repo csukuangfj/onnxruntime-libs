@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - fix-macos-2
   workflow_dispatch:
     inputs:
       version:

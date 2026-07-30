@@ -9,18 +9,20 @@ let package = Package(
         .visionOS(.v1),
     ],
     products: [
-        // High-level Swift wrapper (works on all platforms)
-        .library(
-            name: "OnnxRuntime",
-            targets: ["OnnxRuntime"]
-        ),
+        // Static xcframework (default)
+        .library(name: "OnnxRuntimeKit", targets: ["OnnxRuntimeKit"]),
+        // Shared/dynamic xcframework
+        .library(name: "OnnxRuntimeSharedKit", targets: ["OnnxRuntimeSharedKit"]),
         // Per-platform binary targets for direct use
         .library(name: "onnxruntime-macos", targets: ["OnnxruntimeMacOS"]),
         .library(name: "onnxruntime-ios", targets: ["OnnxruntimeIOS"]),
         .library(name: "onnxruntime-visionos", targets: ["OnnxruntimeVisionOS"]),
+        .library(name: "onnxruntime-macos-shared", targets: ["OnnxruntimeMacOSShared"]),
+        .library(name: "onnxruntime-ios-shared", targets: ["OnnxruntimeIOSShared"]),
+        .library(name: "onnxruntime-visionos-shared", targets: ["OnnxruntimeVisionOSShared"]),
     ],
     targets: [
-        // Binary targets for pre-built xcframeworks
+        // --- Static binary targets (one per platform) ---
         .binaryTarget(
             name: "OnnxruntimeMacOS",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.27.1/onnxruntime-macos-static-xcframework-1.27.1.xcframework.zip",
@@ -37,25 +39,60 @@ let package = Package(
             checksum: "206cdc2f23a1679aa3b3a91a74a866fad56a7ea50709fe5d4a67fb9b868c6234"
         ),
 
-        // Swift wrapper that re-exports the C API
+        // --- Shared binary targets (one per platform) ---
+        .binaryTarget(
+            name: "OnnxruntimeMacOSShared",
+            url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.27.1/onnxruntime-macos-shared-xcframework-1.27.1.xcframework.zip",
+            checksum: "9d1d49b7c5ba7d5ccff048aff3f0c40431f8232b67259df9ab7f85d76e57cb75"
+        ),
+        .binaryTarget(
+            name: "OnnxruntimeIOSShared",
+            url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.27.1/onnxruntime-ios-shared-xcframework-1.27.1.xcframework.zip",
+            checksum: "ea73fa5ed5ca69e37ba2d37df64a16ed4141d0575e99963b9f3939da2b107ae3"
+        ),
+        .binaryTarget(
+            name: "OnnxruntimeVisionOSShared",
+            url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.27.1/onnxruntime-visionos-shared-xcframework-1.27.1.xcframework.zip",
+            checksum: "148dac4ddefe70eff072833bf49e6abd8c3eadcd8946c8a22292b14cd338f36a"
+        ),
+
+        // --- Static wrapper (default) ---
         .target(
-            name: "OnnxRuntime",
+            name: "OnnxRuntimeKit",
             dependencies: [
-                "OnnxruntimeMacOS",
-                "OnnxruntimeIOS",
-                "OnnxruntimeVisionOS",
+                .target(name: "OnnxruntimeMacOS", condition: .when(platforms: [.macOS])),
+                .target(name: "OnnxruntimeIOS", condition: .when(platforms: [.iOS])),
+                .target(name: "OnnxruntimeVisionOS", condition: .when(platforms: [.visionOS])),
             ],
             linkerSettings: [
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreML"),
+                .linkedLibrary("c++"),
             ]
         ),
 
-        // Demo executable
+        // --- Shared wrapper ---
+        .target(
+            name: "OnnxRuntimeSharedKit",
+            dependencies: [
+                .target(name: "OnnxruntimeMacOSShared", condition: .when(platforms: [.macOS])),
+                .target(name: "OnnxruntimeIOSShared", condition: .when(platforms: [.iOS])),
+                .target(name: "OnnxruntimeVisionOSShared", condition: .when(platforms: [.visionOS])),
+            ],
+            path: "Sources/OnnxRuntimeSharedKit",
+            linkerSettings: [
+                .linkedFramework("CoreFoundation"),
+                .linkedFramework("Foundation"),
+                .linkedFramework("CoreML"),
+                .linkedLibrary("c++"),
+            ]
+        ),
+
+        // Demo
         .executableTarget(
             name: "VersionDemo",
-            dependencies: ["OnnxRuntime"],
+            dependencies: ["OnnxRuntimeKit"],
             path: "Examples/VersionDemo"
         ),
     ]

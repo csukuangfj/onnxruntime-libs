@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "VersionDemo",
-    platforms: [.iOS(.v15)],
+    platforms: [.visionOS(.v1)],
     dependencies: [
         .package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master"),
     ],
@@ -11,7 +11,7 @@ let package = Package(
         .executableTarget(
             name: "VersionDemo",
             dependencies: [
-                .product(name: "OnnxRuntimeKit", package: "onnxruntime-libs"),
+                .product(name: "OnnxRuntimeSharedKit", package: "onnxruntime-libs"),
             ]
         ),
     ]
