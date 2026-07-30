@@ -3,7 +3,7 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - release-v1.27.1
+      - fix-macos
   workflow_dispatch:
     inputs:
       version:
@@ -26,7 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        link_type: ["shared", "static"]
+        # link_type: ["shared", "static"]
+        link_type: ["shared"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
@@ -53,8 +54,14 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          brew install ninja tree jq
+          brew install ninja
+          which cmake
           cmake --version
+          brew install tree
+          tree --version
+
+          brew install jq
+          which jq
 
       - name: Patch build settings for macOS only
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -72,6 +79,9 @@ jobs:
           ' tools/ci_build/github/apple/default_full_apple_framework_build_settings.json \
             > macos_build_settings.json
 
+          cat macos_build_settings.json
+          git diff .
+
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
@@ -79,6 +89,7 @@ jobs:
           set -euo pipefail
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake --version
 
           link_type=${{ matrix.link_type }}
           if [[ $link_type == "shared" ]]; then
@@ -86,6 +97,8 @@ jobs:
           else
             opts=""
           fi
+
+          echo "opts: $opts"
 
           INTERMEDIATES=build/apple_framework/intermediates
 
@@ -95,7 +108,8 @@ jobs:
               --config Release \
               $opts \
               --only_build_single_sysroot_arch_framework macosx $arch \
-              macos_build_settings.json
+              macos_build_settings.json \
+              2>&1 | tail -5
 
             # macOS Xcode places framework in Release/Release/ or Release/.
             # build_apple_framework.py expects Release/Release-macosx/.
@@ -118,6 +132,17 @@ jobs:
             $opts \
             --only_assemble_xcframework \
             macos_build_settings.json
+
+      - name: Create onnxruntime macOS XCFramework
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUILD_ROOT=build/apple_framework/framework_out
+
+          ls -lh $BUILD_ROOT
+          tree $BUILD_ROOT
 
       - name: Add modulemap for SPM
         if: steps.cache-build-result.outputs.cache-hit != 'true'
