@@ -3,7 +3,7 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - fix-macos-2
+      - fix-macos
   workflow_dispatch:
     inputs:
       version:
@@ -26,7 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest]
-        link_type: ["shared", "static"]
+        # link_type: ["shared", "static"]
+        link_type: ["static"]
 
     steps:
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
