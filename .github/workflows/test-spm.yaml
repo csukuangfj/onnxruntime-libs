@@ -3,12 +3,12 @@ name: test-spm
 on:
   push:
     branches:
-      - release-v1.27.1
+      - fix-macos
   workflow_dispatch:
 
 jobs:
   test-spm-macos:
-    name: Test SPM (macOS)
+    name: Test SPM (macOS static)
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -24,8 +24,25 @@ jobs:
           swift build 2>&1
           swift run VersionDemo
 
+  test-spm-macos-shared:
+    name: Test SPM (macOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run (macOS shared)
+        shell: bash
+        run: |
+          cd spm-examples/macOS-Shared
+          rm -rf .build
+          swift package update 2>&1
+          swift package show-dependencies
+          swift build 2>&1
+          swift run VersionDemo
+
   test-spm-ios:
-    name: Test SPM (iOS)
+    name: Test SPM (iOS static)
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -66,8 +83,50 @@ jobs:
           echo "=== Running on iOS Simulator ==="
           xcrun simctl spawn "$DEVICE" "$BINARY"
 
+  test-spm-ios-shared:
+    name: Test SPM (iOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run for iOS Simulator (shared)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/iOS-Shared
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for iOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=iOS Simulator" \
+            -skipPackagePluginValidation \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-iphonesimulator/VersionDemo" -type f | head -1)
+          echo "Binary: $BINARY"
+
+          echo "=== Booting iOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'iPhone' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Running on iOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
   test-spm-visionos:
-    name: Test SPM (visionOS)
+    name: Test SPM (visionOS static)
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -78,6 +137,49 @@ jobs:
         run: |
           set -euo pipefail
           cd spm-examples/visionOS
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for visionOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=visionOS Simulator" \
+            -skipPackagePluginValidation \
+            EXCLUDED_ARCHS=x86_64 \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-xrsimulator/VersionDemo" -type f | head -1)
+          echo "Binary: $BINARY"
+
+          echo "=== Booting visionOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'Vision' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Running on visionOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
+  test-spm-visionos-shared:
+    name: Test SPM (visionOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run for visionOS Simulator (shared)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/visionOS-Shared
 
           echo "=== Resolving ==="
           swift package resolve
