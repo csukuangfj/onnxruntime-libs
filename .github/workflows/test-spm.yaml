@@ -90,7 +90,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build for iOS Simulator (shared)
+      - name: Build and run for iOS Simulator (shared)
         shell: bash
         run: |
           set -euo pipefail
@@ -105,7 +105,45 @@ jobs:
             -skipPackagePluginValidation \
             build 2>&1
 
-          echo "=== iOS shared build succeeded ==="
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-iphonesimulator/VersionDemo" -type f | head -1)
+          PRODUCTS_DIR=$(dirname "$BINARY")
+          echo "Binary: $BINARY"
+          echo "Products: $PRODUCTS_DIR"
+
+          echo "=== Booting iOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'iPhone' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Copying framework to simulator ==="
+          SIM_DATA=$(xcrun simctl list devices -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['udid'] == '$DEVICE':
+                      print(d['dataPath'])
+          ")
+          echo "Simulator data: $SIM_DATA"
+
+          # Copy framework to simulator's usr/lib/swift/
+          FRAMEWORK_SRC="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
+          mkdir -p "$SIM_FRAMEWORK_DIR"
+          cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
+          echo "Copied framework to $SIM_FRAMEWORK_DIR"
+
+          echo "=== Running on iOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
 
   test-spm-visionos:
     name: Test SPM (visionOS static)
@@ -157,7 +195,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build for visionOS Simulator (shared)
+      - name: Build and run for visionOS Simulator (shared)
         shell: bash
         run: |
           set -euo pipefail
@@ -173,4 +211,42 @@ jobs:
             EXCLUDED_ARCHS=x86_64 \
             build 2>&1
 
-          echo "=== visionOS shared build succeeded ==="
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-xrsimulator/VersionDemo" -type f | head -1)
+          PRODUCTS_DIR=$(dirname "$BINARY")
+          echo "Binary: $BINARY"
+          echo "Products: $PRODUCTS_DIR"
+
+          echo "=== Booting visionOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'Vision' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Copying framework to simulator ==="
+          SIM_DATA=$(xcrun simctl list devices -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['udid'] == '$DEVICE':
+                      print(d['dataPath'])
+          ")
+          echo "Simulator data: $SIM_DATA"
+
+          # Copy framework to simulator's usr/lib/swift/
+          FRAMEWORK_SRC="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          SIM_FRAMEWORK_DIR="$SIM_DATA/usr/lib/swift/onnxruntime.framework"
+          mkdir -p "$SIM_FRAMEWORK_DIR"
+          cp -R "$FRAMEWORK_SRC/" "$SIM_FRAMEWORK_DIR/"
+          echo "Copied framework to $SIM_FRAMEWORK_DIR"
+
+          echo "=== Running on visionOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
