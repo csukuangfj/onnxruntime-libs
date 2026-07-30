@@ -53,7 +53,7 @@ let package = Package(
         .binaryTarget(
             name: "OnnxruntimeVisionOSShared",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.27.1/onnxruntime-visionos-shared-xcframework-1.27.1.xcframework.zip",
-            checksum: "8cf35459c30f05f8e764035fc74e76d7716d06bf405847b1e7acf8278424a2d1"
+            checksum: "148dac4ddefe70eff072833bf49e6abd8c3eadcd8946c8a22292b14cd338f36a"
         ),
 
         // --- Static wrapper (default) ---
