@@ -11,10 +11,7 @@ let package = Package(
         .executableTarget(
             name: "VersionDemo",
             dependencies: [
-                .product(name: "OnnxRuntime-Shared", package: "onnxruntime-libs"),
-            ],
-            linkerSettings: [
-                .linkedLibrary("c++"),
+                .product(name: "onnxruntime-visionos-shared", package: "onnxruntime-libs"),
             ]
         ),
     ]

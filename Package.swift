@@ -13,6 +13,13 @@ let package = Package(
         .library(name: "OnnxRuntime", targets: ["OnnxRuntime"]),
         // Shared/dynamic xcframework
         .library(name: "OnnxRuntime-Shared", targets: ["OnnxRuntimeShared"]),
+        // Per-platform binary targets for direct use (bypasses wrapper)
+        .library(name: "onnxruntime-macos", targets: ["OnnxruntimeMacOS"]),
+        .library(name: "onnxruntime-ios", targets: ["OnnxruntimeIOS"]),
+        .library(name: "onnxruntime-visionos", targets: ["OnnxruntimeVisionOS"]),
+        .library(name: "onnxruntime-macos-shared", targets: ["OnnxruntimeMacOSShared"]),
+        .library(name: "onnxruntime-ios-shared", targets: ["OnnxruntimeIOSShared"]),
+        .library(name: "onnxruntime-visionos-shared", targets: ["OnnxruntimeVisionOSShared"]),
     ],
     targets: [
         // --- Static binary targets (one per platform) ---
