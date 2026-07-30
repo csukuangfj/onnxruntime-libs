@@ -72,7 +72,7 @@ let package = Package(
                 .target(name: "OnnxruntimeIOSShared", condition: .when(platforms: [.iOS])),
                 .target(name: "OnnxruntimeVisionOSShared", condition: .when(platforms: [.visionOS])),
             ],
-            path: "Sources/OnnxRuntime",
+            path: "Sources/OnnxRuntimeShared",
             linkerSettings: [
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
