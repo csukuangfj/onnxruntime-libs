@@ -112,16 +112,17 @@ jobs:
 
             # macOS Xcode places framework in Release/Release/ or Release/.
             # build_apple_framework.py expects Release/Release-macosx/.
-            # Create symlink so it can find the framework.
+            # Create symlink only if the expected path doesn't already exist.
             ARCH_DIR=$INTERMEDIATES/macosx_${arch}/Release
-            rm -rf "$ARCH_DIR/Release-macosx"
-            if [[ -d "$ARCH_DIR/Release/Release/onnxruntime.framework" ]]; then
-              ln -sf Release "$ARCH_DIR/Release-macosx"
-            elif [[ -d "$ARCH_DIR/Release/onnxruntime.framework" ]]; then
-              ln -sf Release "$ARCH_DIR/Release-macosx"
-            fi
-            if [[ -f "$ARCH_DIR/Release/framework_info.json" ]]; then
-              cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" 2>/dev/null || true
+            if [[ ! -d "$ARCH_DIR/Release-macosx" ]]; then
+              if [[ -d "$ARCH_DIR/Release/Release/onnxruntime.framework" ]]; then
+                ln -sf Release "$ARCH_DIR/Release-macosx"
+              elif [[ -d "$ARCH_DIR/Release/onnxruntime.framework" ]]; then
+                ln -sf Release "$ARCH_DIR/Release-macosx"
+              fi
+              if [[ -f "$ARCH_DIR/Release/framework_info.json" ]]; then
+                cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" 2>/dev/null || true
+              fi
             fi
           done
 
