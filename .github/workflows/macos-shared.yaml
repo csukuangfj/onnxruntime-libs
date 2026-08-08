@@ -77,35 +77,72 @@ jobs:
           build_dir=./build-macos/${{ matrix.arch }}
           arch=${{ matrix.arch }}
           if [[ $arch == universal2 ]]; then
-            arch="x86_64;arm64"
             extra_opt="--no_kleidiai"
-            # sed -i.bak s/\"arm64e\",/\"x86_64\;arm64\",/g ./tools/ci_build/build.py
           fi
 
           sed -i.bak -E '/SOVERSION|VERSION \$/d' ./cmake/onnxruntime.cmake
 
           git diff
 
-          python3 ./tools/ci_build/build.py \
-            --build_dir $build_dir \
-            --config Release \
-            --cmake_generator 'Ninja' \
-            --update \
-            --build \
-            --use_xcode \
-            --build_shared_lib \
-            --compile_no_warning_as_error \
-            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-            --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
-            --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
-            --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            --apple_sysroot macosx \
-            --target install \
-            --parallel \
-            --skip_tests \
-            --apple_deploy_target '10.15' \
-            $extra_opt \
-            --use_coreml
+          if [[ $arch == universal2 ]]; then
+            # Build arm64 and x86_64 separately, then lipo to create universal binary.
+            # This avoids x86-specific AVX512 flags being applied to arm64 targets.
+            for sub_arch in arm64 x86_64; do
+              echo "=== Building $sub_arch ==="
+              sub_build_dir=./build-macos/$sub_arch
+              python3 ./tools/ci_build/build.py \
+                --build_dir $sub_build_dir \
+                --config Release \
+                --cmake_generator 'Ninja' \
+                --update \
+                --build \
+                --use_xcode \
+                --build_shared_lib \
+                --compile_no_warning_as_error \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+                --cmake_extra_defines CMAKE_INSTALL_PREFIX=$sub_build_dir/install/ \
+                --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$sub_arch" \
+                --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                --apple_sysroot macosx \
+                --target install \
+                --parallel \
+                --skip_tests \
+                --apple_deploy_target '10.15' \
+                $extra_opt \
+                --use_coreml
+            done
+
+            # Combine into universal binary
+            arm64_install=./build-macos/arm64/Release/build-macos/arm64/install
+            x86_64_install=./build-macos/x86_64/Release/build-macos/x86_64/install
+            mkdir -p $build_dir/Release/$build_dir/install/lib $build_dir/Release/$build_dir/install/include
+            lipo -create \
+              $arm64_install/lib/libonnxruntime.dylib \
+              $x86_64_install/lib/libonnxruntime.dylib \
+              -output $build_dir/Release/$build_dir/install/lib/libonnxruntime.dylib
+            cp -r $arm64_install/include/* $build_dir/Release/$build_dir/install/include/
+          else
+            python3 ./tools/ci_build/build.py \
+              --build_dir $build_dir \
+              --config Release \
+              --cmake_generator 'Ninja' \
+              --update \
+              --build \
+              --use_xcode \
+              --build_shared_lib \
+              --compile_no_warning_as_error \
+              --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+              --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
+              --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
+              --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+              --apple_sysroot macosx \
+              --target install \
+              --parallel \
+              --skip_tests \
+              --apple_deploy_target '10.15' \
+              $extra_opt \
+              --use_coreml
+          fi
             # see  https://github.com/microsoft/onnxruntime/pull/24194/files
             # for why to use --no_kleidiai
 
