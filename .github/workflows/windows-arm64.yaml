@@ -204,5 +204,5 @@ jobs:
         with:
           file_glob: true
           file: "./*.tar.bz2"
-          overwrite: true
+          overwrite: false
           tag: v${{ env.ONNXRUNTIME_VERSION }}

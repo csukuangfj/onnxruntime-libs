@@ -149,7 +149,7 @@ jobs:
         run: |
           set -euo pipefail
           cd build/apple_framework/framework_out
-          zip -r onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
+          zip -ry onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip \
             onnxruntime.xcframework
           ls -lh *.zip
           mv *.zip $GITHUB_WORKSPACE/
@@ -167,7 +167,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: true
+          overwrite: false
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Publish to huggingface
