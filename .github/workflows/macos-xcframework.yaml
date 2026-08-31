@@ -145,8 +145,11 @@ jobs:
               fi
 
               # Release-macosx may exist (created by Xcode) but with framework
-              # inside static_framework/ instead of directly. Create inner symlink.
-              if [[ -d "$ARCH_DIR/Release-macosx/static_framework/onnxruntime.framework" ]] && \
+              # inside static_framework/ instead of directly. Create inner symlink
+              # ONLY for static builds. For shared builds, we need the actual
+              # dynamic framework, not a symlink to the static one.
+              if [[ "${{ matrix.link_type }}" != "shared" ]] && \
+                 [[ -d "$ARCH_DIR/Release-macosx/static_framework/onnxruntime.framework" ]] && \
                  [[ ! -d "$EXPECTED_FW" ]]; then
                 ln -sf "static_framework/onnxruntime.framework" "$EXPECTED_FW"
               fi
