@@ -3,11 +3,11 @@ name: windows-x86
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.29.0)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
 
 jobs:
   windows_x86:
@@ -138,6 +138,13 @@ jobs:
           cp -v $src/ThirdPartyNotices.txt $dst_dir/
           cp -v $src/VERSION_NUMBER $dst_dir/
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe tests/test_onnxruntime.cc \
+            /I$artifact/include /link $artifact/lib/onnxruntime.lib
+          ./test_onnxruntime.exe
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'ON'
         uses: actions/upload-artifact@v4
@@ -145,6 +152,18 @@ jobs:
           name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-win-x64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+            /I$artifact/include /link $artifact/lib/onnxruntime.lib
+          ./test_onnxruntime.exe
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe tests/test_onnxruntime.cc \
+            /I$artifact/include /link $artifact/lib/onnxruntime.lib
+          ./test_onnxruntime.exe
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'OFF'
         uses: actions/upload-artifact@v4

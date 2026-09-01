@@ -3,11 +3,11 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - fix-macos-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.29.0)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
 
 jobs:
   visionos-xcframework:
@@ -130,10 +130,8 @@ jobs:
         shell: bash
         run: |
           MODULEMAP='module onnxruntime {
-              umbrella header "Headers/onnxruntime_c_api.h"
               export *
               module * { export * }
-          }'
 
           FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
           for slice in "$FW_ROOT"/*/; do

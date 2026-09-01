@@ -3,7 +3,7 @@ name: test-spm
 on:
   push:
     branches:
-      - master
+      - test-ci
   workflow_dispatch:
 
 jobs:

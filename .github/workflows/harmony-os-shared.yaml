@@ -3,11 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.29.0)"
         required: true
 
 permissions:
@@ -21,7 +21,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
 
 jobs:
   harmony-os-shared:
@@ -286,7 +286,6 @@ jobs:
           printf '  const MLAS_SBGEMM_POSTPROCESSOR *OutputProcessor;\n' >> $f
           printf '  bool AIsfp32; bool BIsfp32; bool ZeroMode; bool BIsPacked;\n' >> $f
           printf '};\n' >> $f
-          printf 'static inline size_t MlasSBGemmPackBSize(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){return 0;}\n' >> $f
           printf 'static inline void MlasSBGemmConvertPackB(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const float*,size_t,void*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline void MlasSBGemmBatch(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,MLAS_THREADPOOL*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> $f
@@ -294,7 +293,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y patchelf
+          sudo apt-get install -y test-ci
 
       - name: Patch model_editor_c_api for Clang 15
         shell: bash
@@ -596,9 +595,9 @@ jobs:
 
           readelf -d ./$artifact/lib/libonnxruntime.so
 
-          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          test-ci --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
-          echo "---after patchelf"
+          echo "---after test-ci"
 
           readelf -d ./$artifact/lib/libonnxruntime.so
           ls -lh ./$artifact/lib/libonnxruntime.so

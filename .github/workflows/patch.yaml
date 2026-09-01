@@ -3,7 +3,7 @@ name: patch
 on:
   push:
     branches:
-      - patchelf
+      - test-ci
 
   workflow_dispatch:
     inputs:
@@ -20,7 +20,7 @@ env:
     ${{ github.event.release.tag_name || github.event.inputs.version || '1.22.0' }}
 
 jobs:
-  patchelf:
+  test-ci:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,14 +36,14 @@ jobs:
       - name: Install
         shell: bash
         run: |
-          sudo apt-get install -y patchelf zip
+          sudo apt-get install -y test-ci zip
 
       - name: Run
         shell: bash
         run: |
           cd .github/scripts
           export CUDA_VERSION=${{ matrix.cuda }}
-          ./patchelf.sh
+          ./test-ci.sh
 
       - name: Show sha256sum
         shell: bash

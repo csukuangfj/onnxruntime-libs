@@ -3,11 +3,11 @@ name: macos-shared
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.29.0)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
 
 jobs:
   macos-shared:
@@ -236,6 +236,14 @@ jobs:
 
           zip -ry ${artifact}.zip ./$artifact
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          artifact=onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          g++ -std=c++17 -o /tmp/test_onnxruntime tests/test_onnxruntime.cc \
+            -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
+          /tmp/test_onnxruntime
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4

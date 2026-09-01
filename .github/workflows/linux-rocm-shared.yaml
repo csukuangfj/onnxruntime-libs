@@ -1,13 +1,13 @@
 name: linux-shared
 
 on:
-  # push:
-  #   branches:
-  #     - rocm
+  push:
+    branches:
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.29.0)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
 
 jobs:
   linux-rocmshared:
@@ -97,7 +97,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y patchelf
+          sudo apt-get install -y test-ci
 
       - name: create build directory
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -195,13 +195,21 @@ jobs:
           ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
-          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          test-ci --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
           ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
           zip -r ${artifact}.zip ./$artifact
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          artifact=onnxruntime-linux-x64-rocm-$config-$version
+          g++ -std=c++17 -o /tmp/test_onnxruntime tests/test_onnxruntime.cc \
+            -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
+          /tmp/test_onnxruntime
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
