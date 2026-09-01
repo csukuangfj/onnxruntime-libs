@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix-macos-2
+      - small-fixes-2
   workflow_dispatch:
     inputs:
       version:
