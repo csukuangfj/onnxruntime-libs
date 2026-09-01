@@ -149,9 +149,10 @@ jobs:
               if [[ "${{ matrix.link_type }}" == "shared" ]]; then
                 # For shared builds, we need the actual dynamic framework.
                 # The dynamic framework is at Release/Release/onnxruntime.framework.
-                # Create a symlink to it.
+                # Note: ARCH_DIR already includes /Release, so we use
+                # ARCH_DIR/Release/onnxruntime.framework.
                 if [[ ! -d "$EXPECTED_FW" ]] && \
-                   [[ -d "$ARCH_DIR/Release/Release/onnxruntime.framework" ]]; then
+                   [[ -d "$ARCH_DIR/Release/onnxruntime.framework" ]]; then
                   ln -sf "../Release/onnxruntime.framework" "$EXPECTED_FW"
                 fi
               else
