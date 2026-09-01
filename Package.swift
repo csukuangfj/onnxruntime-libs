@@ -26,7 +26,7 @@ let package = Package(
         .binaryTarget(
             name: "OnnxruntimeMacOS",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.1/onnxruntime-macos-static-xcframework-1.28.1.xcframework.zip",
-            checksum: "e3e9c4b18677aaac91aaf69487c95bbf412a2d4b18b7cd3604ccaf1863eaea2f"
+            checksum: "38c9a1e8bcf2497ff5eb721195743e4b4367ade3cd1eb9869c0cfd1bd367c36b"
         ),
         .binaryTarget(
             name: "OnnxruntimeIOS",
@@ -43,7 +43,7 @@ let package = Package(
         .binaryTarget(
             name: "OnnxruntimeMacOSShared",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.1/onnxruntime-macos-shared-xcframework-1.28.1.xcframework.zip",
-            checksum: "169c8c18be6cf32d3f880efe7527b28d8e6c9b1502cd54239d8b39d3657b4427"
+            checksum: "06fa9d311802698f018ea2ede59ae65f9ce4ce9b38eb1b20cfac23f245e6609d"
         ),
         .binaryTarget(
             name: "OnnxruntimeIOSShared",
