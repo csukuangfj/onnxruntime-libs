@@ -152,7 +152,7 @@ jobs:
                 # Create a symlink to it.
                 if [[ ! -d "$EXPECTED_FW" ]] && \
                    [[ -d "$ARCH_DIR/Release/Release/onnxruntime.framework" ]]; then
-                  ln -sf "../../Release/Release/onnxruntime.framework" "$EXPECTED_FW"
+                  ln -sf "../Release/onnxruntime.framework" "$EXPECTED_FW"
                 fi
               else
                 # For static builds, create inner symlink to static_framework/.
