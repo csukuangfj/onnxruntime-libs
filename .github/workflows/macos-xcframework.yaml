@@ -130,35 +130,25 @@ jobs:
             find "$ARCH_DIR" -name "*.framework" -type d 2>/dev/null || true
 
             if [[ ! -d "$EXPECTED_FW" ]]; then
-              if [[ ! -d "$ARCH_DIR/Release-macosx" ]]; then
-                # Release-macosx doesn't exist yet; create top-level symlink
-                if [[ -d "$ARCH_DIR/Release/Release-macosx" ]]; then
-                  ln -sf "Release/Release-macosx" "$ARCH_DIR/Release-macosx"
-                elif [[ -d "$ARCH_DIR/Release/Release/onnxruntime.framework" ]]; then
-                  ln -sf "Release/Release" "$ARCH_DIR/Release-macosx"
-                elif [[ -d "$ARCH_DIR/Release/onnxruntime.framework" ]]; then
-                  ln -sf Release "$ARCH_DIR/Release-macosx"
-                fi
-                if [[ -f "$ARCH_DIR/Release/framework_info.json" ]]; then
-                  cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" 2>/dev/null || true
-                fi
-              fi
-
-              # Release-macosx may exist (created by Xcode) but with framework
-              # inside static_framework/ instead of directly.
               if [[ "${{ matrix.link_type }}" == "shared" ]]; then
-                # For shared builds, we need the actual dynamic framework.
-                # The dynamic framework is at Release/Release/onnxruntime.framework.
-                # Note: ARCH_DIR already includes /Release, so we use
-                # ARCH_DIR/Release/onnxruntime.framework.
-                if [[ ! -d "$EXPECTED_FW" ]] && \
-                   [[ -d "$ARCH_DIR/Release/onnxruntime.framework" ]]; then
-                  ln -sf "../Release/onnxruntime.framework" "$EXPECTED_FW"
+                # For shared builds, find the dynamic framework and copy it.
+                # Xcode places it at Release/Release/onnxruntime.framework,
+                # but build_apple_framework.py expects
+                # Release-macosx/onnxruntime.framework.
+                DYNAMIC_FW=$(find "$ARCH_DIR" -name "onnxruntime.framework" -type d \
+                  -not -path "*/static_framework/*" \
+                  -not -path "*/EagerLinkingTBDs/*" \
+                  -not -path "*/Release-macosx/*" | head -1)
+                if [[ -n "$DYNAMIC_FW" ]]; then
+                  mkdir -p "$ARCH_DIR/Release-macosx"
+                  cp -R "$DYNAMIC_FW" "$EXPECTED_FW"
+                  echo "Copied dynamic framework: $DYNAMIC_FW -> $EXPECTED_FW"
+                else
+                  echo "ERROR: Could not find dynamic framework in $ARCH_DIR"
                 fi
               else
-                # For static builds, create inner symlink to static_framework/.
-                if [[ -d "$ARCH_DIR/Release-macosx/static_framework/onnxruntime.framework" ]] && \
-                   [[ ! -d "$EXPECTED_FW" ]]; then
+                # For static builds, create symlink to static_framework/.
+                if [[ -d "$ARCH_DIR/Release-macosx/static_framework/onnxruntime.framework" ]]; then
                   ln -sf "static_framework/onnxruntime.framework" "$EXPECTED_FW"
                 fi
               fi
