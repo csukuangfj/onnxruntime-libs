@@ -182,18 +182,16 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
-      - name: Checkout onnxruntime-libs for test
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
-          g++ -std=c++17 -o /tmp/test_onnxruntime $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
+
+          # Download test file directly
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
             -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
           /tmp/test_onnxruntime
       - name: Upload artifact
