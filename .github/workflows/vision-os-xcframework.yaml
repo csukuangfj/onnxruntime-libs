@@ -177,6 +177,25 @@ jobs:
           fi
           echo "PASSED: minos is $minos"
 
+      - name: Test onnxruntime (compile only)
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # Find the framework inside the xcframework
+          fw=$(find build/apple_framework/framework_out -name "onnxruntime.framework" -type d | head -1)
+          if [ -z "$fw" ]; then
+            echo "WARNING: onnxruntime.framework not found, skipping test"
+            exit 0
+          fi
+
+          # Download test file
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          # Compile only (can't run visionOS binary on macOS host)
+          g++ -std=c++17 -c /tmp/test_onnxruntime.cc -o /tmp/test_onnxruntime.o \
+            -F$(dirname "$fw") -framework onnxruntime
+          echo "PASSED: compilation successful"
+
       - name: Zip XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         run: |
