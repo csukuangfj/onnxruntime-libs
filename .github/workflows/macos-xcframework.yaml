@@ -266,6 +266,7 @@ jobs:
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
 
           g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
+            -I"$fw/Headers" \
             -F$(dirname "$fw") -framework onnxruntime \
             -Wl,-rpath,$(dirname "$fw")
           /tmp/test_onnxruntime
@@ -292,7 +293,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Publish to huggingface
