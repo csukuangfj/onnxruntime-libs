@@ -199,6 +199,7 @@ jobs:
           MODULEMAP='module onnxruntime {
               export *
               module * { export * }
+          }'
 
           FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
           for slice in "$FW_ROOT"/*/; do
@@ -221,15 +222,22 @@ jobs:
           echo "Checking minos of $binary"
           vtool -show-build "$binary"
 
-          minos=$(vtool -show-build "$binary" | grep minos | awk '{print $2}')
-          echo "minos: $minos"
+          # Universal binaries have minos for each architecture
+          failed=0
+          while read -r minos; do
+            echo "minos: $minos"
+            # macos-latest (Apple Silicon) enforces min 11.0, macos-15-intel allows 10.15
+            if [[ "$minos" != "10.15" && "$minos" != "11.0" ]]; then
+              echo "FAILED: expected minos 10.15 or 11.0, got $minos"
+              failed=1
+            fi
+          done < <(vtool -show-build "$binary" | grep minos | awk '{print $2}')
 
-          # macos-latest (Apple Silicon) enforces min 11.0, macos-15-intel allows 10.15
-          if [[ "$minos" != "10.15" && "$minos" != "11.0" ]]; then
-            echo "FAILED: expected minos 10.15 or 11.0, got $minos"
+          if [[ $failed -eq 0 ]]; then
+            echo "PASSED"
+          else
             exit 1
           fi
-          echo "PASSED: minos is $minos"
 
       - name: Zip XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
