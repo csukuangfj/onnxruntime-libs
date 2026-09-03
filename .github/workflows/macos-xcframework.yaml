@@ -231,7 +231,8 @@ jobs:
           fi
 
           echo "Checking minos of $binary"
-          vtool -show-build "$binary"
+          otool_output=$(otool -l "$binary")
+          echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | head -20 || true
 
           # Universal binaries have minos for each architecture
           failed=0
@@ -242,7 +243,7 @@ jobs:
               echo "FAILED: expected minos 10.15 or 11.0, got $minos"
               failed=1
             fi
-          done < <(vtool -show-build "$binary" | grep minos | awk '{print $2}')
+          done < <(echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | grep minos | awk '{print $2}')
 
           if [[ $failed -eq 0 ]]; then
             echo "PASSED"
