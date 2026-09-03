@@ -119,8 +119,7 @@ jobs:
               --config Release \
               $opts \
               --only_build_single_sysroot_arch_framework macosx $arch \
-              macos_build_settings.json \
-              2>&1 | tail -5
+              macos_build_settings.json
 
             # macOS Xcode may place the framework in a different location than
             # what build_apple_framework.py expects (Release/Release-macosx/onnxruntime.framework).
@@ -128,7 +127,7 @@ jobs:
             ARCH_DIR=$INTERMEDIATES/macosx_${arch}/Release
             EXPECTED_FW="$ARCH_DIR/Release-macosx/onnxruntime.framework"
             echo "--- Checking framework layout for $arch ---"
-            find "$ARCH_DIR" -name "*.framework" -type d 2>/dev/null || true
+            find "$ARCH_DIR" -name "*.framework" -type d || true
 
             if [[ ! -d "$EXPECTED_FW" ]]; then
               if [[ ! -d "$ARCH_DIR/Release-macosx" ]]; then
@@ -141,7 +140,7 @@ jobs:
                   ln -sf Release "$ARCH_DIR/Release-macosx"
                 fi
                 if [[ -f "$ARCH_DIR/Release/framework_info.json" ]]; then
-                  cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" 2>/dev/null || true
+                  cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" || true
                 fi
               fi
 
@@ -166,7 +165,7 @@ jobs:
             fi
 
             echo "--- Framework path check ---"
-            ls -la "$ARCH_DIR/Release-macosx" 2>/dev/null || echo "Release-macosx not found"
+            ls -la "$ARCH_DIR/Release-macosx" || echo "Release-macosx not found"
             if [[ -d "$EXPECTED_FW" ]]; then
               echo "Expected framework path exists: $EXPECTED_FW"
             else
