@@ -96,7 +96,6 @@ jobs:
                 --cmake_generator 'Ninja' \
                 --update \
                 --build \
-                --use_xcode \
                 --build_shared_lib \
                 --compile_no_warning_as_error \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
@@ -129,7 +128,6 @@ jobs:
               --cmake_generator 'Ninja' \
               --update \
               --build \
-              --use_xcode \
               --build_shared_lib \
               --compile_no_warning_as_error \
               --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
@@ -251,9 +249,9 @@ jobs:
           minos=$(vtool -show-build $dylib | grep minos | awk '{print $2}')
           echo "minos: $minos"
 
-          expected="10.15"
-          if [[ "$minos" != "$expected" ]]; then
-            echo "FAILED: expected minos $expected, got $minos"
+          # macos-latest (Apple Silicon) enforces min 11.0, macos-15-intel allows 10.15
+          if [[ "$minos" != "10.15" && "$minos" != "11.0" ]]; then
+            echo "FAILED: expected minos 10.15 or 11.0, got $minos"
             exit 1
           fi
           echo "PASSED: minos is $minos"
@@ -263,7 +261,7 @@ jobs:
         shell: bash
         run: |
           artifact=onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
-          g++ -std=c++17 -o /tmp/test_onnxruntime tests/test_onnxruntime.cc \
+          g++ -std=c++17 -o /tmp/test_onnxruntime $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
             -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
           /tmp/test_onnxruntime
       - name: Upload artifact

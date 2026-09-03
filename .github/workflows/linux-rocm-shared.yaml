@@ -207,7 +207,7 @@ jobs:
         shell: bash
         run: |
           artifact=onnxruntime-linux-x64-rocm-$config-$version
-          g++ -std=c++17 -o /tmp/test_onnxruntime tests/test_onnxruntime.cc \
+          g++ -std=c++17 -o /tmp/test_onnxruntime $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
             -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
           /tmp/test_onnxruntime
       - name: Upload artifact

@@ -142,7 +142,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe tests/test_onnxruntime.cc \
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
             /I$artifact/include /link $artifact/lib/onnxruntime.lib
           ./test_onnxruntime.exe
       - name: Upload artifact
@@ -161,7 +161,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe tests/test_onnxruntime.cc \
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
             /I$artifact/include /link $artifact/lib/onnxruntime.lib
           ./test_onnxruntime.exe
       - name: Upload artifact

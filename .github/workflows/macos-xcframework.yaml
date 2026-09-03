@@ -212,21 +212,21 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          dylib=$(find build/apple_framework/framework_out -name "libonnxruntime.dylib" | head -1)
-          if [ -z "$dylib" ]; then
-            echo "WARNING: libonnxruntime.dylib not found, skipping minos check"
+          binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
+          if [ -z "$binary" ]; then
+            echo "WARNING: onnxruntime binary not found, skipping minos check"
             exit 0
           fi
 
-          echo "Checking minos of $dylib"
-          vtool -show-build "$dylib"
+          echo "Checking minos of $binary"
+          vtool -show-build "$binary"
 
-          minos=$(vtool -show-build "$dylib" | grep minos | awk '{print $2}')
+          minos=$(vtool -show-build "$binary" | grep minos | awk '{print $2}')
           echo "minos: $minos"
 
-          expected="10.15"
-          if [[ "$minos" != "$expected" ]]; then
-            echo "FAILED: expected minos $expected, got $minos"
+          # macos-latest (Apple Silicon) enforces min 11.0, macos-15-intel allows 10.15
+          if [[ "$minos" != "10.15" && "$minos" != "11.0" ]]; then
+            echo "FAILED: expected minos 10.15 or 11.0, got $minos"
             exit 1
           fi
           echo "PASSED: minos is $minos"

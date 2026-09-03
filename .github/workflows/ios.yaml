@@ -173,6 +173,30 @@ jobs:
             fi
           done
 
+      - name: Verify deployment target
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
+          if [ -z "$binary" ]; then
+            echo "WARNING: onnxruntime binary not found, skipping minos check"
+            exit 0
+          fi
+
+          echo "Checking minos of $binary"
+          vtool -show-build "$binary"
+
+          minos=$(vtool -show-build "$binary" | grep minos | awk '{print $2}')
+          echo "minos: $minos"
+
+          # iOS deployment target should be 16.0 or similar, not something crazy like 26.5
+          major=$(echo "$minos" | cut -d. -f1)
+          if [ "$major" -gt 20 ]; then
+            echo "FAILED: minos $minos is unreasonably high"
+            exit 1
+          fi
+          echo "PASSED: minos is $minos"
+
       - name: Zip XCFramework
         run: |
           set -euo pipefail
