@@ -102,8 +102,17 @@ jobs:
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
-          # Reduce xcodebuild verbosity by passing -quiet through cmake
-          sed -i.bak "s/'--', '-parallelizeTargets'/'--', '-quiet', '-parallelizeTargets'/g" tools/ci_build/build.py || true
+          # Reduce xcodebuild verbosity by patching build.py to add -quiet
+          python3 -c "
+          import re
+          with open('tools/ci_build/build.py', 'r') as f:
+              content = f.read()
+          # Add -quiet before -project in xcodebuild invocations
+          content = re.sub(r\"(xcodebuild.*?) -project\", r\"\1 -quiet -project\", content)
+          with open('tools/ci_build/build.py', 'w') as f:
+              f.write(content)
+          print('Patched build.py to add -quiet to xcodebuild')
+          " || true
 
           link_type=${{ matrix.link_type }}
           if [[ $link_type == "shared" ]]; then
