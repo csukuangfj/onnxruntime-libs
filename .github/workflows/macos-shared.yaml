@@ -3,7 +3,7 @@ name: macos-shared
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -262,6 +262,10 @@ jobs:
           else
             exit 1
           fi
+
+      - name: Checkout onnxruntime-libs for test
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
 
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'

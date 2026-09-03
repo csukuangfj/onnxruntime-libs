@@ -138,6 +138,10 @@ jobs:
           cp -v $src/ThirdPartyNotices.txt $dst_dir/
           cp -v $src/VERSION_NUMBER $dst_dir/
 
+      - name: Checkout onnxruntime-libs for test
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
@@ -152,11 +156,10 @@ jobs:
           name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-win-x64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
+      - name: Checkout onnxruntime-libs for test
         if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-            /I$artifact/include /link $artifact/lib/onnxruntime.lib
-          ./test_onnxruntime.exe
+        uses: actions/checkout@v4
+
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash

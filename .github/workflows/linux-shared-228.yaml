@@ -170,6 +170,10 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
+      - name: Checkout onnxruntime-libs for test
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
