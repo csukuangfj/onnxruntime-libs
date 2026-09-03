@@ -271,7 +271,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          artifact=onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          artifact=$GITHUB_WORKSPACE/onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
           g++ -std=c++17 -o /tmp/test_onnxruntime $GITHUB_WORKSPACE/tests/test_onnxruntime.cc \
             -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
           /tmp/test_onnxruntime
@@ -307,7 +307,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             arch=${{ matrix.arch }}
-            artifact=onnxruntime-osx-$arch-$version
+            artifact=$GITHUB_WORKSPACE/onnxruntime-osx-$arch-$version
 
             tree ./$artifact
 
