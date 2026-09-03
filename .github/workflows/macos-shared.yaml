@@ -102,6 +102,7 @@ jobs:
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
                 --cmake_extra_defines CMAKE_INSTALL_PREFIX=$sub_build_dir/install/ \
                 --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$sub_arch" \
+                --cmake_extra_defines CMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
                 --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
                 --apple_sysroot macosx \
                 --target install \
@@ -134,6 +135,7 @@ jobs:
               --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
               --cmake_extra_defines CMAKE_INSTALL_PREFIX=$build_dir/install/ \
               --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="$arch" \
+              --cmake_extra_defines CMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
               --cmake_extra_defines CMAKE_POLICY_VERSION_MINIMUM=3.5 \
               --apple_sysroot macosx \
               --target install \
@@ -235,6 +237,26 @@ jobs:
           tree ./$artifact
 
           zip -ry ${artifact}.zip ./$artifact
+
+      - name: Verify deployment target
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          artifact=onnxruntime-osx-${{ matrix.arch }}-${{ env.ONNXRUNTIME_VERSION }}
+          dylib=$artifact/lib/libonnxruntime.dylib
+
+          echo "Checking minos of $dylib"
+          vtool -show-build $dylib
+
+          minos=$(vtool -show-build $dylib | grep minos | awk '{print $2}')
+          echo "minos: $minos"
+
+          expected="10.15"
+          if [[ "$minos" != "$expected" ]]; then
+            echo "FAILED: expected minos $expected, got $minos"
+            exit 1
+          fi
+          echo "PASSED: minos is $minos"
 
       - name: Test onnxruntime
         if: steps.cache-build-result.outputs.cache-hit != 'true'

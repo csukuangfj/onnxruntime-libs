@@ -71,6 +71,7 @@ jobs:
             del(.build_params.iphoneos, .build_params.iphonesimulator) |
             .build_params.base += [
               "--compile_no_warning_as_error",
+              "--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=10.15",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
             ] |
@@ -206,6 +207,29 @@ jobs:
               echo "$MODULEMAP" > "$slice/onnxruntime.framework/Modules/module.modulemap"
             fi
           done
+
+      - name: Verify deployment target
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          dylib=$(find build/apple_framework/framework_out -name "libonnxruntime.dylib" | head -1)
+          if [ -z "$dylib" ]; then
+            echo "WARNING: libonnxruntime.dylib not found, skipping minos check"
+            exit 0
+          fi
+
+          echo "Checking minos of $dylib"
+          vtool -show-build "$dylib"
+
+          minos=$(vtool -show-build "$dylib" | grep minos | awk '{print $2}')
+          echo "minos: $minos"
+
+          expected="10.15"
+          if [[ "$minos" != "$expected" ]]; then
+            echo "FAILED: expected minos $expected, got $minos"
+            exit 1
+          fi
+          echo "PASSED: minos is $minos"
 
       - name: Zip XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'

@@ -3,7 +3,7 @@ name: android-shared
 on:
   push:
     branches:
-      - test-ci
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
@@ -59,7 +59,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y test-ci
+          sudo apt-get install -y patchelf
 
 
       - name: build

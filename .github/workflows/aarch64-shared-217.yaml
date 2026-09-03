@@ -3,7 +3,7 @@ name: aarch64-shared-217
 on:
   push:
     branches:
-      - test-ci
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
@@ -56,7 +56,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y test-ci
+          sudo apt-get install -y patchelf
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -188,7 +188,7 @@ jobs:
           # ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so
 
-          test-ci --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
           # ldd ./$artifact/lib/libonnxruntime.so
           readelf -d ./$artifact/lib/libonnxruntime.so

@@ -3,7 +3,7 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - test-ci
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
@@ -293,7 +293,7 @@ jobs:
 
           git diff
 
-          sudo apt-get install -y test-ci
+          sudo apt-get install -y patchelf
 
       - name: Patch model_editor_c_api for Clang 15
         shell: bash
@@ -595,9 +595,9 @@ jobs:
 
           readelf -d ./$artifact/lib/libonnxruntime.so
 
-          test-ci --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
 
-          echo "---after test-ci"
+          echo "---after patchelf"
 
           readelf -d ./$artifact/lib/libonnxruntime.so
           ls -lh ./$artifact/lib/libonnxruntime.so
