@@ -3,7 +3,7 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
