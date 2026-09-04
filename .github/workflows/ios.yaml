@@ -190,9 +190,10 @@ jobs:
           fi
 
           echo "Checking minos of $binary"
-          vtool -show-build "$binary"
+          otool_output=$(otool -l "$binary")
+          echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | head -20 || true
 
-          minos=$(vtool -show-build "$binary" | grep minos | awk '{print $2}')
+          minos=$(echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | grep minos | awk '{print $2}' | head -1)
           echo "minos: $minos"
 
           # iOS deployment target should be 12.0
