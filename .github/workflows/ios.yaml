@@ -84,7 +84,7 @@ jobs:
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-          jq '.build_params.base += ["--cmake_extra_defines=IPHONEOS_DEPLOYMENT_TARGET=12.0"]' \
+          jq '.build_params.base += ["--cmake_extra_defines=IPHONEOS_DEPLOYMENT_TARGET=13.0"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
@@ -196,9 +196,9 @@ jobs:
           minos=$(echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | grep minos | awk '{print $2}' | head -1)
           echo "minos: $minos"
 
-          # iOS deployment target should be 12.0
-          if [[ "$minos" != "12.0" ]]; then
-            echo "FAILED: expected minos 12.0, got $minos"
+          # iOS deployment target should be 13.0 (ONNX Runtime minimum)
+          if [[ "$minos" != "13.0" ]]; then
+            echo "FAILED: expected minos 13.0, got $minos"
             exit 1
           fi
           echo "PASSED: minos is $minos"
