@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.0)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   ios:
@@ -84,9 +84,9 @@ jobs:
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
 
-          jq '.build_params.base += ["--cmake_extra_defines=IPHONEOS_DEPLOYMENT_TARGET=13.0", "--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=13.0"] |
-              .build_params.iphoneos = [.build_params.iphoneos[] | sub("--apple_deploy_target=15.1"; "--apple_deploy_target=13.0")] |
-              .build_params.iphonesimulator = [.build_params.iphonesimulator[] | sub("--apple_deploy_target=15.1"; "--apple_deploy_target=13.0")]' \
+          # Override deployment target to 13.0
+          jq '.build_params.iphoneos = [.build_params.iphoneos[] | sub("apple_deploy_target=[0-9.]+"; "apple_deploy_target=13.0")] |
+              .build_params.iphonesimulator = [.build_params.iphonesimulator[] | sub("apple_deploy_target=[0-9.]+"; "apple_deploy_target=13.0")]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
