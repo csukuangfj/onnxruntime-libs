@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -167,6 +167,7 @@ jobs:
           MODULEMAP='module onnxruntime {
               export *
               module * { export * }
+          }'
 
           # Add modulemap to each platform slice's framework
           FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework

@@ -3,7 +3,7 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -144,6 +144,7 @@ jobs:
           MODULEMAP='module onnxruntime {
               export *
               module * { export * }
+          }'
 
           FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
           for slice in "$FW_ROOT"/*/; do
