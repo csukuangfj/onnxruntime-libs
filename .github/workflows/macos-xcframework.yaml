@@ -3,7 +3,7 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -268,7 +268,7 @@ jobs:
           g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
             -I"$fw/Headers" \
             -F$(dirname "$fw") -framework onnxruntime \
-            -framework CoreML -framework Foundation \
+            -framework CoreML -framework Foundation -framework Network \
             -Wl,-rpath,$(dirname "$fw")
           /tmp/test_onnxruntime
 
