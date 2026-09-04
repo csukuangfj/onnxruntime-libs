@@ -69,7 +69,8 @@ jobs:
           jq '
             .build_params.base += [
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
-              "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
+              "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF",
+              "--cmake_extra_defines=XROS_DEPLOYMENT_TARGET=1.0"
             ]
           ' tools/ci_build/github/apple/default_vision_os_framework_build_settings.json \
             > visionos_build_settings.json
@@ -169,10 +170,9 @@ jobs:
           minos=$(vtool -show-build "$binary" | grep minos | awk '{print $2}')
           echo "minos: $minos"
 
-          # visionOS deployment target should be 1.0 or similar, not something crazy like 26.5
-          major=$(echo "$minos" | cut -d. -f1)
-          if [ "$major" -gt 20 ]; then
-            echo "FAILED: minos $minos is unreasonably high"
+          # visionOS deployment target should be 1.0
+          if [[ "$minos" != "1.0" ]]; then
+            echo "FAILED: expected minos 1.0, got $minos"
             exit 1
           fi
           echo "PASSED: minos is $minos"
