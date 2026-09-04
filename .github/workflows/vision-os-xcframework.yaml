@@ -193,8 +193,7 @@ jobs:
 
           # Compile only (can't run visionOS binary on macOS host)
           g++ -std=c++17 -c /tmp/test_onnxruntime.cc -o /tmp/test_onnxruntime.o \
-            -I"$fw/Headers" \
-            -F$(dirname "$fw") -framework onnxruntime
+            -I"$fw/Headers"
           echo "PASSED: compilation successful"
 
       - name: Zip XCFramework
