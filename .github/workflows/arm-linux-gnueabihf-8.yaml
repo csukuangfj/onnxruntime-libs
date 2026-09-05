@@ -162,7 +162,6 @@ jobs:
             --config Release \
             --build \
             --build_shared_lib \
-            --arm \
             --update \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \

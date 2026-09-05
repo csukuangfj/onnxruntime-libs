@@ -3,7 +3,7 @@ name: aarch64-shared-228
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -145,9 +145,7 @@ jobs:
           sudo chown -R runner $build_dir
           ls -lh $build_dir
 
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -186,7 +184,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
           # Download test file directly
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
@@ -224,7 +222,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
             tree ./$artifact
 
