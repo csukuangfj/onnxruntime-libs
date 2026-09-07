@@ -3,7 +3,7 @@ name: patch
 on:
   push:
     branches:
-      - test-ci
+      - test-ci-2
 
   workflow_dispatch:
     inputs:

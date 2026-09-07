@@ -124,6 +124,7 @@ jobs:
           cmake --version
 
       - name: apply patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cd tools/ci_build

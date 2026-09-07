@@ -3,7 +3,7 @@ name: aarch64-shared-217
 on:
   push:
     branches:
-      - test-ci
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
