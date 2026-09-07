@@ -156,6 +156,8 @@ jobs:
         shell: bash
         run: |
           build_dir=./build-shared
+          config=${{ matrix.config }}
+          version=${{ env.ONNXRUNTIME_VERSION }}
 
           sudo chown -R runner $build_dir
           ls -lh $build_dir

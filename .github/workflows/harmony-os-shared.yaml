@@ -564,6 +564,8 @@ jobs:
         run: |
           cd onnxruntime
           build_dir=./build-shared
+          config=${{ matrix.config }}
+          version=${{ env.ONNXRUNTIME_VERSION }}
 
           ls -lh $build_dir
 
