@@ -3,7 +3,7 @@ name: windows-x86
 on:
   push:
     branches:
-      - test-ci-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
@@ -142,7 +142,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          set artifact=onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}
+          if "${{ matrix.use_static_crt }}"=="ON" (set crt=MT) else (set crt=MD)
+          set artifact=onnxruntime-win-x86-%crt%-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o %TEMP%\test_onnxruntime.cc
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
           cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe %TEMP%\test_onnxruntime.cc /I%artifact%\include /link %artifact%\lib\onnxruntime.lib
@@ -158,7 +159,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          set artifact=onnxruntime-win-x86-${{ env.ONNXRUNTIME_VERSION }}
+          if "${{ matrix.use_static_crt }}"=="ON" (set crt=MT) else (set crt=MD)
+          set artifact=onnxruntime-win-x86-%crt%-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o %TEMP%\test_onnxruntime.cc
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
           cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe %TEMP%\test_onnxruntime.cc /I%artifact%\include /link %artifact%\lib\onnxruntime.lib
