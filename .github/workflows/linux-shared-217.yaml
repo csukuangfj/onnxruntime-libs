@@ -3,11 +3,11 @@ name: linux-shared-217
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   linux-shared-217:
@@ -147,13 +147,13 @@ jobs:
         shell: bash
         run: |
           build_dir=./build-shared
+          config=${{ matrix.config }}
+          version=${{ env.ONNXRUNTIME_VERSION }}
 
           sudo chown -R runner $build_dir
           ls -lh $build_dir
 
-          version=${{ env.ONNXRUNTIME_VERSION }}
-          config=${{ matrix.config }}
-          artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+          artifact=onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -188,6 +188,18 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+
+          # Download test file directly
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
+            -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
+          /tmp/test_onnxruntime
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
@@ -201,7 +213,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
@@ -220,7 +232,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-x64-glibc2_17-$config-$version
+            artifact=onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
 
             tree ./$artifact
 

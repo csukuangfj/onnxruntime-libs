@@ -3,11 +3,11 @@ name: windows-x64
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   windows_x64:
@@ -137,6 +137,16 @@ jobs:
           cp -v $src/ThirdPartyNotices.txt $dst_dir/
           cp -v $src/VERSION_NUMBER $dst_dir/
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          if "${{ matrix.use_static_crt }}"=="ON" (set crt=MT) else (set crt=MD)
+          set artifact=onnxruntime-win-x64-%crt%-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o %TEMP%\test_onnxruntime.cc
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe %TEMP%\test_onnxruntime.cc /I%artifact%\include /link %artifact%\lib\onnxruntime.lib
+          test_onnxruntime.exe
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'ON'
         uses: actions/upload-artifact@v4
@@ -144,6 +154,16 @@ jobs:
           name: onnxruntime-win-x64-static-CRT-${{ matrix.use_static_crt }}-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-win-x64-MT-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
 
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          if "${{ matrix.use_static_crt }}"=="ON" (set crt=MT) else (set crt=MD)
+          set artifact=onnxruntime-win-x64-%crt%-${{ matrix.build_type }}-${{ env.ONNXRUNTIME_VERSION }}
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o %TEMP%\test_onnxruntime.cc
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cl.exe /std:c++17 /EHsc /Fe:test_onnxruntime.exe %TEMP%\test_onnxruntime.cc /I%artifact%\include /link %artifact%\lib\onnxruntime.lib
+          test_onnxruntime.exe
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true' && matrix.use_static_crt == 'OFF'
         uses: actions/upload-artifact@v4
@@ -203,5 +223,5 @@ jobs:
         with:
           file_glob: true
           file: "./*.tar.bz2"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}

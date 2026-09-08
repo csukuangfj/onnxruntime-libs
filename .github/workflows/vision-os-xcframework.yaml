@@ -3,11 +3,11 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - fix-macos-2
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   visionos-xcframework:
@@ -69,7 +69,8 @@ jobs:
           jq '
             .build_params.base += [
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
-              "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
+              "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF",
+              "--cmake_extra_defines=XROS_DEPLOYMENT_TARGET=1.0"
             ]
           ' tools/ci_build/github/apple/default_vision_os_framework_build_settings.json \
             > visionos_build_settings.json
@@ -85,6 +86,17 @@ jobs:
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
+
+          # Reduce xcodebuild verbosity by patching build.py to add -quiet
+          python3 -c "
+          import re
+          with open('tools/ci_build/build.py', 'r') as f:
+              content = f.read()
+          content = re.sub(r\"(xcodebuild.*?) -project\", r\"\1 -quiet -project\", content)
+          with open('tools/ci_build/build.py', 'w') as f:
+              f.write(content)
+          print('Patched build.py to add -quiet to xcodebuild')
+          " || true
 
           link_type=${{ matrix.link_type }}
           if [[ $link_type == "shared" ]]; then
@@ -130,7 +142,6 @@ jobs:
         shell: bash
         run: |
           MODULEMAP='module onnxruntime {
-              umbrella header "Headers/onnxruntime_c_api.h"
               export *
               module * { export * }
           }'
@@ -143,6 +154,49 @@ jobs:
               echo "Added modulemap to $slice"
             fi
           done
+
+      - name: Verify deployment target
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
+          if [ -z "$binary" ]; then
+            echo "WARNING: onnxruntime binary not found, skipping minos check"
+            exit 0
+          fi
+
+          echo "Checking minos of $binary"
+          otool_output=$(otool -l "$binary")
+          echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | head -20 || true
+
+          minos=$(echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | grep minos | awk '{print $2}' | head -1)
+          echo "minos: $minos"
+
+          # visionOS deployment target should be 1.0
+          if [[ "$minos" != "1.0" ]]; then
+            echo "FAILED: expected minos 1.0, got $minos"
+            exit 1
+          fi
+          echo "PASSED: minos is $minos"
+
+      - name: Test onnxruntime (compile only)
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # Find the framework inside the xcframework
+          fw=$(find build/apple_framework/framework_out -name "onnxruntime.framework" -type d | head -1)
+          if [ -z "$fw" ]; then
+            echo "WARNING: onnxruntime.framework not found, skipping test"
+            exit 0
+          fi
+
+          # Download test file
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          # Compile only (can't run visionOS binary on macOS host)
+          g++ -std=c++17 -c /tmp/test_onnxruntime.cc -o /tmp/test_onnxruntime.o \
+            -I"$fw/Headers"
+          echo "PASSED: compilation successful"
 
       - name: Zip XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -167,7 +221,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Publish to huggingface

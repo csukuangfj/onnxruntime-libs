@@ -3,11 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - release-v1.27.1-2
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -21,7 +21,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   harmony-os-shared:
@@ -286,7 +286,6 @@ jobs:
           printf '  const MLAS_SBGEMM_POSTPROCESSOR *OutputProcessor;\n' >> $f
           printf '  bool AIsfp32; bool BIsfp32; bool ZeroMode; bool BIsPacked;\n' >> $f
           printf '};\n' >> $f
-          printf 'static inline size_t MlasSBGemmPackBSize(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){return 0;}\n' >> $f
           printf 'static inline void MlasSBGemmConvertPackB(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,bool,size_t,size_t,const float*,size_t,void*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline void MlasSBGemmBatch(CBLAS_TRANSPOSE,CBLAS_TRANSPOSE,size_t,size_t,size_t,size_t,const MLAS_SBGEMM_DATA_PARAMS*,MLAS_THREADPOOL*,const MLAS_BACKEND_KERNEL_SELECTOR_CONFIG*){}\n' >> $f
           printf 'static inline bool MlasBf16AccelerationSupported(){return false;}\n' >> $f
@@ -565,6 +564,8 @@ jobs:
         run: |
           cd onnxruntime
           build_dir=./build-shared
+          config=${{ matrix.config }}
+          version=${{ env.ONNXRUNTIME_VERSION }}
 
           ls -lh $build_dir
 
@@ -621,7 +622,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions

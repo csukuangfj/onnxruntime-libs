@@ -3,11 +3,11 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - fix-macos-2
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   macos-xcframework:
@@ -71,6 +71,7 @@ jobs:
             del(.build_params.iphoneos, .build_params.iphonesimulator) |
             .build_params.base += [
               "--compile_no_warning_as_error",
+              "--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=10.15",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"
             ] |
@@ -101,6 +102,18 @@ jobs:
           export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
+          # Reduce xcodebuild verbosity by patching build.py to add -quiet
+          python3 -c "
+          import re
+          with open('tools/ci_build/build.py', 'r') as f:
+              content = f.read()
+          # Add -quiet before -project in xcodebuild invocations
+          content = re.sub(r\"(xcodebuild.*?) -project\", r\"\1 -quiet -project\", content)
+          with open('tools/ci_build/build.py', 'w') as f:
+              f.write(content)
+          print('Patched build.py to add -quiet to xcodebuild')
+          " || true
+
           link_type=${{ matrix.link_type }}
           if [[ $link_type == "shared" ]]; then
             opts="--build_dynamic_framework"
@@ -118,8 +131,7 @@ jobs:
               --config Release \
               $opts \
               --only_build_single_sysroot_arch_framework macosx $arch \
-              macos_build_settings.json \
-              2>&1 | tail -5
+              macos_build_settings.json
 
             # macOS Xcode may place the framework in a different location than
             # what build_apple_framework.py expects (Release/Release-macosx/onnxruntime.framework).
@@ -127,7 +139,7 @@ jobs:
             ARCH_DIR=$INTERMEDIATES/macosx_${arch}/Release
             EXPECTED_FW="$ARCH_DIR/Release-macosx/onnxruntime.framework"
             echo "--- Checking framework layout for $arch ---"
-            find "$ARCH_DIR" -name "*.framework" -type d 2>/dev/null || true
+            find "$ARCH_DIR" -name "*.framework" -type d || true
 
             if [[ ! -d "$EXPECTED_FW" ]]; then
               if [[ ! -d "$ARCH_DIR/Release-macosx" ]]; then
@@ -140,7 +152,7 @@ jobs:
                   ln -sf Release "$ARCH_DIR/Release-macosx"
                 fi
                 if [[ -f "$ARCH_DIR/Release/framework_info.json" ]]; then
-                  cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" 2>/dev/null || true
+                  cp "$ARCH_DIR/Release/framework_info.json" "$ARCH_DIR/Release-macosx/framework_info.json" || true
                 fi
               fi
 
@@ -165,7 +177,7 @@ jobs:
             fi
 
             echo "--- Framework path check ---"
-            ls -la "$ARCH_DIR/Release-macosx" 2>/dev/null || echo "Release-macosx not found"
+            ls -la "$ARCH_DIR/Release-macosx" || echo "Release-macosx not found"
             if [[ -d "$EXPECTED_FW" ]]; then
               echo "Expected framework path exists: $EXPECTED_FW"
             else
@@ -196,7 +208,6 @@ jobs:
         shell: bash
         run: |
           MODULEMAP='module onnxruntime {
-              umbrella header "Headers/onnxruntime_c_api.h"
               export *
               module * { export * }
           }'
@@ -208,6 +219,58 @@ jobs:
               echo "$MODULEMAP" > "$slice/onnxruntime.framework/Modules/module.modulemap"
             fi
           done
+
+      - name: Verify deployment target
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
+          if [ -z "$binary" ]; then
+            echo "WARNING: onnxruntime binary not found, skipping minos check"
+            exit 0
+          fi
+
+          echo "Checking minos of $binary"
+          otool_output=$(otool -l "$binary")
+          echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | head -20 || true
+
+          # Universal binaries have minos for each architecture
+          failed=0
+          while read -r minos; do
+            echo "minos: $minos"
+            # macos-latest (Apple Silicon) enforces min 11.0, macos-15-intel allows 10.15
+            if [[ "$minos" != "10.15" && "$minos" != "11.0" ]]; then
+              echo "FAILED: expected minos 10.15 or 11.0, got $minos"
+              failed=1
+            fi
+          done < <(echo "$otool_output" | grep -E -A4 'LC_BUILD_VERSION' | grep minos | awk '{print $2}')
+
+          if [[ $failed -eq 0 ]]; then
+            echo "PASSED"
+          else
+            exit 1
+          fi
+
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # Find the framework inside the xcframework
+          fw=$(find build/apple_framework/framework_out -name "onnxruntime.framework" -type d | head -1)
+          if [ -z "$fw" ]; then
+            echo "WARNING: onnxruntime.framework not found, skipping test"
+            exit 0
+          fi
+
+          # Download test file
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
+            -I"$fw/Headers" \
+            -F$(dirname "$fw") -framework onnxruntime \
+            -framework CoreML -framework Foundation -framework Network \
+            -Wl,-rpath,$(dirname "$fw")
+          /tmp/test_onnxruntime
 
       - name: Zip XCFramework
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -231,7 +294,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Publish to huggingface

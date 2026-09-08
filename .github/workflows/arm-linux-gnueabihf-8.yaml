@@ -1,10 +1,13 @@
 name: arm-linux-gnueabihf-8
 
 on:
+  push:
+    branches:
+      - test-ci-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.27.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.27.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   arm_linux_gnueabihf:
@@ -130,6 +133,7 @@ jobs:
           cmake --version
 
       - name: apply patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cd tools/ci_build
@@ -159,7 +163,6 @@ jobs:
             --config Release \
             --build \
             --build_shared_lib \
-            --arm \
             --update \
             --path_to_protoc_exe $GITHUB_WORKSPACE/bin/protoc \
             --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
@@ -227,7 +230,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
