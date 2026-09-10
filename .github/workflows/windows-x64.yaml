@@ -76,6 +76,7 @@ jobs:
             --skip_tests \
             --build_shared_lib \
             --disable_memleak_checker \
+            --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
             --update \
             --build
 

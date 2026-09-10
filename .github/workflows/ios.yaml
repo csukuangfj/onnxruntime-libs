@@ -3,7 +3,7 @@ name: ios
 on:
   push:
     branches:
-      - release-v1.29.1
+      - release-v1.29.2
   workflow_dispatch:
     inputs:
       version:
@@ -79,7 +79,7 @@ jobs:
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
           #
-          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"]' \
+          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json

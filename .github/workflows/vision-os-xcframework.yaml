@@ -3,7 +3,7 @@ name: visionos-xcframework
 on:
   push:
     branches:
-      - release-v1.29.1
+      - release-v1.29.2
   workflow_dispatch:
     inputs:
       version:
@@ -70,7 +70,8 @@ jobs:
             .build_params.base += [
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF",
-              "--cmake_extra_defines=XROS_DEPLOYMENT_TARGET=1.0"
+              "--cmake_extra_defines=XROS_DEPLOYMENT_TARGET=1.0",
+              "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"
             ]
           ' tools/ci_build/github/apple/default_vision_os_framework_build_settings.json \
             > visionos_build_settings.json

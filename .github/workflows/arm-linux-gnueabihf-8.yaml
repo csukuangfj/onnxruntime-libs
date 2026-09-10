@@ -3,7 +3,7 @@ name: arm-linux-gnueabihf-8
 on:
   push:
     branches:
-      - release-v1.29.1
+      - release-v1.29.2
   workflow_dispatch:
     inputs:
       version:
