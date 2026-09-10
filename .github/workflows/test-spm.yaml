@@ -3,10 +3,252 @@ name: test-spm
 on:
   push:
     branches:
-      - release-v1.29.2
+      - release-v1.29.1-2
   workflow_dispatch:
 
 jobs:
+  # --- Local SPM tests (use local checkout instead of remote package) ---
+  test-local-spm-macos:
+    name: Test local SPM (macOS static)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (macOS)
+        shell: bash
+        run: |
+          cd spm-examples/macOS
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+          rm -rf .build
+          swift package resolve
+          swift package show-dependencies
+          swift build 2>&1
+          swift run VersionDemo
+
+  test-local-spm-macos-shared:
+    name: Test local SPM (macOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (macOS shared)
+        shell: bash
+        run: |
+          cd spm-examples/macOS-Shared
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+          rm -rf .build
+          swift package resolve
+          swift package show-dependencies
+          swift build 2>&1
+          swift run VersionDemo
+
+  test-local-spm-ios:
+    name: Test local SPM (iOS static)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (iOS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/iOS
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for iOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=iOS Simulator" \
+            -skipPackagePluginValidation \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-iphonesimulator/VersionDemo" -type f | head -1)
+          echo "Binary: $BINARY"
+
+          echo "=== Booting iOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'iPhone' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Running on iOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
+  test-local-spm-ios-shared:
+    name: Test local SPM (iOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (iOS shared)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/iOS-Shared
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for iOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=iOS Simulator" \
+            -skipPackagePluginValidation \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-iphonesimulator/VersionDemo" -type f | head -1)
+          PRODUCTS_DIR=$(dirname "$BINARY")
+          echo "Binary: $BINARY"
+          echo "Products: $PRODUCTS_DIR"
+
+          echo "=== Booting iOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'iPhone' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Copying framework to PackageFrameworks ==="
+          FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
+          PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          mkdir -p "$PRODUCTS_DIR/PackageFrameworks"
+          cp -R "$FRAMEWORK_SRC/" "$PKG_FRAMEWORKS/"
+          echo "Copied framework to $PKG_FRAMEWORKS"
+
+          echo "=== Running on iOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
+  test-local-spm-visionos:
+    name: Test local SPM (visionOS static)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (visionOS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/visionOS
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for visionOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=visionOS Simulator" \
+            -skipPackagePluginValidation \
+            EXCLUDED_ARCHS=x86_64 \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-xrsimulator/VersionDemo" -type f | head -1)
+          echo "Binary: $BINARY"
+
+          echo "=== Booting visionOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'Vision' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Running on visionOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
+  test-local-spm-visionos-shared:
+    name: Test local SPM (visionOS shared)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run local package (visionOS shared)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd spm-examples/visionOS-Shared
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          git diff
+          cat Package.swift
+
+          echo "=== Resolving ==="
+          swift package resolve
+
+          echo "=== Building for visionOS Simulator ==="
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=visionOS Simulator" \
+            -skipPackagePluginValidation \
+            EXCLUDED_ARCHS=x86_64 \
+            build 2>&1
+
+          echo "=== Finding built executable ==="
+          BINARY=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/*-xrsimulator/VersionDemo" -type f | head -1)
+          PRODUCTS_DIR=$(dirname "$BINARY")
+          echo "Binary: $BINARY"
+          echo "Products: $PRODUCTS_DIR"
+
+          echo "=== Booting visionOS Simulator ==="
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for key in devices:
+              for d in devices[key]:
+                  if d['isAvailable'] and 'Vision' in d['name']:
+                      print(d['udid'])
+                      sys.exit(0)
+          ")
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" 2>/dev/null || true
+
+          echo "=== Copying framework to PackageFrameworks ==="
+          FRAMEWORK_SRC="$PRODUCTS_DIR/onnxruntime.framework"
+          PKG_FRAMEWORKS="$PRODUCTS_DIR/PackageFrameworks/onnxruntime.framework"
+          mkdir -p "$PRODUCTS_DIR/PackageFrameworks"
+          cp -R "$FRAMEWORK_SRC/" "$PKG_FRAMEWORKS/"
+          echo "Copied framework to $PKG_FRAMEWORKS"
+
+          echo "=== Running on visionOS Simulator ==="
+          xcrun simctl spawn "$DEVICE" "$BINARY"
+
+  # --- Remote SPM tests (test against published release) ---
   test-spm-macos:
     name: Test SPM (macOS static)
     runs-on: macos-latest

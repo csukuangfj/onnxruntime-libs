@@ -3,11 +3,11 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - release-v1.29.2
+      - release-v1.29.1
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   macos-xcframework:
@@ -208,7 +208,8 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          MODULEMAP='module onnxruntime {
+          MODULEMAP='framework module onnxruntime {
+              umbrella "."
               export *
               module * { export * }
           }'
@@ -295,7 +296,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: false
+          overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Publish to huggingface
