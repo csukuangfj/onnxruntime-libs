@@ -227,7 +227,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: true
+          overwrite: false
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
