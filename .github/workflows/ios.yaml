@@ -3,11 +3,11 @@ name: ios
 on:
   push:
     branches:
-      - test-ci-2
+      - release-v1.29.1
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.28.2)"
+        description: "Version information (e.g., 1.29.1)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
 
 jobs:
   ios:
@@ -79,7 +79,7 @@ jobs:
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
           #
-          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF"]' \
+          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
@@ -167,6 +167,7 @@ jobs:
           set -euo pipefail
 
           MODULEMAP='module onnxruntime {
+              umbrella header "Headers/onnxruntime_c_api.h"
               export *
               module * { export * }
           }'
@@ -245,8 +246,80 @@ jobs:
           name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
           path: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
 
+  test-spm:
+    name: test-spm-${{ matrix.link_type }}
+    needs: ios
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        link_type: ["shared", "static"]
+    env:
+      ONNXRUNTIME_VERSION:
+        |-
+        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+          path: xcframeworks
+
+      - name: Test local SPM (iOS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=${{ env.ONNXRUNTIME_VERSION }}
+          link_type=${{ matrix.link_type }}
+          zip_path="$(pwd)/xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
+
+          # Patch root Package.swift: replace all binaryTarget url/checksum with local path
+          python3 -c "
+          import re
+          zip_path = '$zip_path'
+          with open('Package.swift') as f:
+              content = f.read()
+          def replace(m):
+              return m.group(1) + '\n            path: \"' + zip_path + '\"\n        '
+          content = re.sub(r'(\.binaryTarget\(\s*name: \"[^\"]+\",)\s*\n\s*url: \"[^\"]+\",\s*\n\s*checksum: \"[^\"]+\"', replace, content)
+          with open('Package.swift', 'w') as f:
+              f.write(content)
+          "
+          git diff Package.swift
+
+          cd spm-examples/iOS
+          sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
+          cat Package.swift
+          rm -rf .build
+          swift package resolve
+          swift package show-dependencies
+          xcodebuild -scheme VersionDemo \
+            -destination "generic/platform=iOS Simulator" \
+            -skipPackagePluginValidation \
+            build 2>&1
+
+  release:
+    name: release-${{ matrix.link_type }}
+    needs: test-spm
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        link_type: ["shared", "static"]
+    env:
+      ONNXRUNTIME_VERSION:
+        |-
+        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           file_glob: true
@@ -254,9 +327,8 @@ jobs:
           overwrite: true
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
-      # https://huggingface.co/docs/hub/spaces-github-actions
       - name: Publish to huggingface
-        if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        if: github.repository_owner == 'csukuangfj'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         uses: nick-fields/retry@v3
@@ -265,30 +337,19 @@ jobs:
           timeout_seconds: 200
           shell: bash
           command: |
-            rm -rf huggingface
-
-            ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
-
             git config --global user.email "csukuangfj@gmail.com"
             git config --global user.name "Fangjun Kuang"
-
             export GIT_CLONE_PROTECTION_ACTIVE=false
             rm -rf huggingface
             GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
-
             cd huggingface
             mkdir -p $version
             cp -v ../onnxruntime-ios-${{ matrix.link_type }}.xcframework*.zip ./$version
-            git status
             git lfs track "*.zip"
-
             git add .
-
             git commit -m "upload onnxruntime-ios-${{ matrix.link_type }}.xcframework $version"
             git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
-
-# ===========static==========
 # /Users/runner/work/onnxruntime-libs/onnxruntime-libs/build/apple_framework/intermediates/iphoneos_arm64/Release/Release-iphoneos
 # .
 # ├── libcoreml_proto.a

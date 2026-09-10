@@ -3,11 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - test-ci-2
+      - release-v1.29.1-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.28.2)"
+        description: "Version information (e.g., 1.29.1)"
         required: true
 
 permissions:
@@ -21,7 +21,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
 
 jobs:
   harmony-os-shared:
@@ -622,7 +622,7 @@ jobs:
         with:
           file_glob: true
           file: "./*.zip"
-          overwrite: true
+          overwrite: false
           tag: v${{ env.ONNXRUNTIME_VERSION }}
 
       # https://huggingface.co/docs/hub/spaces-github-actions
