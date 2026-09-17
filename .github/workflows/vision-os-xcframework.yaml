@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - release-v1.29.1
+      - fix-v1.28.2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +17,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   visionos-xcframework:
@@ -155,6 +156,59 @@ jobs:
               echo "$MODULEMAP" > "$slice/onnxruntime.framework/Modules/module.modulemap"
               echo "Added modulemap to $slice"
             fi
+          done
+
+      - name: Fix framework symlinks
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          # build_apple_framework.py may create flat directories instead of
+          # proper symlinks.  A correct versioned framework must have:
+          #   Versions/Current -> A
+          #   Headers          -> Versions/Current/Headers
+          #   Modules          -> Versions/Current/Modules
+          #   Resources        -> Versions/Current/Resources
+          #   onnxruntime      -> Versions/Current/onnxruntime
+          #
+          # Without these symlinks codesign (Xcode 26) fails with
+          # "unsealed contents present in the root directory of an embedded
+          # framework".  See https://github.com/csukuangfj/onnxruntime-libs/issues/62
+          FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
+          for slice in "$FW_ROOT"/*/; do
+            fw="$slice/onnxruntime.framework"
+            [[ -d "$fw/Versions/A" ]] || continue
+
+            for entry in Headers Modules Resources; do
+              if [[ -d "$fw/$entry" && ! -L "$fw/$entry" ]]; then
+                if [[ ! -d "$fw/Versions/A/$entry" ]]; then
+                  mv "$fw/$entry" "$fw/Versions/A/$entry"
+                else
+                  rm -rf "$fw/$entry"
+                fi
+              fi
+            done
+
+            if [[ -f "$fw/onnxruntime" && ! -L "$fw/onnxruntime" ]]; then
+              if [[ ! -f "$fw/Versions/A/onnxruntime" ]]; then
+                mv "$fw/onnxruntime" "$fw/Versions/A/onnxruntime"
+              else
+                rm -f "$fw/onnxruntime"
+              fi
+            fi
+
+            if [[ -d "$fw/Versions/Current" && ! -L "$fw/Versions/Current" ]]; then
+              rm -rf "$fw/Versions/Current"
+            fi
+            ln -sf A "$fw/Versions/Current"
+
+            ln -sf Versions/Current/Headers   "$fw/Headers"
+            ln -sf Versions/Current/Modules   "$fw/Modules"
+            ln -sf Versions/Current/Resources "$fw/Resources"
+            ln -sf Versions/Current/onnxruntime "$fw/onnxruntime"
+
+            echo "Fixed symlinks in $fw"
+            ls -la "$fw"
+            ls -la "$fw/Versions/"
           done
 
       - name: Verify deployment target
