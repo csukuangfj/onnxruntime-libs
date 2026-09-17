@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - release-v1.29.1
-      - fix-v1.28.2
   workflow_dispatch:
     inputs:
       version:

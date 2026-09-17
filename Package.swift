@@ -26,34 +26,34 @@ let package = Package(
         .binaryTarget(
             name: "OnnxruntimeMacOS",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-macos-static-xcframework-1.28.2.xcframework.zip",
-            checksum: "39f816cac19cb76e0f504b2d7c91fec3e889c25bf5b9b474297b19eb0bd69a31"
+            checksum: "cb0b0bec912c77229517c463e28a3fac9674c521f9599919efff1ef2b42f3da0"
         ),
         .binaryTarget(
             name: "OnnxruntimeIOS",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-ios-static-xcframework-1.28.2.xcframework.zip",
-            checksum: "306b740d513a1af5c9f1c3a7d2ca98d8bf5491a558a45ef2b14cbed4fde64059"
+            checksum: "2c2299acbb461d26d4bac4bc85985d40e7c7177ed6072703ae0846d88b0b4599"
         ),
         .binaryTarget(
             name: "OnnxruntimeVisionOS",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-visionos-static-xcframework-1.28.2.xcframework.zip",
-            checksum: "f255197cb35505715bc91d7f3ff6c4c77cc0f1eb511bb743f9661b16feb50666"
+            checksum: "0961770125a898ea5ee88b288ba8e63dc0b4dac069aeb7e2405e218b66dae1d7"
         ),
 
         // --- Shared binary targets (one per platform) ---
         .binaryTarget(
             name: "OnnxruntimeMacOSShared",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-macos-shared-xcframework-1.28.2.xcframework.zip",
-            checksum: "4703c0e937d2c6e6421086eae6b23026e37acbd848ac757bc190b6ad67cffd53"
+            checksum: "99a47f4d3e24a2f6e9ab1231692e96093297dd5d8e7f47c86ed4efc9554438d7"
         ),
         .binaryTarget(
             name: "OnnxruntimeIOSShared",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-ios-shared-xcframework-1.28.2.xcframework.zip",
-            checksum: "a2c49aecf40f20d1cb271bfba4f87671637c9fa4de69f11fc75671ec2d8f7c5d"
+            checksum: "d955b44322de53cc0be60e4939c89e46c2ba9dc0e9eef7f25ec8c73427ac6546"
         ),
         .binaryTarget(
             name: "OnnxruntimeVisionOSShared",
             url: "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-visionos-shared-xcframework-1.28.2.xcframework.zip",
-            checksum: "f8195d79f6d541cdbe766f4691869ba4560d92a7dc9462b7d730c138650c4f6b"
+            checksum: "f5445a78438b0ee82eedd1beb2ce82f4ba77bcef10ffa38f5fed6b8b154e3def"
         ),
 
         // --- Static wrapper (default) ---
