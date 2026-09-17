@@ -346,20 +346,25 @@ jobs:
           set -euo pipefail
           version=${{ env.ONNXRUNTIME_VERSION }}
           link_type=${{ matrix.link_type }}
-          zip_path="$(pwd)/xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
+          # Relative path from package root (SPM requires relative paths)
+          zip_path="xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
 
-          # Patch root Package.swift: replace all binaryTarget url/checksum with local path
-          python3 -c "
+          # Patch root Package.swift: replace only the matching iOS binaryTarget
+          python3 << PYEOF
           import re
-          zip_path = '$zip_path'
-          with open('Package.swift') as f:
+          zip_path = "$zip_path"
+          link_type = "$link_type"
+          target_name = "IOSShared" if link_type == "shared" else r"IOS(?!Shared)"
+          with open("Package.swift") as f:
               content = f.read()
           def replace(m):
-              return m.group(1) + '\n            path: \"' + zip_path + '\"\n        '
-          content = re.sub(r'(\.binaryTarget\(\s*name: \"[^\"]+\",)\s*\n\s*url: \"[^\"]+\",\s*\n\s*checksum: \"[^\"]+\"', replace, content)
-          with open('Package.swift', 'w') as f:
+              return m.group(1) + '\n            path: "' + zip_path + '"\n        '
+          content = re.sub(
+              r'(\.binaryTarget\(\s*name: "Onnxruntime' + target_name + r'",)\s*\n\s*url: "[^"]+",\s*\n\s*checksum: "[^"]+"',
+              replace, content)
+          with open("Package.swift", "w") as f:
               f.write(content)
-          "
+          PYEOF
           git diff Package.swift
 
           cd spm-examples/iOS
