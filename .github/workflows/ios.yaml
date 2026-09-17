@@ -30,7 +30,24 @@ jobs:
         link_type: ["shared", "static"]
 
     steps:
+      - name: Check if release artifact already exists
+        id: release-check
+        shell: bash
+        run: |
+          tag="v${{ env.ONNXRUNTIME_VERSION }}"
+          artifact="onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip"
+          url="https://github.com/${{ github.repository }}/releases/download/${tag}/${artifact}"
+          echo "Checking: $url"
+          if curl -sI -o /dev/null -w "%{http_code}" "$url" | grep -q "^302"; then
+            echo "Artifact already exists in release ${tag}, skipping build"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Artifact not found, will build"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.release-check.outputs.exists != 'true'
         id: cache-build-result
         uses: actions/cache@v4
         with:
@@ -38,12 +55,13 @@ jobs:
           key: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
       - name: ccache
+        if: steps.release-check.outputs.exists != 'true'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
@@ -51,7 +69,7 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Install dependencies on macos
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           brew install ninja
@@ -64,7 +82,7 @@ jobs:
           which jq
 
       - name: Patch 1
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
@@ -75,7 +93,7 @@ jobs:
           git diff .
 
       - name: Patch 2
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
@@ -95,7 +113,7 @@ jobs:
           git diff .
 
       - name: Patch 4
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # jq '
@@ -114,7 +132,7 @@ jobs:
           git diff .
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -184,7 +202,7 @@ jobs:
           done
 
       - name: Fix framework symlinks
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # build_apple_framework.py may create flat directories instead of
@@ -237,7 +255,7 @@ jobs:
           done
 
       - name: Verify deployment target
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
@@ -261,7 +279,7 @@ jobs:
           echo "PASSED: minos is $minos"
 
       - name: Test onnxruntime (compile only)
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Find the framework inside the xcframework
@@ -294,7 +312,7 @@ jobs:
           mv *.zip $GITHUB_WORKSPACE/
 
       - name: Upload artifact xcframework
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
@@ -308,19 +326,31 @@ jobs:
       fail-fast: false
       matrix:
         link_type: ["shared", "static"]
-    env:
-      ONNXRUNTIME_VERSION:
-        |-
-        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download artifact
+      - name: Download artifact from workflow
         uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
           path: xcframeworks
+        continue-on-error: true
+
+      - name: Download artifact from release
+        if: success()
+        shell: bash
+        run: |
+          if ls xcframeworks/*.zip 2>/dev/null; then
+            echo "Artifact already downloaded from workflow"
+            exit 0
+          fi
+          echo "Downloading from GitHub release..."
+          tag="v${{ env.ONNXRUNTIME_VERSION }}"
+          artifact="onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip"
+          mkdir -p xcframeworks
+          curl -sL "https://github.com/${{ github.repository }}/releases/download/${tag}/${artifact}" \
+            -o "xcframeworks/${artifact}"
 
       - name: Test local SPM (iOS)
         shell: bash
@@ -363,15 +393,26 @@ jobs:
       fail-fast: false
       matrix:
         link_type: ["shared", "static"]
-    env:
-      ONNXRUNTIME_VERSION:
-        |-
-        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
     steps:
-      - name: Download artifact
+      - name: Download artifact from workflow
         uses: actions/download-artifact@v4
         with:
           name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
+        continue-on-error: true
+
+      - name: Download artifact from release
+        if: success()
+        shell: bash
+        run: |
+          if ls ./*.zip 2>/dev/null; then
+            echo "Artifact already downloaded from workflow"
+            exit 0
+          fi
+          echo "Downloading from GitHub release..."
+          tag="v${{ env.ONNXRUNTIME_VERSION }}"
+          artifact="onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip"
+          curl -sL "https://github.com/${{ github.repository }}/releases/download/${tag}/${artifact}" \
+            -o "${artifact}"
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         uses: svenstaro/upload-release-action@v2
