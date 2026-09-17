@@ -163,6 +163,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
 
       - name: Create onnxruntime XCFramework
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -175,6 +176,7 @@ jobs:
           tree $BUILD_ROOT
 
       - name: Add modulemap for SPM
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -292,6 +294,7 @@ jobs:
           echo "PASSED: compilation successful"
 
       - name: Zip XCFramework
+        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
 
@@ -309,11 +312,17 @@ jobs:
         if: steps.release-check.outputs.exists == 'true' || steps.cache-build-result.outputs.cache-hit == 'true'
         shell: bash
         run: |
+          zip_name="onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip"
           cached_dir="onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}"
-          zip_name="${cached_dir}.xcframework.zip"
-          if [[ -d "$cached_dir" && ! -f "$zip_name" ]]; then
+          if [[ -f "$zip_name" ]]; then
+            echo "Zip already exists"
+          elif [[ -d "$cached_dir" ]]; then
             cd "$cached_dir"
             zip -ry "../${zip_name}" onnxruntime.xcframework
+          else
+            echo "Downloading artifact from GitHub release..."
+            tag="v${{ env.ONNXRUNTIME_VERSION }}"
+            curl -fSL "https://github.com/${{ github.repository }}/releases/download/${tag}/${zip_name}" -o "$zip_name"
           fi
 
       - name: Upload artifact xcframework
