@@ -56,13 +56,6 @@ jobs:
           path: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
           key: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
 
-      - name: ccache
-        if: steps.release-check.outputs.exists != 'true'
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
-          create-symlink: true
-
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
@@ -101,7 +94,7 @@ jobs:
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
           #
-          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF", "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CC=ccache clang", "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CXX=ccache clang++"]' \
+          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json
@@ -138,8 +131,6 @@ jobs:
         if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
           # Reduce xcodebuild verbosity by patching build.py to add -quiet
