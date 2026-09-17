@@ -300,30 +300,13 @@ jobs:
           set -euo pipefail
           version=${{ env.ONNXRUNTIME_VERSION }}
           link_type=${{ matrix.link_type }}
-          # Relative path from package root (SPM requires relative paths)
           zip_path="xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
 
-          # Patch root Package.swift: replace only the matching iOS binaryTarget
-          python3 << PYEOF
-          import re
-          zip_path = "$zip_path"
-          link_type = "$link_type"
-          target_name = "IOSShared" if link_type == "shared" else r"IOS(?!Shared)"
-          with open("Package.swift") as f:
-              content = f.read()
-          def replace(m):
-              return m.group(1) + '\n            path: "' + zip_path + '"\n        '
-          content = re.sub(
-              r'(\.binaryTarget\(\s*name: "Onnxruntime' + target_name + r'",)\s*\n\s*url: "[^"]+",\s*\n\s*checksum: "[^"]+"',
-              replace, content)
-          with open("Package.swift", "w") as f:
-              f.write(content)
-          PYEOF
-          git diff Package.swift
+          cp .github/scripts/Package-ios-${link_type}.swift Package.swift
+          sed -i '' "s|__ZIP_PATH__|${zip_path}|g" Package.swift
 
           cd spm-examples/iOS
           sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
-          cat Package.swift
           rm -rf .build
           swift package resolve
           swift package show-dependencies
