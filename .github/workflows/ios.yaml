@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.1)"
+        description: "Version information (e.g., 1.28.2)"
         required: true
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.28.2' }}
 
 jobs:
   ios:
@@ -29,20 +29,7 @@ jobs:
         link_type: ["shared", "static"]
 
     steps:
-      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
-        id: cache-build-result
-        uses: actions/cache@v4
-        with:
-          path: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-ios-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
-
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
-
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
@@ -50,7 +37,6 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Install dependencies on macos
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           brew install ninja
@@ -63,7 +49,6 @@ jobs:
           which jq
 
       - name: Patch 1
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
@@ -74,7 +59,6 @@ jobs:
           git diff .
 
       - name: Patch 2
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
@@ -94,7 +78,6 @@ jobs:
           git diff .
 
       - name: Patch 4
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # jq '
@@ -113,11 +96,8 @@ jobs:
           git diff .
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for macOS
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
           cmake --version
 
           # Reduce xcodebuild verbosity by patching build.py to add -quiet
@@ -182,8 +162,59 @@ jobs:
             fi
           done
 
+      - name: Fix framework symlinks
+        shell: bash
+        run: |
+          # build_apple_framework.py may create flat directories instead of
+          # proper symlinks.  A correct versioned framework must have:
+          #   Versions/Current -> A
+          #   Headers          -> Versions/Current/Headers
+          #   Modules          -> Versions/Current/Modules
+          #   Resources        -> Versions/Current/Resources
+          #   onnxruntime      -> Versions/Current/onnxruntime
+          #
+          # Without these symlinks codesign (Xcode 26) fails with
+          # "unsealed contents present in the root directory of an embedded
+          # framework".  See https://github.com/csukuangfj/onnxruntime-libs/issues/62
+          FW_ROOT=build/apple_framework/framework_out/onnxruntime.xcframework
+          for slice in "$FW_ROOT"/*/; do
+            fw="$slice/onnxruntime.framework"
+            [[ -d "$fw/Versions/A" ]] || continue
+
+            for entry in Headers Modules Resources; do
+              if [[ -d "$fw/$entry" && ! -L "$fw/$entry" ]]; then
+                if [[ ! -d "$fw/Versions/A/$entry" ]]; then
+                  mv "$fw/$entry" "$fw/Versions/A/$entry"
+                else
+                  rm -rf "$fw/$entry"
+                fi
+              fi
+            done
+
+            if [[ -f "$fw/onnxruntime" && ! -L "$fw/onnxruntime" ]]; then
+              if [[ ! -f "$fw/Versions/A/onnxruntime" ]]; then
+                mv "$fw/onnxruntime" "$fw/Versions/A/onnxruntime"
+              else
+                rm -f "$fw/onnxruntime"
+              fi
+            fi
+
+            if [[ -d "$fw/Versions/Current" && ! -L "$fw/Versions/Current" ]]; then
+              rm -rf "$fw/Versions/Current"
+            fi
+            ln -sf A "$fw/Versions/Current"
+
+            ln -sf Versions/Current/Headers   "$fw/Headers"
+            ln -sf Versions/Current/Modules   "$fw/Modules"
+            ln -sf Versions/Current/Resources "$fw/Resources"
+            ln -sf Versions/Current/onnxruntime "$fw/onnxruntime"
+
+            echo "Fixed symlinks in $fw"
+            ls -la "$fw"
+            ls -la "$fw/Versions/"
+          done
+
       - name: Verify deployment target
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
@@ -207,7 +238,6 @@ jobs:
           echo "PASSED: minos is $minos"
 
       - name: Test onnxruntime (compile only)
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Find the framework inside the xcframework
@@ -240,11 +270,10 @@ jobs:
           mv *.zip $GITHUB_WORKSPACE/
 
       - name: Upload artifact xcframework
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.zip
+          path: onnxruntime-ios-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip
 
   test-spm:
     name: test-spm-${{ matrix.link_type }}
@@ -254,10 +283,6 @@ jobs:
       fail-fast: false
       matrix:
         link_type: ["shared", "static"]
-    env:
-      ONNXRUNTIME_VERSION:
-        |-
-        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -274,25 +299,13 @@ jobs:
           set -euo pipefail
           version=${{ env.ONNXRUNTIME_VERSION }}
           link_type=${{ matrix.link_type }}
-          zip_path="$(pwd)/xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
+          zip_path="xcframeworks/onnxruntime-ios-${link_type}-xcframework-${version}.xcframework.zip"
 
-          # Patch root Package.swift: replace all binaryTarget url/checksum with local path
-          python3 -c "
-          import re
-          zip_path = '$zip_path'
-          with open('Package.swift') as f:
-              content = f.read()
-          def replace(m):
-              return m.group(1) + '\n            path: \"' + zip_path + '\"\n        '
-          content = re.sub(r'(\.binaryTarget\(\s*name: \"[^\"]+\",)\s*\n\s*url: \"[^\"]+\",\s*\n\s*checksum: \"[^\"]+\"', replace, content)
-          with open('Package.swift', 'w') as f:
-              f.write(content)
-          "
-          git diff Package.swift
+          cp .github/scripts/Package-ios-${link_type}.swift Package.swift
+          sed -i '' "s|__ZIP_PATH__|${zip_path}|g" Package.swift
 
           cd spm-examples/iOS
           sed -i.bak 's|.package(url: "https://github.com/csukuangfj/onnxruntime-libs", branch: "master")|.package(path: "../../")|' Package.swift
-          cat Package.swift
           rm -rf .build
           swift package resolve
           swift package show-dependencies
@@ -309,10 +322,6 @@ jobs:
       fail-fast: false
       matrix:
         link_type: ["shared", "static"]
-    env:
-      ONNXRUNTIME_VERSION:
-        |-
-        ${{ github.event.release.tag_name || github.event.inputs.version || '1.29.1' }}
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
