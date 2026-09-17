@@ -30,34 +30,7 @@ jobs:
         link_type: ["shared", "static"]
 
     steps:
-      - name: Check if workflow artifact already exists
-        id: release-check
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          name="onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}"
-          echo "Checking for workflow artifact: ${name}"
-          count=$(gh api "repos/${{ github.repository }}/actions/artifacts?name=${name}" \
-            --jq '.total_count' 2>/dev/null || echo "0")
-          if [ "$count" -gt 0 ] 2>/dev/null; then
-            echo "Artifact '${name}' already exists (${count} found), skipping build"
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Artifact not found, will build"
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.release-check.outputs.exists != 'true'
-        id: cache-build-result
-        uses: actions/cache@v4
-        with:
-          path: onnxruntime-visionos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-visionos-xcframework-${{ matrix.link_type }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
-
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: microsoft/onnxruntime
@@ -65,7 +38,6 @@ jobs:
           ref: v${{ env.ONNXRUNTIME_VERSION }}
 
       - name: Install dependencies on macos
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           brew install ninja
@@ -78,7 +50,6 @@ jobs:
           which jq
 
       - name: Patch build settings
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           jq '
@@ -95,7 +66,6 @@ jobs:
           git diff .
 
       - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }} for visionOS
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -141,7 +111,6 @@ jobs:
             visionos_build_settings.json
 
       - name: Create onnxruntime visionOS XCFramework
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -152,7 +121,6 @@ jobs:
           tree $BUILD_ROOT
 
       - name: Add modulemap for SPM
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           MODULEMAP='module onnxruntime {
@@ -171,7 +139,6 @@ jobs:
           done
 
       - name: Fix framework symlinks
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # build_apple_framework.py may create flat directories instead of
@@ -224,7 +191,6 @@ jobs:
           done
 
       - name: Verify deployment target
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           binary=$(find build/apple_framework/framework_out -name "onnxruntime" -type f | head -1)
@@ -248,7 +214,6 @@ jobs:
           echo "PASSED: minos is $minos"
 
       - name: Test onnxruntime (compile only)
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Find the framework inside the xcframework
@@ -267,7 +232,6 @@ jobs:
           echo "PASSED: compilation successful"
 
       - name: Zip XCFramework
-        if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           cd build/apple_framework/framework_out
@@ -275,23 +239,6 @@ jobs:
             onnxruntime.xcframework
           ls -lh *.zip
           mv *.zip $GITHUB_WORKSPACE/
-
-      - name: Prepare cached artifact for upload
-        if: steps.release-check.outputs.exists == 'true' || steps.cache-build-result.outputs.cache-hit == 'true'
-        shell: bash
-        run: |
-          zip_name="onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}.xcframework.zip"
-          cached_dir="onnxruntime-visionos-${{ matrix.link_type }}-xcframework-${{ env.ONNXRUNTIME_VERSION }}"
-          if [[ -f "$zip_name" ]]; then
-            echo "Zip already exists"
-          elif [[ -d "$cached_dir" ]]; then
-            cd "$cached_dir"
-            zip -ry "../${zip_name}" onnxruntime.xcframework
-          else
-            echo "Downloading artifact from GitHub release..."
-            tag="v${{ env.ONNXRUNTIME_VERSION }}"
-            curl -fSL "https://github.com/${{ github.repository }}/releases/download/${tag}/${zip_name}" -o "$zip_name"
-          fi
 
       - name: Upload artifact xcframework
         uses: actions/upload-artifact@v4
