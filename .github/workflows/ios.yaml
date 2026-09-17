@@ -61,6 +61,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-ios-${{ matrix.link_type }}
+          create-symlink: true
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
@@ -100,7 +101,7 @@ jobs:
         run: |
           # see https://github.com/microsoft/onnxruntime/pull/26380
           #
-          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"]' \
+          jq '.build_params.base += ["--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF", "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF", "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CC=ccache clang", "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CXX=ccache clang++"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json

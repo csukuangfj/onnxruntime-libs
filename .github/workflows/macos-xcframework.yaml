@@ -61,6 +61,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-macos-xcframework-${{ matrix.link_type }}
+          create-symlink: true
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.release-check.outputs.exists != 'true' && steps.cache-build-result.outputs.cache-hit != 'true'
@@ -95,7 +96,9 @@ jobs:
               "--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=10.15",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF",
-              "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF"
+              "--cmake_extra_defines=onnxruntime_BUILD_UNIT_TESTS=OFF",
+              "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CC=ccache clang",
+              "--cmake_extra_defines=CMAKE_XCODE_ATTRIBUTE_CXX=ccache clang++"
             ] |
             .build_params.macosx = ["--macos=MacOSX", "--apple_deploy_target=10.15"]
           ' tools/ci_build/github/apple/default_full_apple_framework_build_settings.json \
