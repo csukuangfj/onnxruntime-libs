@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.1)"
+        description: "Version information (e.g., 1.30.0)"
         required: true
 
 permissions:
@@ -76,6 +76,9 @@ jobs:
           elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.1[56789].[0-9] || ${{ env.ONNXRUNTIME_VERSION }} =~ 1.2[0-9].[0-9] ]]; then
             wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
             unzip protoc-21.12-linux-x86_64.zip
+          elif [[ ${{ env.ONNXRUNTIME_VERSION }} =~ 1.[3-9][0-9].[0-9] ]]; then
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protoc-33.6-linux-x86_64.zip
+            unzip protoc-33.6-linux-x86_64.zip
           else
             echo "Unsupported version ${{ env.ONNXRUNTIME_VERSION }}"
             exit 1

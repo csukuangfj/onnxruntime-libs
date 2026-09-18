@@ -3,11 +3,11 @@ name: harmony-os-shared
 on:
   push:
     branches:
-      - fix-macos
+      - fix-macos-2
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.29.1)"
+        description: "Version information (e.g., 1.30.0)"
         required: true
 
 permissions:
