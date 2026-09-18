@@ -32,6 +32,15 @@ jobs:
         run: |
           unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -52,6 +61,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -74,6 +92,15 @@ jobs:
         run: |
           unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -95,6 +122,15 @@ jobs:
         run: |
           unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -115,6 +151,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -139,6 +184,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -161,6 +215,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -185,6 +248,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -207,6 +279,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -231,6 +312,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -253,6 +343,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -277,6 +376,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-arm-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -300,6 +408,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-x64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -320,6 +437,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-x64-glibc2_17-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -342,6 +468,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-x64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -362,6 +497,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-x64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -384,6 +528,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-x64-gpu_cuda12-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -404,6 +557,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-x64-gpu_cuda13-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -426,6 +588,15 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -446,6 +617,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -468,6 +648,15 @@ jobs:
         run: |
           unzip -q onnxruntime-osx-arm64-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -488,6 +677,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-osx-arm64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -510,6 +708,15 @@ jobs:
         run: |
           unzip -q onnxruntime-osx-universal2-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -530,6 +737,15 @@ jobs:
         shell: bash
         run: |
           unzip -q onnxruntime-osx-x86_64-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Compile and run
         shell: bash
@@ -552,6 +768,15 @@ jobs:
         run: |
           unzip -q onnxruntime-osx-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Compile and run
         shell: bash
         run: |
@@ -573,6 +798,15 @@ jobs:
         run: |
           unzip -q onnxruntime-wasm-static_lib-simd-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
@@ -593,6 +827,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -642,6 +885,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -689,6 +941,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -738,6 +999,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -785,6 +1055,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -834,6 +1113,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -881,6 +1169,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -930,6 +1227,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -978,6 +1284,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1000,6 +1315,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1024,6 +1348,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1046,6 +1379,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1070,6 +1412,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1092,6 +1443,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1116,6 +1476,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1139,6 +1508,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1161,6 +1539,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1210,6 +1597,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1257,6 +1653,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1306,6 +1711,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1353,6 +1767,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1402,6 +1825,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1449,6 +1881,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1498,6 +1939,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1546,6 +1996,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1568,6 +2027,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1592,6 +2060,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1614,6 +2091,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1638,6 +2124,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1660,6 +2155,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1684,6 +2188,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1707,6 +2220,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -1729,6 +2251,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1778,6 +2309,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1825,6 +2365,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1874,6 +2423,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -1921,6 +2479,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1970,6 +2537,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Delete system onnxruntime.dll
@@ -2017,6 +2593,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2066,6 +2651,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -2088,6 +2682,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2112,6 +2715,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -2134,6 +2746,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2158,6 +2779,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -2180,6 +2810,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2204,6 +2843,15 @@ jobs:
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
           ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
+          ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
@@ -2226,6 +2874,15 @@ jobs:
         shell: bash
         run: |
           tar xjf onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
+          if [ -n "$dir" ]; then
+            mv "$dir"/* .
+            rm -rf "$dir"
+          fi
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
