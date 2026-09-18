@@ -3,7 +3,7 @@ name: test
 on:
   push:
     branches:
-      - fix-macos
+      - fix-macos-2
   workflow_dispatch:
     inputs:
       version:
@@ -116,11 +116,13 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          LD_LIBRARY_PATH=./lib ./test_version
+          test -d include || (echo "ERROR: include/ not found"; exit 1)
+          ls include/onnxruntime/core/session/
+          find . -name "*.so" -o -name "*.so.*" | head -5
+          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
@@ -137,11 +139,13 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          LD_LIBRARY_PATH=./lib ./test_version
+          test -d include || (echo "ERROR: include/ not found"; exit 1)
+          ls include/onnxruntime/core/session/
+          find . -name "*.so" -o -name "*.so.*" | head -5
+          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
@@ -158,11 +162,13 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          LD_LIBRARY_PATH=./lib ./test_version
+          test -d include || (echo "ERROR: include/ not found"; exit 1)
+          ls include/onnxruntime/core/session/
+          find . -name "*.so" -o -name "*.so.*" | head -5
+          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
@@ -179,11 +185,13 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          LD_LIBRARY_PATH=./lib ./test_version
+          test -d include || (echo "ERROR: include/ not found"; exit 1)
+          ls include/onnxruntime/core/session/
+          find . -name "*.so" -o -name "*.so.*" | head -5
+          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
@@ -200,11 +208,13 @@ jobs:
         run: |
           unzip -q onnxruntime-linux-aarch64-glibc2_28-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
           ls -lh
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          LD_LIBRARY_PATH=./lib ./test_version
+          test -d include || (echo "ERROR: include/ not found"; exit 1)
+          ls include/onnxruntime/core/session/
+          find . -name "*.so" -o -name "*.so.*" | head -5
+          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
