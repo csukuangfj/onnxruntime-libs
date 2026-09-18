@@ -7,7 +7,7 @@ let package = Package(
     targets: [
         .binaryTarget(name: "OnnxruntimeIOSShared", path: "__ZIP_PATH__"),
         .target(name: "OnnxRuntimeKit", dependencies: [.target(name: "OnnxruntimeIOSShared")],
-            linkerSettings: [.linkedFramework("CoreFoundation"), .linkedFramework("Foundation"), .linkedFramework("CoreML"), .linkedFramework("Network"), .linkedLibrary("c++")]),
+            linkerSettings: [.linkedFramework("CoreFoundation"), .linkedFramework("Foundation"), .linkedFramework("CoreML"), .linkedFramework("Network"), .linkedFramework("UIKit"), .linkedLibrary("c++")]),
         .executableTarget(name: "VersionDemo", dependencies: ["OnnxRuntimeKit"], path: "Examples/VersionDemo"),
     ]
 )
