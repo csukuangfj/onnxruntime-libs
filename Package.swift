@@ -68,6 +68,7 @@ let package = Package(
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreML"),
+                .linkedFramework("Network"),
                 .linkedLibrary("c++"),
             ]
         ),
@@ -85,6 +86,7 @@ let package = Package(
                 .linkedFramework("CoreFoundation"),
                 .linkedFramework("Foundation"),
                 .linkedFramework("CoreML"),
+                .linkedFramework("Network"),
                 .linkedLibrary("c++"),
             ]
         ),
