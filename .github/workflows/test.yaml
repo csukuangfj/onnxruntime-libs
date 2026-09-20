@@ -741,7 +741,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -o test_version
+          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
           ./test_version
 
   test-onnxruntime-osx-universal2-static-lib-1-30-0-zip:
@@ -772,7 +772,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -o test_version
+          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
           ./test_version
 
   test-onnxruntime-osx-x86-64-1-30-0-zip:
@@ -834,7 +834,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          clang++ -std=c++17 -arch x86_64 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -o test_version
+          clang++ -std=c++17 -arch x86_64 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
           ./test_version
 
   test-onnxruntime-wasm-static-lib-simd-1-30-0-zip:
@@ -1874,7 +1874,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -1907,7 +1907,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -1940,7 +1940,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1973,7 +1973,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -2006,7 +2006,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2039,7 +2039,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -2072,7 +2072,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2105,7 +2105,7 @@ jobs:
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Debug-1-30-0-tar-bz2:
@@ -2135,6 +2135,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2193,6 +2195,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2251,6 +2255,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2309,6 +2315,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2367,6 +2375,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2425,6 +2435,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2483,6 +2495,8 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Delete system onnxruntime.dll
         shell: bash
         run: |
@@ -2541,10 +2555,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2574,10 +2590,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -2607,10 +2625,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2640,10 +2660,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -2673,10 +2695,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2706,10 +2730,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -2739,10 +2765,12 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2772,9 +2800,11 @@ jobs:
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - name: Compile and run
         shell: bash
         run: |
-          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
 
