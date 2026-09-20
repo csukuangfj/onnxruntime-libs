@@ -35,11 +35,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -65,11 +66,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -95,11 +97,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -125,11 +128,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -155,19 +159,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
-          find . -name "*.so" -o -name "*.so.*" | head -5
-          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
@@ -187,19 +191,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
-          find . -name "*.so" -o -name "*.so.*" | head -5
-          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
@@ -219,19 +223,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
-          find . -name "*.so" -o -name "*.so.*" | head -5
-          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
@@ -251,19 +255,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
-          find . -name "*.so" -o -name "*.so.*" | head -5
-          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
 
   test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
@@ -283,19 +287,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
-          find . -name "*.so" -o -name "*.so.*" | head -5
-          find . -name "*.so" -o -name "*.so.*" | grep -q . || (echo "ERROR: no .so found"; exit 1)
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
+          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
@@ -315,17 +319,17 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
           find . -name "*.a" | head -5
           find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
@@ -347,17 +351,17 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
           find . -name "*.a" | head -5
           find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
@@ -379,17 +383,17 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
         run: |
-          test -d include || (echo "ERROR: include/ not found"; exit 1)
-          ls include/onnxruntime/core/session/
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
           find . -name "*.a" | head -5
           find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
@@ -411,11 +415,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -441,11 +446,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -471,11 +477,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -501,11 +508,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -531,11 +539,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -561,11 +570,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -591,11 +601,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -621,11 +632,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -651,11 +663,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -681,11 +694,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -711,11 +725,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
@@ -741,16 +756,17 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
         run: |
-          clang++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          clang++ -std=c++17 -arch x86_64 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
           DYLD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-osx-x86-64-static-lib-1-30-0-zip:
@@ -771,16 +787,17 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Compile and run
         shell: bash
         run: |
-          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -o test_version
+          clang++ -std=c++17 -arch x86_64 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -o test_version
           ./test_version
 
   test-onnxruntime-wasm-static-lib-simd-1-30-0-zip:
@@ -801,11 +818,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Verify archive contents
         shell: bash
@@ -831,44 +849,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MD-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-MinSizeRel-1.30.0.tar.bz2
@@ -888,44 +881,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MD-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-Release-1.30.0.tar.bz2
@@ -945,44 +913,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MD-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-RelWithDebInfo-1.30.0.tar.bz2
@@ -1002,44 +945,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MT-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-Debug-1.30.0.tar.bz2
@@ -1059,44 +977,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MT-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-MinSizeRel-1.30.0.tar.bz2
@@ -1116,44 +1009,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MT-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-Release-1.30.0.tar.bz2
@@ -1173,44 +1041,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-MT-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-RelWithDebInfo-1.30.0.tar.bz2
@@ -1230,44 +1073,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
-          ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Delete system onnxruntime.dll
-        shell: bash
-        run: |
-          search_dirs=(
-            "/c/Windows"
-            "/c/Program Files"
-            "/c/Program Files (x86)"
-          )
-          count=0
-          for dir in "${search_dirs[@]}"; do
-            if [ -d "$dir" ]; then
-              while IFS= read -r f; do
-                [ -z "$f" ] && continue
-                echo "Deleting: $f"
-                rm -f "$f" || true
-                count=$((count + 1))
-              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
-            fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
           done
-          if [ "$count" -eq 0 ]; then
-            echo "No stale onnxruntime.dll found"
-          else
-            echo "Deleted $count onnxruntime.dll file(s)"
-          fi
-      - name: Compile and run
+          ls -lh
+      - name: Verify archive contents
         shell: bash
         run: |
-          cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.dll" -o -name "*.lib" | head -10
+          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-Debug-1.30.0.tar.bz2
@@ -1287,19 +1105,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
@@ -1319,19 +1137,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-Release-1.30.0.tar.bz2
@@ -1351,19 +1169,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
@@ -1383,19 +1201,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Debug-1.30.0.tar.bz2
@@ -1415,19 +1233,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
@@ -1447,19 +1265,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Release-1.30.0.tar.bz2
@@ -1479,19 +1297,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
@@ -1511,19 +1329,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Compile and run
+      - name: Verify archive contents
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
-          ./test_onnxruntime.exe
+          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-x64-MD-Debug-1.30.0.tar.bz2
@@ -1543,11 +1361,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1579,7 +1398,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -1600,11 +1419,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1636,7 +1456,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Release-1-30-0-tar-bz2:
@@ -1657,11 +1477,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1693,7 +1514,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1714,11 +1535,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1750,7 +1572,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Debug-1-30-0-tar-bz2:
@@ -1771,11 +1593,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1807,7 +1630,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -1828,11 +1651,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1864,7 +1688,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Release-1-30-0-tar-bz2:
@@ -1885,11 +1709,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1921,7 +1746,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1942,11 +1767,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -1978,7 +1804,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Debug-1-30-0-tar-bz2:
@@ -1999,18 +1825,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2031,18 +1858,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -2063,18 +1891,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2095,18 +1924,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -2127,18 +1957,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2159,18 +1990,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -2191,18 +2023,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2223,18 +2056,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Debug-1-30-0-tar-bz2:
@@ -2255,11 +2089,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2291,7 +2126,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2312,11 +2147,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2348,7 +2184,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Release-1-30-0-tar-bz2:
@@ -2369,11 +2205,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2405,7 +2242,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2426,11 +2263,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2462,7 +2300,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2483,11 +2321,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2519,7 +2358,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-Release-1-30-0-tar-bz2:
@@ -2540,11 +2379,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2576,7 +2416,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2597,11 +2437,12 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -2633,7 +2474,7 @@ jobs:
         shell: bash
         run: |
           cp -v lib/onnxruntime.dll . 2>/dev/null || true
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Debug-1-30-0-tar-bz2:
@@ -2654,18 +2495,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2686,18 +2528,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -2718,18 +2561,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2750,18 +2594,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -2782,18 +2627,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2814,18 +2660,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -2846,18 +2693,19 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2878,17 +2726,18 @@ jobs:
       - name: Flatten directory
         shell: bash
         run: |
-          dir=$(find . -maxdepth 1 -type d -name "onnxruntime-*" | head -1)
-          if [ -n "$dir" ]; then
-            mv "$dir"/* .
-            rm -rf "$dir"
-          fi
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
           ls -lh
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Compile and run
         shell: bash
         run: |
-          cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
           ./test_onnxruntime.exe
 
