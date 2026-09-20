@@ -55,6 +55,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -96,6 +97,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -137,6 +139,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -178,6 +181,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -1009,7 +1013,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -1073,7 +1077,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-Release-1-30-0-tar-bz2:
@@ -1137,7 +1141,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1201,7 +1205,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Debug-1-30-0-tar-bz2:
@@ -1265,7 +1269,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -1329,7 +1333,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Release-1-30-0-tar-bz2:
@@ -1393,7 +1397,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1457,7 +1461,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Debug-1-30-0-tar-bz2:
@@ -1496,7 +1500,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -1535,7 +1539,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -1574,7 +1578,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1613,7 +1617,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -1652,7 +1656,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -1691,7 +1695,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -1730,7 +1734,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -1769,7 +1773,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
@@ -1831,7 +1835,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -1893,7 +1897,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Release-1-30-0-tar-bz2:
@@ -1955,7 +1959,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2017,7 +2021,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Debug-1-30-0-tar-bz2:
@@ -2079,7 +2083,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2141,7 +2145,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Release-1-30-0-tar-bz2:
@@ -2203,7 +2207,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2265,7 +2269,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Debug-1-30-0-tar-bz2:
@@ -2302,7 +2306,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2339,7 +2343,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -2376,7 +2380,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2413,7 +2417,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -2450,7 +2454,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2487,7 +2491,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -2524,7 +2528,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2561,7 +2565,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Debug-1-30-0-tar-bz2:
@@ -2625,7 +2629,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -2689,7 +2693,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Release-1-30-0-tar-bz2:
@@ -2753,7 +2757,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -2817,7 +2821,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -2881,7 +2885,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-Release-1-30-0-tar-bz2:
@@ -2945,7 +2949,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -3009,7 +3013,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Debug-1-30-0-tar-bz2:
@@ -3048,7 +3052,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
@@ -3087,7 +3091,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Release-1-30-0-tar-bz2:
@@ -3126,7 +3130,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
@@ -3165,7 +3169,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Debug-1-30-0-tar-bz2:
@@ -3204,7 +3208,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
@@ -3243,7 +3247,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Release-1-30-0-tar-bz2:
@@ -3282,7 +3286,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
@@ -3321,7 +3325,7 @@ jobs:
           ls -lh test_onnxruntime.exe
           strip test_onnxruntime.exe || true
           ls -lh test_onnxruntime.exe
-          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
           ./test_onnxruntime.exe
 
   test-onnxruntime-android-shared-arm64v8a:
@@ -3358,6 +3362,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -3395,6 +3400,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -3432,6 +3438,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
@@ -3469,6 +3476,7 @@ jobs:
             chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
             LD_LIBRARY_PATH=./lib ./test_version
             '
 
