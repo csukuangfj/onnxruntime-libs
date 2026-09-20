@@ -1,0 +1,3482 @@
+name: test
+
+on:
+  push:
+    branches:
+      - fix-macos
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "onnxruntime version to test"
+        required: true
+        default: '1.30.0'
+
+env:
+  ONNXRUNTIME_VERSION:
+    |-
+    ${{ github.event.inputs.version || '1.30.0' }}
+
+jobs:
+  test-onnxruntime-android-arm64-v8a-static-lib-1-30-0-zip:
+    name: onnxruntime-android-arm64-v8a-static_lib-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:aarch64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-armeabi-v7a-static-lib-1-30-0-zip:
+    name: onnxruntime-android-armeabi-v7a-static_lib-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:arm \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-x86-64-static-lib-1-30-0-zip:
+    name: onnxruntime-android-x86_64-static_lib-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:x86_64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-x86-static-lib-1-30-0-zip:
+    name: onnxruntime-android-x86-static_lib-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:i686 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-linux-aarch64-glibc2-17-Debug-1-30-0-zip:
+    name: onnxruntime-linux-aarch64-glibc2_17-Debug-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
+    name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
+    name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
+    name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
+    name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-glibc2_28-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-glibc2_28-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
+    name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-28-zip:
+    name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_28.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-aarch64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-linux-arm-static-lib-1-30-0-zip:
+    name: onnxruntime-linux-arm-static_lib-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-arm-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-arm-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Install cross-compiler
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          arm-linux-gnueabihf-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          file test_version
+
+  test-onnxruntime-linux-x64-glibc2-17-Debug-1-30-0-zip:
+    name: onnxruntime-linux-x64-glibc2_17-Debug-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-glibc2_17-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-glibc2-17-Release-1-30-0-zip:
+    name: onnxruntime-linux-x64-glibc2_17-Release-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-glibc2_17-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-glibc2_17-Release-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-glibc2-28-Debug-1-30-0-zip:
+    name: onnxruntime-linux-x64-glibc2_28-Debug-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-glibc2_28-Debug-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-glibc2-28-MinSizeRel-1-30-0-zip:
+    name: onnxruntime-linux-x64-glibc2_28-MinSizeRel-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-glibc2_28-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-gpu-cuda12-1-30-0-patched-zip:
+    name: onnxruntime-linux-x64-gpu_cuda12-1.30.0-patched.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-gpu_cuda12-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-gpu_cuda12-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-gpu-cuda13-1-30-0-patched-zip:
+    name: onnxruntime-linux-x64-gpu_cuda13-1.30.0-patched.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-gpu_cuda13-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-gpu_cuda13-${{ env.ONNXRUNTIME_VERSION }}-patched.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          LD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-linux-x64-static-lib-1-30-0-glibc2-17-zip:
+    name: onnxruntime-linux-x64-static_lib-1.30.0-glibc2_17.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_17.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-linux-x64-static-lib-1-30-0-glibc2-28-zip:
+    name: onnxruntime-linux-x64-static_lib-1.30.0-glibc2_28.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-linux-x64-static_lib-${{ env.ONNXRUNTIME_VERSION }}-glibc2_28.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-osx-arm64-1-30-0-zip:
+    name: onnxruntime-osx-arm64-1.30.0.zip
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-osx-arm64-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-osx-arm64-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          clang++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          DYLD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-osx-arm64-static-lib-1-30-0-zip:
+    name: onnxruntime-osx-arm64-static_lib-1.30.0.zip
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-osx-arm64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-osx-arm64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-osx-universal2-static-lib-1-30-0-zip:
+    name: onnxruntime-osx-universal2-static_lib-1.30.0.zip
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-osx-universal2-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-osx-universal2-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-osx-x86-64-1-30-0-zip:
+    name: onnxruntime-osx-x86_64-1.30.0.zip
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-osx-x86_64-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-osx-x86_64-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          clang++ -std=c++17 -arch x86_64 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          DYLD_LIBRARY_PATH=./lib ./test_version
+
+  test-onnxruntime-osx-x86-64-static-lib-1-30-0-zip:
+    name: onnxruntime-osx-x86_64-static_lib-1.30.0.zip
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-osx-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-osx-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Compile and run
+        shell: bash
+        run: |
+          clang++ -std=c++17 -arch x86_64 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -framework CoreFoundation -framework Foundation -o test_version
+          ls -lh test_version
+          strip test_version || true
+          ls -lh test_version
+          readelf -d test_version 2>/dev/null || otool -L test_version 2>/dev/null || true
+          ./test_version
+
+  test-onnxruntime-wasm-static-lib-simd-1-30-0-zip:
+    name: onnxruntime-wasm-static_lib-simd-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-wasm-static_lib-simd-${{ env.ONNXRUNTIME_VERSION }}.zip
+      - name: Extract
+        shell: bash
+        run: |
+          unzip -q onnxruntime-wasm-static_lib-simd-${{ env.ONNXRUNTIME_VERSION }}.zip
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Verify archive contents
+        shell: bash
+        run: |
+          find . -name "*.a" | head -5
+          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+
+  test-onnxruntime-win-arm64-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MT-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MT-Debug-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MDd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MT-Debug-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MTd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MT-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MT-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MDd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MT-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MT-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MTd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Delete system onnxruntime.dll
+        shell: bash
+        run: |
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MD-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MD-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MD-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MDd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MD-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MD-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MD-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MD-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MT-Debug-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MT-Debug-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MT-Debug-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MTd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MT-MinSizeRel-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MT-Release-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MT-Release-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MT-Release-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-win-x86-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
+    name: onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download
+        shell: bash
+        run: |
+          curl -SL -o onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+      - name: Extract
+        shell: bash
+        run: |
+          tar xjf onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-${{ env.ONNXRUNTIME_VERSION }}.tar.bz2
+          ls -lh
+      - name: Flatten directory
+        shell: bash
+        run: |
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          ls -lh
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Compile and run
+        shell: bash
+        run: |
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ls -lh test_onnxruntime.exe
+          strip test_onnxruntime.exe || true
+          ls -lh test_onnxruntime.exe
+          readelf -d test_onnxruntime.exe 2>/dev/null || otool -L test_onnxruntime.exe 2>/dev/null || MSYS_NO_PATHCONV=1 dumpbin /dependents test_onnxruntime.exe 2>/dev/null || true
+          ./test_onnxruntime.exe
+
+  test-onnxruntime-android-shared-arm64v8a:
+    name: onnxruntime-android-shared-arm64-v8a-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/arm64-v8a/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:aarch64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-shared-armeabiv7a:
+    name: onnxruntime-android-shared-armeabi-v7a-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/armeabi-v7a/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:arm \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-shared-x8664:
+    name: onnxruntime-android-shared-x86_64-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/x86_64/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:x86_64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+
+  test-onnxruntime-android-shared-x86:
+    name: onnxruntime-android-shared-x86-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/x86/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:i686 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ls -lh test_version
+            readelf -d test_version 2>/dev/null || true
+            LD_LIBRARY_PATH=./lib ./test_version
+            '
+

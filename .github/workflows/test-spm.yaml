@@ -3,7 +3,7 @@ name: test-spm
 on:
   push:
     branches:
-      - release-v1.29.1-2
+      - fix-macos-2
   workflow_dispatch:
 
 jobs:
