@@ -19,7 +19,7 @@ env:
 jobs:
   test-onnxruntime-android-arm64-v8a-static-lib-1-30-0-zip:
     name: onnxruntime-android-arm64-v8a-static_lib-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,30 +27,31 @@ jobs:
         shell: bash
         run: |
           wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-      - name: Extract
+      - name: Compile and run in termux
         shell: bash
         run: |
-          unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-          ls -lh
-      - name: Flatten directory
-        shell: bash
-        run: |
-          for d in onnxruntime-*/; do
-            [ -d "$d" ] || continue
-            mv "$d"/* .
-            rm -rf "$d"
-            break
-          done
-          ls -lh
-      - name: Verify archive contents
-        shell: bash
-        run: |
-          find . -name "*.so" -o -name "*.a" | head -5
-          find . -name "*.so" -o -name "*.a" | grep -q . || (echo "ERROR: no .so/.a found"; exit 1)
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}:/work \
+            termux/termux-docker:aarch64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cd /work
+            unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+            for d in onnxruntime-*/; do
+              [ -d "$d" ] || continue
+              mv "$d"/* .
+              rm -rf "$d"
+              break
+            done
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
 
   test-onnxruntime-android-armeabi-v7a-static-lib-1-30-0-zip:
     name: onnxruntime-android-armeabi-v7a-static_lib-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,26 +59,27 @@ jobs:
         shell: bash
         run: |
           wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-      - name: Extract
+      - name: Compile and run in termux
         shell: bash
         run: |
-          unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-          ls -lh
-      - name: Flatten directory
-        shell: bash
-        run: |
-          for d in onnxruntime-*/; do
-            [ -d "$d" ] || continue
-            mv "$d"/* .
-            rm -rf "$d"
-            break
-          done
-          ls -lh
-      - name: Verify archive contents
-        shell: bash
-        run: |
-          find . -name "*.so" -o -name "*.a" | head -5
-          find . -name "*.so" -o -name "*.a" | grep -q . || (echo "ERROR: no .so/.a found"; exit 1)
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}:/work \
+            termux/termux-docker:arm \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cd /work
+            unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+            for d in onnxruntime-*/; do
+              [ -d "$d" ] || continue
+              mv "$d"/* .
+              rm -rf "$d"
+              break
+            done
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
 
   test-onnxruntime-android-x86-64-static-lib-1-30-0-zip:
     name: onnxruntime-android-x86_64-static_lib-1.30.0.zip
@@ -89,26 +91,27 @@ jobs:
         shell: bash
         run: |
           wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-      - name: Extract
+      - name: Compile and run in termux
         shell: bash
         run: |
-          unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-          ls -lh
-      - name: Flatten directory
-        shell: bash
-        run: |
-          for d in onnxruntime-*/; do
-            [ -d "$d" ] || continue
-            mv "$d"/* .
-            rm -rf "$d"
-            break
-          done
-          ls -lh
-      - name: Verify archive contents
-        shell: bash
-        run: |
-          find . -name "*.so" -o -name "*.a" | head -5
-          find . -name "*.so" -o -name "*.a" | grep -q . || (echo "ERROR: no .so/.a found"; exit 1)
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}:/work \
+            termux/termux-docker:x86_64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cd /work
+            unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+            for d in onnxruntime-*/; do
+              [ -d "$d" ] || continue
+              mv "$d"/* .
+              rm -rf "$d"
+              break
+            done
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
 
   test-onnxruntime-android-x86-static-lib-1-30-0-zip:
     name: onnxruntime-android-x86-static_lib-1.30.0.zip
@@ -120,26 +123,27 @@ jobs:
         shell: bash
         run: |
           wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-      - name: Extract
+      - name: Compile and run in termux
         shell: bash
         run: |
-          unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-          ls -lh
-      - name: Flatten directory
-        shell: bash
-        run: |
-          for d in onnxruntime-*/; do
-            [ -d "$d" ] || continue
-            mv "$d"/* .
-            rm -rf "$d"
-            break
-          done
-          ls -lh
-      - name: Verify archive contents
-        shell: bash
-        run: |
-          find . -name "*.so" -o -name "*.a" | head -5
-          find . -name "*.so" -o -name "*.a" | grep -q . || (echo "ERROR: no .so/.a found"; exit 1)
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}:/work \
+            termux/termux-docker:i686 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cd /work
+            unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+            for d in onnxruntime-*/; do
+              [ -d "$d" ] || continue
+              mv "$d"/* .
+              rm -rf "$d"
+              break
+            done
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
 
   test-onnxruntime-linux-aarch64-glibc2-17-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-Debug-1.30.0.zip
