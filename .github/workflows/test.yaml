@@ -39,19 +39,20 @@ jobs:
           done
           mkdir -p tests
           cp ../tests/test_onnxruntime.cc tests/
-          chmod -R 777 .
           ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}/ort-test:/work \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
             termux/termux-docker:aarch64 \
             bash -c '
             apt update -y
             apt install -y clang libc++
-            cd /work
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -78,19 +79,20 @@ jobs:
           done
           mkdir -p tests
           cp ../tests/test_onnxruntime.cc tests/
-          chmod -R 777 .
           ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}/ort-test:/work \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
             termux/termux-docker:arm \
             bash -c '
             apt update -y
             apt install -y clang libc++
-            cd /work
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -117,19 +119,20 @@ jobs:
           done
           mkdir -p tests
           cp ../tests/test_onnxruntime.cc tests/
-          chmod -R 777 .
           ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}/ort-test:/work \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
             termux/termux-docker:x86_64 \
             bash -c '
             apt update -y
             apt install -y clang libc++
-            cd /work
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -156,19 +159,20 @@ jobs:
           done
           mkdir -p tests
           cp ../tests/test_onnxruntime.cc tests/
-          chmod -R 777 .
           ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}/ort-test:/work \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
             termux/termux-docker:i686 \
             bash -c '
             apt update -y
             apt install -y clang libc++
-            cd /work
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -3047,4 +3051,148 @@ jobs:
         run: |
           MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
           ./test_onnxruntime.exe
+
+  test-onnxruntime-android-shared-arm64v8a:
+    name: onnxruntime-android-shared-arm64-v8a-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/arm64-v8a/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:aarch64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
+
+  test-onnxruntime-android-shared-armeabiv7a:
+    name: onnxruntime-android-shared-armeabi-v7a-1.30.0.zip
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/armeabi-v7a/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:arm \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
+
+  test-onnxruntime-android-shared-x8664:
+    name: onnxruntime-android-shared-x86_64-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/x86_64/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:x86_64 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
+
+  test-onnxruntime-android-shared-x86:
+    name: onnxruntime-android-shared-x86-1.30.0.zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Prepare workspace
+        shell: bash
+        run: |
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p include lib tests
+          cp headers/* include/
+          cp jni/x86/* lib/
+          cp ../tests/test_onnxruntime.cc tests/
+          ls -lh include/ lib/ tests/
+      - name: Compile and run in termux
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            --volume ${{ github.workspace }}/ort-test:/tmp/ort-test \
+            termux/termux-docker:i686 \
+            bash -c '
+            apt update -y
+            apt install -y clang libc++
+            cp -r /tmp/ort-test /data/data/com.termux/files/usr/tmp/ort-test
+            cd /data/data/com.termux/files/usr/tmp/ort-test
+            chmod -R 777 .
+            clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
+            ./test_version
+            '
 
