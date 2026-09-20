@@ -143,7 +143,7 @@ jobs:
 
   test-onnxruntime-linux-aarch64-glibc2-17-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-Debug-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -166,21 +166,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          file test_version
-          ls -lh lib/*.so*
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -203,21 +197,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          file test_version
-          ls -lh lib/*.so*
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -240,21 +228,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          file test_version
-          ls -lh lib/*.so*
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -277,21 +259,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          file test_version
-          ls -lh lib/*.so*
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -314,21 +290,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
-          file test_version
-          ls -lh lib/*.so*
+          g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -351,20 +321,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
-          file test_version
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ./test_version
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-28-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_28.zip
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -387,16 +352,11 @@ jobs:
             break
           done
           ls -lh
-      - name: Install cross-compiler
+      - name: Compile and run
         shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Compile (cross-compile, cannot run)
-        shell: bash
-        run: |
-          aarch64-linux-gnu-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
-          file test_version
+          g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          ./test_version
 
   test-onnxruntime-linux-arm-static-lib-1-30-0-zip:
     name: onnxruntime-linux-arm-static_lib-1.30.0.zip
@@ -870,7 +830,7 @@ jobs:
 
   test-onnxruntime-win-arm64-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-Debug-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -893,16 +853,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-MinSizeRel-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -925,16 +913,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-Release-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -957,16 +973,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MD-RelWithDebInfo-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -989,16 +1033,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-Debug-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1021,16 +1093,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-MinSizeRel-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1053,16 +1153,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-Release-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1085,16 +1213,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-MT-RelWithDebInfo-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1117,16 +1273,44 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Delete system onnxruntime.dll
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.dll" -o -name "*.lib" | head -10
-          find . -name "*.dll" -o -name "*.lib" | grep -q . || (echo "ERROR: no .dll/.lib found"; exit 1)
+          search_dirs=(
+            "/c/Windows"
+            "/c/Program Files"
+            "/c/Program Files (x86)"
+          )
+          count=0
+          for dir in "${search_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                echo "Deleting: $f"
+                rm -f "$f" || true
+                count=$((count + 1))
+              done < <(find "$dir" -name "onnxruntime.dll" -type f 2>/dev/null || true)
+            fi
+          done
+          if [ "$count" -eq 0 ]; then
+            echo "No stale onnxruntime.dll found"
+          else
+            echo "Deleted $count onnxruntime.dll file(s)"
+          fi
+      - name: Compile and run
+        shell: bash
+        run: |
+          cp -v lib/onnxruntime.dll . 2>/dev/null || true
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-Debug-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1149,16 +1333,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MDd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1181,16 +1368,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-Release-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1213,16 +1403,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1245,16 +1438,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MD /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Debug-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1277,16 +1473,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MTd /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1309,16 +1508,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Release-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1341,16 +1543,19 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1373,12 +1578,15 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+      - name: Compile and run
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.lib" | head -10
-          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
+          MSYS_NO_PATHCONV=1 cl.exe /std:c++17 /EHsc /MT /I include tests/test_onnxruntime.cc /link /LIBPATH:lib onnxruntime.lib shell32.lib
+          ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-x64-MD-Debug-1.30.0.tar.bz2
