@@ -23,28 +23,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download
+      - name: Prepare workspace
         shell: bash
         run: |
-          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          chmod -R 777 .
+          ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}:/work \
+            --volume ${{ github.workspace }}/ort-test:/work \
             termux/termux-docker:aarch64 \
             bash -c '
             apt update -y
             apt install -y clang libc++
             cd /work
-            unzip -q onnxruntime-android-arm64-v8a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-            for d in onnxruntime-*/; do
-              [ -d "$d" ] || continue
-              mv "$d"/* .
-              rm -rf "$d"
-              break
-            done
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -55,28 +62,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download
+      - name: Prepare workspace
         shell: bash
         run: |
-          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          chmod -R 777 .
+          ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}:/work \
+            --volume ${{ github.workspace }}/ort-test:/work \
             termux/termux-docker:arm \
             bash -c '
             apt update -y
             apt install -y clang libc++
             cd /work
-            unzip -q onnxruntime-android-armeabi-v7a-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-            for d in onnxruntime-*/; do
-              [ -d "$d" ] || continue
-              mv "$d"/* .
-              rm -rf "$d"
-              break
-            done
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -87,28 +101,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download
+      - name: Prepare workspace
         shell: bash
         run: |
-          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          chmod -R 777 .
+          ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}:/work \
+            --volume ${{ github.workspace }}/ort-test:/work \
             termux/termux-docker:x86_64 \
             bash -c '
             apt update -y
             apt install -y clang libc++
             cd /work
-            unzip -q onnxruntime-android-x86_64-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-            for d in onnxruntime-*/; do
-              [ -d "$d" ] || continue
-              mv "$d"/* .
-              rm -rf "$d"
-              break
-            done
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
@@ -119,28 +140,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download
+      - name: Prepare workspace
         shell: bash
         run: |
-          wget -q https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          mkdir -p ort-test
+          wget -q -O ort-test/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip https://github.com/csukuangfj/onnxruntime-libs/releases/download/v${{ env.ONNXRUNTIME_VERSION }}/onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          cd ort-test
+          unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          rm -f onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
+          for d in onnxruntime-*/; do
+            [ -d "$d" ] || continue
+            mv "$d"/* .
+            rm -rf "$d"
+            break
+          done
+          mkdir -p tests
+          cp ../tests/test_onnxruntime.cc tests/
+          chmod -R 777 .
+          ls -lh
       - name: Compile and run in termux
         shell: bash
         run: |
           docker run --rm \
             --user 0:0 \
-            --volume ${{ github.workspace }}:/work \
+            --volume ${{ github.workspace }}/ort-test:/work \
             termux/termux-docker:i686 \
             bash -c '
             apt update -y
             apt install -y clang libc++
             cd /work
-            unzip -q onnxruntime-android-x86-static_lib-${{ env.ONNXRUNTIME_VERSION }}.zip
-            for d in onnxruntime-*/; do
-              [ -d "$d" ] || continue
-              mv "$d"/* .
-              rm -rf "$d"
-              break
-            done
             clang++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lc++ -lm -llog -o test_version
             ./test_version
             '
