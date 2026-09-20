@@ -166,12 +166,17 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          file test_version
+          ls -lh lib/*.so*
 
   test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
@@ -198,12 +203,17 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          file test_version
+          ls -lh lib/*.so*
 
   test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
@@ -230,12 +240,17 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          file test_version
+          ls -lh lib/*.so*
 
   test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
@@ -262,12 +277,17 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          file test_version
+          ls -lh lib/*.so*
 
   test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
     name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
@@ -294,12 +314,17 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | head -5
-          find . -name "*.so" -o -name "*.so.*" -o -name "*.dylib" | grep -q . || (echo "ERROR: no shared lib found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include -L lib tests/test_onnxruntime.cc -lonnxruntime -o test_version
+          file test_version
+          ls -lh lib/*.so*
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
@@ -326,12 +351,16 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          file test_version
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-28-zip:
     name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_28.zip
@@ -358,12 +387,16 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          aarch64-linux-gnu-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          file test_version
 
   test-onnxruntime-linux-arm-static-lib-1-30-0-zip:
     name: onnxruntime-linux-arm-static_lib-1.30.0.zip
@@ -390,12 +423,16 @@ jobs:
             break
           done
           ls -lh
-      - name: Verify archive contents
+      - name: Install cross-compiler
         shell: bash
         run: |
-          test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+      - name: Compile (cross-compile, cannot run)
+        shell: bash
+        run: |
+          arm-linux-gnueabihf-g++ -std=c++17 -I include tests/test_onnxruntime.cc -L lib -lonnxruntime -lpthread -o test_version
+          file test_version
 
   test-onnxruntime-linux-x64-glibc2-17-Debug-1-30-0-zip:
     name: onnxruntime-linux-x64-glibc2_17-Debug-1.30.0.zip
@@ -1116,8 +1153,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
@@ -1148,8 +1185,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-Release-1.30.0.tar.bz2
@@ -1180,8 +1217,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
@@ -1212,8 +1249,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Debug-1.30.0.tar.bz2
@@ -1244,8 +1281,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
@@ -1276,8 +1313,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-Release-1.30.0.tar.bz2
@@ -1308,8 +1345,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
     name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
@@ -1340,8 +1377,8 @@ jobs:
         shell: bash
         run: |
           test -f include/onnxruntime_c_api.h || (echo "ERROR: header not found"; exit 1)
-          find . -name "*.a" | head -5
-          find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
+          find . -name "*.lib" | head -10
+          find . -name "*.lib" | grep -q . || (echo "ERROR: no .lib found"; exit 1)
 
   test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
     name: onnxruntime-win-x64-MD-Debug-1.30.0.tar.bz2
