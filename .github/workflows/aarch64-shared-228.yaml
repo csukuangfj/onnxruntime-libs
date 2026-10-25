@@ -3,11 +3,11 @@ name: aarch64-shared-228
 on:
   push:
     branches:
-      - fix-macos-2
+      - release-v1.31.0
   workflow_dispatch:
     inputs:
       version:
-        description: "Version information (e.g., 1.30.0)"
+        description: "Version information (e.g., 1.31.0)"
         required: true
 
 permissions:
@@ -16,11 +16,11 @@ permissions:
 env:
   ONNXRUNTIME_VERSION:
     |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
-    ${{ github.event.release.tag_name || github.event.inputs.version || '1.30.0' }}
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.31.0' }}
 
 jobs:
   aarch64-shared-228:
-    name: ${{ matrix.config }}
+    name: ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -28,6 +28,9 @@ jobs:
         os: [ubuntu-22.04-arm]
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
+        # 0 the old gcc4-compatible COW one. See the check step below.
+        cxx11_abi: [0, 1]
         # config: ['MinSizeRel', 'Release']
         # config: ['Release']
 
@@ -36,8 +39,8 @@ jobs:
         id: cache-build-result
         uses: actions/cache@v4
         with:
-          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}-cache-v1
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}-cache-v1
 
       - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -117,6 +120,10 @@ jobs:
 
               build_dir=/shared/build-shared
 
+              # _GLIBCXX_USE_CXX11_ABI is a preprocessor macro, not a CMake
+              # variable, so it has to arrive through the compiler flags.
+              export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=${{ matrix.cxx11_abi }}"
+
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
                 --build_dir $build_dir \
@@ -147,7 +154,7 @@ jobs:
           sudo chown -R runner $build_dir
           ls -lh $build_dir
 
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
 
           tag=$(git rev-parse HEAD)
           echo "tag: $tag"
@@ -186,7 +193,7 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
 
           # Download test file directly
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
@@ -194,12 +201,69 @@ jobs:
           g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
             -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
           /tmp/test_onnxruntime
+      - name: Check _GLIBCXX_USE_CXX11_ABI before upload
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          abi=${{ matrix.cxx11_abi }}
+
+          mapfile -t dirs < <(find . -maxdepth 1 -type d -name 'onnxruntime-linux-*' | sort)
+          if [ "${#dirs[@]}" -ne 1 ]; then
+            echo "::error::expected exactly one artifact directory, found ${#dirs[@]}"
+            printf '%s\n' "${dirs[@]}"
+            exit 1
+          fi
+          dir=${dirs[0]#./}
+
+          # The name must carry the -cxx11-abi marker iff the build is the
+          # C++11 ABI.
+          case "$dir" in
+            *-cxx11-abi) name_abi=1 ;;
+            *)           name_abi=0 ;;
+          esac
+          if [ "$name_abi" != "$abi" ]; then
+            echo "::error::artifact name '$dir' does not agree with CXX11_ABI=$abi"
+            exit 1
+          fi
+
+          lib=$(find "$dir" -name 'libonnxruntime.so' | head -1)
+          if [ -z "$lib" ]; then
+            echo "::error::libonnxruntime.so not found inside $dir"
+            exit 1
+          fi
+
+          # The two ABIs mangle std::string differently: the old gcc4-compatible
+          # COW one references std::basic_string (mangled with 'Ss'), the C++11
+          # one references std::__cxx11::basic_string.
+          syms=$(nm "$lib" | awk '{print $NF}' | sort -u)
+          new_abi=$(printf '%s\n' "$syms" | grep -c '__cxx11' || true)
+          old_abi=$(printf '%s\n' "$syms" | grep -cE '^_ZNSs|^_ZNSb' || true)
+
+          echo "artifact          : $dir"
+          echo "library           : $lib"
+          echo "requested         : _GLIBCXX_USE_CXX11_ABI=$abi"
+          echo "std::__cxx11 refs : $new_abi"
+          echo "old COW str refs  : $old_abi"
+
+          if [ "$abi" = "1" ] && [ "$old_abi" -ne 0 ]; then
+            echo "::error::CXX11_ABI=1 but the library still has old-COW std::string refs."
+            exit 1
+          fi
+          if [ "$abi" = "0" ] && [ "$old_abi" -eq 0 ]; then
+            echo "::error::CXX11_ABI=0 but the library has no old-COW std::string refs."
+            exit 1
+          fi
+
+          echo "OK: $dir is _GLIBCXX_USE_CXX11_ABI=$abi"
+
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         if: steps.cache-build-result.outputs.cache-hit != 'true'
@@ -224,7 +288,7 @@ jobs:
             ls -lh
             version=${{ env.ONNXRUNTIME_VERSION }}
             config=${{ matrix.config }}
-            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
 
             tree ./$artifact
 

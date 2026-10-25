@@ -1,0 +1,336 @@
+name: aarch64-shared-224
+
+on:
+  push:
+    branches:
+      - release-v1.31.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version information (e.g., 1.31.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  ONNXRUNTIME_VERSION:
+    |- # Enter release tag name or version name in workflow_dispatch. Appropriate version if not specified
+    ${{ github.event.release.tag_name || github.event.inputs.version || '1.31.0' }}
+
+jobs:
+  aarch64-shared-224:
+    name: ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04-arm]
+        arch: [aarch64]
+        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
+        # 0 the old gcc4-compatible COW one. See the check step below.
+        cxx11_abi: [0, 1]
+        # config: ['MinSizeRel', 'Release']
+        # config: ['Release']
+
+    steps:
+      - name: Cache build result for ${{ env.ONNXRUNTIME_VERSION }}
+        id: cache-build-result
+        uses: actions/cache@v4
+        with:
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+          key: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}-cache-v1
+
+      - name: Checkout v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/onnxruntime
+          submodules: true
+          ref: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: patch
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          sed -i.bak '/SOVERSION/d' ./cmake/onnxruntime.cmake
+          sed -i.bak '/onnxruntime PROPERTIES VERSION/d' ./cmake/onnxruntime.cmake
+
+          git diff
+
+          sudo apt-get install -y patchelf
+
+      - name: Build onnxruntime ${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: addnab/docker-run-action@v3
+        with:
+            # onnxruntime v1.22.0   GCC version must be greater than or equal to 11.1
+            # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
+            #
+            # https://github.com/pypa/manylinux/issues/1266
+            # gcc 12, not 11: onnxruntime hard-fails on aarch64 without the
+            # +bf16 ISA extension, which needs gcc >= 12 *and* a recent
+            # binutils. The image builds both into the same prefix.
+            image: ghcr.io/csukuangfj/manylinux_2_24-aarch64-gcc12:latest
+            # image: quay.io/pypa/manylinux2014_aarch64 # it has only gcc 10. gcc 11 cannot be installed on it
+            options: |
+              --volume ${{ github.workspace }}/:/shared
+            shell: bash
+            run: |
+              echo "config: ${{ matrix.config }}"
+              uname -a
+              which gcc
+
+              gcc --version
+              which python
+
+              # find /opt -name "python*"
+
+              echo "--------------------"
+              PYBIN_DIR=$(find /opt/_internal -type d -path '*/cpython-3.10.*/bin' -print -quit)
+              echo "PYBIN_DIR: $PYBIN_DIR"
+
+              export PATH=$PYBIN_DIR:$PATH
+              which python3
+              python3 --version
+              python3 -m pip install ninja
+
+              cd /shared
+              ls -lh
+              touch /shared/a.txt
+              mkdir build-shared
+
+              version=${{ env.ONNXRUNTIME_VERSION }}
+              which python
+              # v=$(cat ./VERSION_NUMBER)
+              # if [[ $v == "1.18.0" ]]; then
+              #   echo $version > ./VERSION_NUMBER
+              #   sed -i.bak s/1.18.0/$version/g ./onnxruntime/core/session/onnxruntime_c_api.cc
+              # fi
+
+              # echo "---$version---"
+              # cat ./VERSION_NUMBER
+              # echo "---"
+
+              gcc --version
+              which gcc
+
+              g++ --version
+              which g++
+
+              which python
+
+              build_dir=/shared/build-shared
+
+              # _GLIBCXX_USE_CXX11_ABI is a preprocessor macro, not a CMake
+              # variable, so it has to arrive through the compiler flags.
+              export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=${{ matrix.cxx11_abi }}"
+
+              # Pin the compilers: CMake probes cc/c++ first and those are
+              # the distro gcc 6 in this image -- too old for onnxruntime
+              # (needs >= 11.1 and C++20). The image's gcc is on PATH but
+              # CMake would not pick it.
+              export CC="$(command -v gcc)"
+              export CXX="$(command -v g++)"
+              echo "CC=$CC"
+              echo "CXX=$CXX"
+              "$CC" -dumpversion
+              case "$CC" in
+                /opt/gcc-*) ;;
+                *)
+                  echo "::error::CC=$CC is not the gcc built into this image"
+                  exit 1
+                  ;;
+              esac
+
+              python3 tools/ci_build/build.py \
+                --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
+                --build_dir $build_dir \
+                --cmake_generator 'Ninja' \
+                --config ${{ matrix.config }} \
+                --update \
+                --build \
+                --parallel \
+                --skip_tests \
+                --compile_no_warning_as_error \
+                --build_shared_lib \
+                --skip_submodule_sync \
+                --enable_lto \
+                --allow_running_as_root
+
+              chmod a=rwx build-shared
+              ls -lh build-shared
+              ls -lh build-shared/*
+
+      - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          build_dir=./build-shared
+          config=${{ matrix.config }}
+          version=${{ env.ONNXRUNTIME_VERSION }}
+
+          sudo chown -R runner $build_dir
+          ls -lh $build_dir
+
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_24-$config-$version${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+
+          tag=$(git rev-parse HEAD)
+          echo "tag: $tag"
+
+          pushd ./tools/ci_build/github/linux
+          rm copy_strip_binary.sh
+          wget https://github.com/microsoft/onnxruntime/raw/v1.18.1/tools/ci_build/github/linux/copy_strip_binary.sh
+          chmod +x copy_strip_binary.sh
+          ls -lh
+          popd
+
+          ./tools/ci_build/github/linux/copy_strip_binary.sh \
+            -r $build_dir \
+            -a $artifact \
+            -c $config \
+            -l libonnxruntime.so \
+            -s $PWD/ \
+            -t "$(git rev-parse HEAD)"
+
+          mv $build_dir/$artifact ./
+          tree ./$artifact
+
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          patchelf --set-soname libonnxruntime.so ./$artifact/lib/libonnxruntime.so
+
+          # ldd ./$artifact/lib/libonnxruntime.so
+          readelf -d ./$artifact/lib/libonnxruntime.so
+
+          strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
+
+          zip -r ${artifact}.zip ./$artifact
+
+      - name: Test onnxruntime
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          artifact=$GITHUB_WORKSPACE/onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+
+          # Download test file directly
+          curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
+
+          g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
+            -I$artifact/include -L$artifact/lib -lonnxruntime -Wl,-rpath,$artifact/lib
+          /tmp/test_onnxruntime
+      - name: Check _GLIBCXX_USE_CXX11_ABI before upload
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          abi=${{ matrix.cxx11_abi }}
+
+          mapfile -t dirs < <(find . -maxdepth 1 -type d -name 'onnxruntime-linux-*' | sort)
+          if [ "${#dirs[@]}" -ne 1 ]; then
+            echo "::error::expected exactly one artifact directory, found ${#dirs[@]}"
+            printf '%s\n' "${dirs[@]}"
+            exit 1
+          fi
+          dir=${dirs[0]#./}
+
+          # The name must carry the -cxx11-abi marker iff the build is the
+          # C++11 ABI.
+          case "$dir" in
+            *-cxx11-abi) name_abi=1 ;;
+            *)           name_abi=0 ;;
+          esac
+          if [ "$name_abi" != "$abi" ]; then
+            echo "::error::artifact name '$dir' does not agree with CXX11_ABI=$abi"
+            exit 1
+          fi
+
+          lib=$(find "$dir" -name 'libonnxruntime.so' | head -1)
+          if [ -z "$lib" ]; then
+            echo "::error::libonnxruntime.so not found inside $dir"
+            exit 1
+          fi
+
+          # The two ABIs mangle std::string differently: the old gcc4-compatible
+          # COW one references std::basic_string (mangled with 'Ss'), the C++11
+          # one references std::__cxx11::basic_string.
+          syms=$(nm "$lib" | awk '{print $NF}' | sort -u)
+          new_abi=$(printf '%s\n' "$syms" | grep -c '__cxx11' || true)
+          old_abi=$(printf '%s\n' "$syms" | grep -cE '^_ZNSs|^_ZNSb' || true)
+
+          echo "artifact          : $dir"
+          echo "library           : $lib"
+          echo "requested         : _GLIBCXX_USE_CXX11_ABI=$abi"
+          echo "std::__cxx11 refs : $new_abi"
+          echo "old COW str refs  : $old_abi"
+
+          if [ "$abi" = "1" ] && [ "$old_abi" -ne 0 ]; then
+            echo "::error::CXX11_ABI=1 but the library still has old-COW std::string refs."
+            exit 1
+          fi
+          if [ "$abi" = "0" ] && [ "$old_abi" -eq 0 ]; then
+            echo "::error::CXX11_ABI=0 but the library has no old-COW std::string refs."
+            exit 1
+          fi
+
+          echo "OK: $dir is _GLIBCXX_USE_CXX11_ABI=$abi"
+
+      - name: Upload artifact
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      # https://huggingface.co/docs/hub/spaces-github-actions
+      - name: Publish to huggingface
+        # if: github.repository_owner == 'csukuangfj' && steps.cache-build-result.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            ls -lh
+            version=${{ env.ONNXRUNTIME_VERSION }}
+            config=${{ matrix.config }}
+            artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+
+            tree ./$artifact
+
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
+
+            cd huggingface
+
+            d=${{ env.ONNXRUNTIME_VERSION }}
+            mkdir -p $d
+
+            # git lfs pull
+            cp -v ../onnxruntime-linux*.zip ./$d/
+
+            git status
+            git lfs track "*.zip"
+
+            git add .
+
+            git commit -m "upload $artifact"
+            git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main

@@ -3,22 +3,22 @@ name: test
 on:
   push:
     branches:
-      - fix-macos
+      - release-v1.31.0
   workflow_dispatch:
     inputs:
       version:
         description: "onnxruntime version to test"
         required: true
-        default: '1.30.0'
+        default: '1.31.0'
 
 env:
   ONNXRUNTIME_VERSION:
     |-
-    ${{ github.event.inputs.version || '1.30.0' }}
+    ${{ github.event.inputs.version || '1.31.0' }}
 
 jobs:
   test-onnxruntime-android-arm64-v8a-static-lib-1-30-0-zip:
-    name: onnxruntime-android-arm64-v8a-static_lib-1.30.0.zip
+    name: onnxruntime-android-arm64-v8a-static_lib-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -60,7 +60,7 @@ jobs:
             '
 
   test-onnxruntime-android-armeabi-v7a-static-lib-1-30-0-zip:
-    name: onnxruntime-android-armeabi-v7a-static_lib-1.30.0.zip
+    name: onnxruntime-android-armeabi-v7a-static_lib-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -102,7 +102,7 @@ jobs:
             '
 
   test-onnxruntime-android-x86-64-static-lib-1-30-0-zip:
-    name: onnxruntime-android-x86_64-static_lib-1.30.0.zip
+    name: onnxruntime-android-x86_64-static_lib-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -144,7 +144,7 @@ jobs:
             '
 
   test-onnxruntime-android-x86-static-lib-1-30-0-zip:
-    name: onnxruntime-android-x86-static_lib-1.30.0.zip
+    name: onnxruntime-android-x86-static_lib-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -186,7 +186,7 @@ jobs:
             '
 
   test-onnxruntime-linux-aarch64-glibc2-17-Debug-1-30-0-zip:
-    name: onnxruntime-linux-aarch64-glibc2_17-Debug-1.30.0.zip
+    name: onnxruntime-linux-aarch64-glibc2_17-Debug-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -221,7 +221,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-17-MinSizeRel-1-30-0-zip:
-    name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.30.0.zip
+    name: onnxruntime-linux-aarch64-glibc2_17-MinSizeRel-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -256,7 +256,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-Debug-1-30-0-zip:
-    name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.30.0.zip
+    name: onnxruntime-linux-aarch64-glibc2_28-Debug-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -291,7 +291,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-MinSizeRel-1-30-0-zip:
-    name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.30.0.zip
+    name: onnxruntime-linux-aarch64-glibc2_28-MinSizeRel-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -326,7 +326,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-glibc2-28-Release-1-30-0-zip:
-    name: onnxruntime-linux-aarch64-glibc2_28-Release-1.30.0.zip
+    name: onnxruntime-linux-aarch64-glibc2_28-Release-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -361,7 +361,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-17-zip:
-    name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_17.zip
+    name: onnxruntime-linux-aarch64-static_lib-1.31.0-glibc2_17.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -396,7 +396,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-linux-aarch64-static-lib-1-30-0-glibc2-28-zip:
-    name: onnxruntime-linux-aarch64-static_lib-1.30.0-glibc2_28.zip
+    name: onnxruntime-linux-aarch64-static_lib-1.31.0-glibc2_28.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -431,7 +431,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-linux-arm-static-lib-1-30-0-zip:
-    name: onnxruntime-linux-arm-static_lib-1.30.0.zip
+    name: onnxruntime-linux-arm-static_lib-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -467,7 +467,7 @@ jobs:
           file test_version
 
   test-onnxruntime-linux-x64-glibc2-17-Debug-1-30-0-zip:
-    name: onnxruntime-linux-x64-glibc2_17-Debug-1.30.0.zip
+    name: onnxruntime-linux-x64-glibc2_17-Debug-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -502,7 +502,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-glibc2-17-Release-1-30-0-zip:
-    name: onnxruntime-linux-x64-glibc2_17-Release-1.30.0.zip
+    name: onnxruntime-linux-x64-glibc2_17-Release-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -537,7 +537,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-glibc2-28-Debug-1-30-0-zip:
-    name: onnxruntime-linux-x64-glibc2_28-Debug-1.30.0.zip
+    name: onnxruntime-linux-x64-glibc2_28-Debug-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -572,7 +572,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-glibc2-28-MinSizeRel-1-30-0-zip:
-    name: onnxruntime-linux-x64-glibc2_28-MinSizeRel-1.30.0.zip
+    name: onnxruntime-linux-x64-glibc2_28-MinSizeRel-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -607,7 +607,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-gpu-cuda12-1-30-0-patched-zip:
-    name: onnxruntime-linux-x64-gpu_cuda12-1.30.0-patched.zip
+    name: onnxruntime-linux-x64-gpu_cuda12-1.31.0-patched.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -642,7 +642,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-gpu-cuda13-1-30-0-patched-zip:
-    name: onnxruntime-linux-x64-gpu_cuda13-1.30.0-patched.zip
+    name: onnxruntime-linux-x64-gpu_cuda13-1.31.0-patched.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -677,7 +677,7 @@ jobs:
           LD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-linux-x64-static-lib-1-30-0-glibc2-17-zip:
-    name: onnxruntime-linux-x64-static_lib-1.30.0-glibc2_17.zip
+    name: onnxruntime-linux-x64-static_lib-1.31.0-glibc2_17.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -712,7 +712,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-linux-x64-static-lib-1-30-0-glibc2-28-zip:
-    name: onnxruntime-linux-x64-static_lib-1.30.0-glibc2_28.zip
+    name: onnxruntime-linux-x64-static_lib-1.31.0-glibc2_28.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -747,7 +747,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-osx-arm64-1-30-0-zip:
-    name: onnxruntime-osx-arm64-1.30.0.zip
+    name: onnxruntime-osx-arm64-1.31.0.zip
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -782,7 +782,7 @@ jobs:
           DYLD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-osx-arm64-static-lib-1-30-0-zip:
-    name: onnxruntime-osx-arm64-static_lib-1.30.0.zip
+    name: onnxruntime-osx-arm64-static_lib-1.31.0.zip
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -817,7 +817,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-osx-universal2-static-lib-1-30-0-zip:
-    name: onnxruntime-osx-universal2-static_lib-1.30.0.zip
+    name: onnxruntime-osx-universal2-static_lib-1.31.0.zip
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -852,7 +852,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-osx-x86-64-1-30-0-zip:
-    name: onnxruntime-osx-x86_64-1.30.0.zip
+    name: onnxruntime-osx-x86_64-1.31.0.zip
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -887,7 +887,7 @@ jobs:
           DYLD_LIBRARY_PATH=./lib ./test_version
 
   test-onnxruntime-osx-x86-64-static-lib-1-30-0-zip:
-    name: onnxruntime-osx-x86_64-static_lib-1.30.0.zip
+    name: onnxruntime-osx-x86_64-static_lib-1.31.0.zip
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -922,7 +922,7 @@ jobs:
           ./test_version
 
   test-onnxruntime-wasm-static-lib-simd-1-30-0-zip:
-    name: onnxruntime-wasm-static_lib-simd-1.30.0.zip
+    name: onnxruntime-wasm-static_lib-simd-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -953,7 +953,7 @@ jobs:
           find . -name "*.a" | grep -q . || (echo "ERROR: no .a found"; exit 1)
 
   test-onnxruntime-win-arm64-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1017,7 +1017,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1081,7 +1081,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MD-Release-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1145,7 +1145,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1209,7 +1209,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MT-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MT-Debug-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1273,7 +1273,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1337,7 +1337,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MT-Release-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1401,7 +1401,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1465,7 +1465,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1504,7 +1504,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1543,7 +1543,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MD-Release-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1582,7 +1582,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1621,7 +1621,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MT-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MT-Debug-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1660,7 +1660,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1699,7 +1699,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MT-Release-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1738,7 +1738,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-arm64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-arm64-static_lib-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -1777,7 +1777,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -1839,7 +1839,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -1901,7 +1901,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MD-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -1963,7 +1963,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2025,7 +2025,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MT-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MT-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2087,7 +2087,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2149,7 +2149,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MT-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2211,7 +2211,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2273,7 +2273,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2310,7 +2310,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2347,7 +2347,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MD-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2384,7 +2384,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2421,7 +2421,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MT-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MT-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2458,7 +2458,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2495,7 +2495,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MT-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2532,7 +2532,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x64-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x64-static_lib-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2569,7 +2569,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2633,7 +2633,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2697,7 +2697,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MD-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2761,7 +2761,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2825,7 +2825,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2889,7 +2889,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MT-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -2953,7 +2953,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3017,7 +3017,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MD-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MD-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3056,7 +3056,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MD-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MD-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3095,7 +3095,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MD-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MD-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3134,7 +3134,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MD-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MD-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3173,7 +3173,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Debug-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MT-Debug-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MT-Debug-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3212,7 +3212,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-MinSizeRel-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MT-MinSizeRel-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MT-MinSizeRel-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3251,7 +3251,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-Release-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MT-Release-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MT-Release-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3290,7 +3290,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-win-x86-static-lib-MT-RelWithDebInfo-1-30-0-tar-bz2:
-    name: onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-1.30.0.tar.bz2
+    name: onnxruntime-win-x86-static_lib-MT-RelWithDebInfo-1.31.0.tar.bz2
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -3329,7 +3329,7 @@ jobs:
           ./test_onnxruntime.exe
 
   test-onnxruntime-android-shared-arm64v8a:
-    name: onnxruntime-android-shared-arm64-v8a-1.30.0.zip
+    name: onnxruntime-android-shared-arm64-v8a-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -3367,7 +3367,7 @@ jobs:
             '
 
   test-onnxruntime-android-shared-armeabiv7a:
-    name: onnxruntime-android-shared-armeabi-v7a-1.30.0.zip
+    name: onnxruntime-android-shared-armeabi-v7a-1.31.0.zip
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -3405,7 +3405,7 @@ jobs:
             '
 
   test-onnxruntime-android-shared-x8664:
-    name: onnxruntime-android-shared-x86_64-1.30.0.zip
+    name: onnxruntime-android-shared-x86_64-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -3443,7 +3443,7 @@ jobs:
             '
 
   test-onnxruntime-android-shared-x86:
-    name: onnxruntime-android-shared-x86-1.30.0.zip
+    name: onnxruntime-android-shared-x86-1.31.0.zip
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
