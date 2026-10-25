@@ -14,8 +14,18 @@
 # the real thing settles it.
 set -euo pipefail
 
-artifact=${1:?usage: check-runtime-compat.sh <artifact-dir> <base-image>}
-image=${2:?usage: check-runtime-compat.sh <artifact-dir> <base-image>}
+# Usage: check-runtime-compat.sh <base-image> [artifact-dir]
+image=${1:?usage: check-runtime-compat.sh <base-image> [artifact-dir]}
+artifact=${2:-}
+if [ -z "$artifact" ]; then
+  mapfile -t dirs < <(find . -maxdepth 1 -type d -name 'onnxruntime-linux-*' | sort)
+  if [ "${#dirs[@]}" -ne 1 ]; then
+    echo "ERROR: expected exactly one artifact directory, found ${#dirs[@]}" >&2
+    printf '%s\n' "${dirs[@]}"
+    exit 1
+  fi
+  artifact=${dirs[0]#./}
+fi
 
 so=$(find "$artifact" -name 'libonnxruntime.so' | head -1)
 if [ -z "$so" ]; then
@@ -46,7 +56,7 @@ int main(int argc, char **argv) {
 }
 EOF
 
-echo "Testing $so in $image"
+echo "=== loading it in $image ==="
 echo "--- this image's C library:"
 docker run --rm "$image" ldd --version | head -1
 
