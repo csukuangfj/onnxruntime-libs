@@ -3,7 +3,7 @@ name: macos-xcframework
 on:
   push:
     branches:
-      - release-v1.31.0
+      - release-v1.31.0-2
   workflow_dispatch:
     inputs:
       version:
@@ -305,10 +305,16 @@ jobs:
           # Download test file
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
 
+          # -lz -lsqlite3 are needed by the static framework: a static archive
+          # does not carry its transitive deps, so the consumer must link them.
+          # The dynamic framework resolves them internally, and these are
+          # harmless there. Without them the static link fails with
+          # "Undefined symbols for architecture arm64: _deflate / _sqlite3_*".
           g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
             -I"$fw/Headers" \
             -F$(dirname "$fw") -framework onnxruntime \
             -framework CoreML -framework Foundation -framework Network \
+            -lz -lsqlite3 \
             -Wl,-rpath,$(dirname "$fw")
           /tmp/test_onnxruntime
 
