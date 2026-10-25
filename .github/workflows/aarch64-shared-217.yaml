@@ -3,7 +3,7 @@ name: aarch64-shared-217
 on:
   push:
     branches:
-      - release-v1.31.0
+      - release-v1.31.0-2
   workflow_dispatch:
     inputs:
       version:
