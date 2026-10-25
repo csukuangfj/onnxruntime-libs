@@ -3,7 +3,7 @@ name: linux-shared-217
 on:
   push:
     branches:
-      - release-v1.31.0
+      - release-v1.31.0-2
   workflow_dispatch:
     inputs:
       version:
@@ -30,7 +30,7 @@ jobs:
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
         # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
         # 0 the old gcc4-compatible COW one. See the check step below.
-        cxx11_abi: [0]
+        cxx11_abi: [0, 1]
         # config: ['MinSizeRel', 'Release']
 
 
@@ -65,40 +65,37 @@ jobs:
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: addnab/docker-run-action@v3
         with:
-            image: quay.io/pypa/manylinux2014_x86_64
-            # image: quay.io/pypa/manylinux_2_28_x86_64
+            # Stock gcc 11 built from source (test-github-actions/gcc-x86_64).
+            # Deliberately not Red Hat SCL devtoolset: it is configured
+            # --with-default-libstdcxx-abi=gcc4-compatible, so it forces
+            # _GLIBCXX_USE_CXX11_ABI=0 and ignores -D_GLIBCXX_USE_CXX11_ABI=1,
+            # which would make the C++11 ABI impossible here.
+            image: ghcr.io/csukuangfj/manylinux2014-x86_64-gcc11:latest
             options: |
               --volume ${{ github.workspace }}/:/shared
             shell: bash
             run: |
               echo "config: ${{ matrix.config }}"
               uname -a
-              which gcc
+
+              # Pin the compilers: CMake probes cc/c++ first and those resolve to
+              # the image's older toolchain. The gcc 11 is on PATH but CMake
+              # would not pick it.
+              export CC="$(command -v gcc)"
+              export CXX="$(command -v g++)"
+              echo "CC=$CC"
+              echo "CXX=$CXX"
+              "$CC" -dumpversion
+              case "$CC" in
+                /opt/gcc-*) ;;
+                *)
+                  echo "::error::CC=$CC is not the gcc built into this image"
+                  exit 1
+                  ;;
+              esac
 
               gcc --version
-
-              echo "update gcc"
-
-              # See https://github.com/nealef/clefos/issues/9
-              echo "multilib_policy=best" >> /etc/yum.conf
-              echo "skip_missing_names_on_install=False" >> /etc/yum.conf
-              sed -i '/^override_install_langs=/d' /etc/yum.conf
-              yum -y update
-              yum -y install yum-utils curl
-              yum-config-manager --enable extras
-              yum -y install centos-release-scl-rh
-              yum -y install devtoolset-11-binutils devtoolset-11-gcc devtoolset-11-gcc-c++ devtoolset-11-gcc-gfortran
-
-              # see https://stackoverflow.com/questions/72904802/can-not-find-required-gcc-version-after-devtoolset-installation
-              ls -lh /opt/rh/devtoolset-11
-
-              source /opt/rh/devtoolset-11/enable
-
-              echo 'which gcc'
-              which gcc
-
-              echo 'gcc --version'
-              gcc --version
+              g++ --version
               ldd --version
 
               which python
@@ -253,12 +250,16 @@ jobs:
           echo "std::__cxx11 refs : $new_abi"
           echo "old COW str refs  : $old_abi"
 
-          if [ "$abi" = "1" ] && [ "$old_abi" -ne 0 ]; then
-            echo "::error::CXX11_ABI=1 but the library still has old-COW std::string refs."
+          # Neither count is ever zero in a real build: a C++11 build still
+          # carries a handful of old-ABI bridge symbols (std::__cow_string,
+          # std::runtime_error), and an old-ABI build carries a handful of
+          # C++11 ones. So compare the two rather than testing either at zero.
+          if [ "$abi" = "1" ] && [ "$new_abi" -le "$old_abi" ]; then
+            echo "::error::CXX11_ABI=1 but the library has more old-COW than __cxx11 refs (new=$new_abi old=$old_abi)."
             exit 1
           fi
-          if [ "$abi" = "0" ] && [ "$old_abi" -eq 0 ]; then
-            echo "::error::CXX11_ABI=0 but the library has no old-COW std::string refs."
+          if [ "$abi" = "0" ] && [ "$old_abi" -le "$new_abi" ]; then
+            echo "::error::CXX11_ABI=0 but the library has more __cxx11 than old-COW refs (new=$new_abi old=$old_abi)."
             exit 1
           fi
 

@@ -70,6 +70,11 @@ let package = Package(
                 .linkedFramework("CoreML"),
                 .linkedFramework("Network"),
                 .linkedLibrary("c++"),
+                // Needed by the *static* xcframework: a static archive does not
+                // carry its transitive deps, so the consumer must link them.
+                // The dynamic one resolves them internally and ignores these.
+                .linkedLibrary("z"),
+                .linkedLibrary("sqlite3"),
             ]
         ),
 
@@ -88,6 +93,11 @@ let package = Package(
                 .linkedFramework("CoreML"),
                 .linkedFramework("Network"),
                 .linkedLibrary("c++"),
+                // Needed by the *static* xcframework: a static archive does not
+                // carry its transitive deps, so the consumer must link them.
+                // The dynamic one resolves them internally and ignores these.
+                .linkedLibrary("z"),
+                .linkedLibrary("sqlite3"),
             ]
         ),
 

@@ -258,12 +258,16 @@ jobs:
           echo "std::__cxx11 refs : $new_abi"
           echo "old COW str refs  : $old_abi"
 
-          if [ "$abi" = "1" ] && [ "$old_abi" -ne 0 ]; then
-            echo "::error::CXX11_ABI=1 but the library still has old-COW std::string refs."
+          # Neither count is ever zero in a real build: a C++11 build still
+          # carries a handful of old-ABI bridge symbols (std::__cow_string,
+          # std::runtime_error), and an old-ABI build carries a handful of
+          # C++11 ones. So compare the two rather than testing either at zero.
+          if [ "$abi" = "1" ] && [ "$new_abi" -le "$old_abi" ]; then
+            echo "::error::CXX11_ABI=1 but the library has more old-COW than __cxx11 refs (new=$new_abi old=$old_abi)."
             exit 1
           fi
-          if [ "$abi" = "0" ] && [ "$old_abi" -eq 0 ]; then
-            echo "::error::CXX11_ABI=0 but the library has no old-COW std::string refs."
+          if [ "$abi" = "0" ] && [ "$old_abi" -le "$new_abi" ]; then
+            echo "::error::CXX11_ABI=0 but the library has more __cxx11 than old-COW refs (new=$new_abi old=$old_abi)."
             exit 1
           fi
 
