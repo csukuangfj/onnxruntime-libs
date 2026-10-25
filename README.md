@@ -18,11 +18,8 @@ mix them, so pick the one that matches the compiler you link against.
 
 | `_GLIBCXX_USE_CXX11_ABI` | artifact name |
 | --- | --- |
-| `1` — C++11 `std::string`, the default of every stock gcc >= 5 | name ends with `-cxx11-abi` |
-| `0` — old gcc4-compatible COW `std::string`, the default of Red Hat SCL devtoolset | no `-cxx11-abi` marker |
-
-The rule is: the name of an `onnxruntime-linux-*.zip` asset ends with
-`-cxx11-abi` if and only if it was built with `_GLIBCXX_USE_CXX11_ABI=1`.
+| `1` — C++11 `std::string`, the default of every stock gcc >= 5 | see the table below |
+| `0` — old gcc4-compatible COW `std::string`, the default of Red Hat SCL devtoolset | see the table below |
 
 Which ABI is available depends on the **toolchain**, not on the glibc tag:
 
@@ -41,8 +38,16 @@ configured `--with-default-libstdcxx-abi=gcc4-compatible`, so its headers force
 `_GLIBCXX_USE_CXX11_ABI=0` and ignore `-D_GLIBCXX_USE_CXX11_ABI=1` — a toolchain
 that cannot produce the C++11 ABI at all.
 
+Naming differs between the static and shared products:
+
+| product | naming |
+| --- | --- |
+| static (`*_static_lib-*`) x86_64/aarch64 `glibc2_17` | both variants published as `-cxx11-abi-0` and `-cxx11-abi-1` |
+| static (`*_static_lib-*`) x86_64/aarch64 `glibc2_24`/`glibc2_28` | one variant, **no** marker |
+| shared (`onnxruntime-linux-*`) | `-cxx11-abi` suffix iff built with `_GLIBCXX_USE_CXX11_ABI=1` |
+
 Mixing the two variants corrupts the heap at startup with
 `free(): invalid pointer`, because `std::filesystem::path`'s non-inline members
 (`_M_split_cmpts`, `operator=`) live in libstdc++ and are laid out according to
-this macro. Most projects want the `-cxx11-abi` build.
+this macro. Most projects want the C++11 ABI build.
 

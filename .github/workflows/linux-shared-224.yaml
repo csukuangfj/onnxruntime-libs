@@ -144,6 +144,9 @@ jobs:
                 abi_flags="-D_GLIBCXX_USE_CXX11_ABI=0"
               fi
 
+              # Note: for the C++11 ABI nothing is passed at all -- the toolchain
+              # default is used. Only the old ABI needs -D_GLIBCXX_USE_CXX11_ABI=0,
+              # set in CXXFLAGS above.
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
                 --cmake_extra_defines CMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc $abi_flags" \

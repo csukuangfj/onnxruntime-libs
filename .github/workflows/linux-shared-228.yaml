@@ -118,14 +118,12 @@ jobs:
                 export CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
               fi
 
+                # No -static-libstdc++ here: this image uses Red Hat
+              # Note: for the C++11 ABI nothing is passed at all -- the toolchain
+              # default is used. Only the old ABI needs -D_GLIBCXX_USE_CXX11_ABI=0,
+              # set in CXXFLAGS above.
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
-                # No -static-libstdc++ here: this image uses Red Hat
-                # gcc-toolset-12, the devtoolset successor, which keeps the
-                # emitted GLIBCXX references within what the system libstdc++
-                # provides. So the .so already loads on any glibc 2.28 distro
-                # and bundling libstdc++ would only cost size. The runtime test
-                # below is what verifies that.
                 --build_dir $build_dir \
                 --cmake_generator 'Ninja' \
                 --config ${{ matrix.config }} \
