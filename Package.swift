@@ -105,7 +105,14 @@ let package = Package(
         .executableTarget(
             name: "VersionDemo",
             dependencies: ["OnnxRuntimeKit"],
-            path: "Examples/VersionDemo"
+            path: "Examples/VersionDemo",
+            // linkerSettings on OnnxRuntimeKit do not reach this executable's
+            // link line, and the static xcframework needs z + sqlite3 or the
+            // link fails on _deflate / _sqlite3_*. Declare them here too.
+            linkerSettings: [
+                .linkedLibrary("z"),
+                .linkedLibrary("sqlite3"),
+            ]
         ),
     ]
 )
