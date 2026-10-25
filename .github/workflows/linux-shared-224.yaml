@@ -3,7 +3,7 @@ name: linux-shared-224
 on:
   push:
     branches:
-      - release-v1.31.0-2
+      - release-v1.31.0
   workflow_dispatch:
     inputs:
       version:

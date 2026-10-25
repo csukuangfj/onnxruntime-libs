@@ -69,10 +69,12 @@ jobs:
             # https://github.com/pypa/manylinux?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
             #
             # https://github.com/pypa/manylinux/issues/1266
-            # gcc 12, not 11: onnxruntime hard-fails on aarch64 without the
-            # +bf16 ISA extension, which needs gcc >= 12 *and* a recent
-            # binutils. The image builds both into the same prefix.
-            image: ghcr.io/csukuangfj/manylinux_2_24-aarch64-gcc12:latest
+            # gcc 11, with the binutils this image builds alongside it (2.40).
+            # onnxruntime gates the aarch64 +bf16 ISA extension on the
+            # *assembler*, not the compiler; the old Debian 9 binutils 2.28
+            # could not do it, which is why this briefly needed gcc 12. The
+            # base image's own compiler is gcc 6, far too old regardless.
+            image: ghcr.io/csukuangfj/manylinux_2_24-aarch64-gcc11:latest
             # image: quay.io/pypa/manylinux2014_aarch64 # it has only gcc 10. gcc 11 cannot be installed on it
             options: |
               --volume ${{ github.workspace }}/:/shared
