@@ -3,7 +3,7 @@ name: linux-shared-224
 on:
   push:
     branches:
-      - release-v1.31.0
+      - release-v1.31.0-2
   workflow_dispatch:
     inputs:
       version:
@@ -96,7 +96,11 @@ jobs:
 
               which python3
               python3 --version
-              python3 -m pip install ninja
+              # onnxruntime 1.31 needs CMake >= 3.28 but manylinux_2_24 ships
+              # 3.25.0. pip's cmake lands in $PYBIN_DIR/bin, which is first on
+              # PATH, so it wins over the image's /usr/local/bin/cmake.
+              python3 -m pip install ninja cmake
+              cmake --version
 
               cd /shared
               ls -lh
@@ -128,6 +132,11 @@ jobs:
                   exit 1
                   ;;
               esac
+
+              # Fail the step if the build fails. Without this a non-zero exit
+              # from build.py is swallowed and the job only fails later in
+              # Collect results with a confusing 'cannot stat' error.
+              set -e
 
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
