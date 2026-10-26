@@ -193,7 +193,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
           if [ -f "$artifact.zip" ]; then
             echo "already zipped: $artifact.zip"
           else

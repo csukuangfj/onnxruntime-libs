@@ -58,7 +58,11 @@ cc -o /tmp/test_load_so /tmp/test_load_so.c -ldl
 
 echo
 echo "########## 3/3 C API smoke test ##########"
-g++ -std=c++17 -o /tmp/test_onnxruntime "$here/test_onnxruntime.cc" \
+# Compile as C: the C API header defines NO_EXCEPTION as `noexcept` on function
+# pointer types, which is a C++17 language feature -- gcc 6 (manylinux_2_24)
+# cannot parse it. Under C the macro is empty and the header is plain C. This
+# test only calls OrtGetApiBase(), so C is the right language for it anyway.
+cc -x c -o /tmp/test_onnxruntime "$here/test_onnxruntime.cc" \
   -I"$artifact/include" -L"$(dirname "$so")" -lonnxruntime -Wl,-rpath,"$(dirname "$so")"
 /tmp/test_onnxruntime
 
