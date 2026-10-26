@@ -247,11 +247,20 @@ jobs:
           name: onnxruntime-linux-x64-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
           path: .
 
-      - name: Test it
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./tests/test-artifact.sh
+      # Test inside the manylinux *base* image, i.e. the actual old distro the
+      # artifact promises to support. Running it on the ubuntu runner would only
+      # prove it works on ubuntu.
+      - name: Test it on the target distro
+        uses: addnab/docker-run-action@v3
+        with:
+            image: quay.io/pypa/manylinux_2_24_x86_64
+            options: |
+              --volume ${{ github.workspace }}:/shared
+            shell: bash
+            run: |
+              set -euo pipefail
+              cd /shared
+              ./tests/test-artifact.sh
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
         uses: svenstaro/upload-release-action@v2
