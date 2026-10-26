@@ -11,6 +11,20 @@ Note:
  - Code for building shared libraries: https://github.com/csukuangfj/onnxruntime-libs/tree/master/.github/workflows
  - Code for building static libraries: https://github.com/csukuangfj/onnxruntime-build/tree/main/.github/workflows
 
+## Using from SwiftPM
+
+```swift
+.executableTarget(
+    name: "MyApp",
+    dependencies: [.product(name: "OnnxRuntimeKit", package: "onnxruntime-libs")]
+)
+```
+
+The Apple xcframeworks are built with `--no_telemetry`, so they have no
+transitive `libz` / `libsqlite3` dependency and need no extra `linkerSettings`
+on your executable target. `spm-examples/` shows a working setup for each
+platform.
+
 ## `_GLIBCXX_USE_CXX11_ABI` of the Linux libraries
 
 | `_GLIBCXX_USE_CXX11_ABI` | meaning |

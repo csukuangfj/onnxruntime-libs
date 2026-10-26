@@ -51,10 +51,14 @@ jobs:
       - name: Patch build settings for macOS only
         shell: bash
         run: |
+          # --no_telemetry drops the 1DS telemetry SDK from the build. That SDK
+          # is the only reason the static xcframework used to need -lz -lsqlite3
+          # on the consumer side (_deflate / _sqlite3_*).
           jq '
             del(.build_osx_archs.iphoneos, .build_osx_archs.iphonesimulator) |
             del(.build_params.iphoneos, .build_params.iphonesimulator) |
             .build_params.base += [
+              "--no_telemetry",
               "--compile_no_warning_as_error",
               "--cmake_extra_defines=CMAKE_OSX_DEPLOYMENT_TARGET=10.15",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
@@ -305,16 +309,13 @@ jobs:
           # Download test file
           curl -sL https://raw.githubusercontent.com/csukuangfj/onnxruntime-libs/${{ github.ref }}/tests/test_onnxruntime.cc -o /tmp/test_onnxruntime.cc
 
-          # -lz -lsqlite3 are needed by the static framework: a static archive
-          # does not carry its transitive deps, so the consumer must link them.
-          # The dynamic framework resolves them internally, and these are
-          # harmless there. Without them the static link fails with
-          # "Undefined symbols for architecture arm64: _deflate / _sqlite3_*".
+          # Intentionally no -lz -lsqlite3: the framework is built with
+          # --no_telemetry so it has no transitive libz/libsqlite3 dependency.
+          # If this link fails on _deflate / _sqlite3_*, that dependency is back.
           g++ -std=c++17 -o /tmp/test_onnxruntime /tmp/test_onnxruntime.cc \
             -I"$fw/Headers" \
             -F$(dirname "$fw") -framework onnxruntime \
             -framework CoreML -framework Foundation -framework Network \
-            -lz -lsqlite3 \
             -Wl,-rpath,$(dirname "$fw")
           /tmp/test_onnxruntime
 

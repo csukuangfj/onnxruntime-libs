@@ -51,8 +51,13 @@ jobs:
       - name: Patch build settings
         shell: bash
         run: |
+          # --no_telemetry is a no-op for visionOS (the 1DS telemetry SDK does
+          # not support it), but keep the flag explicit and uniform across the
+          # Apple xcframework builds so no telemetry/libz/libsqlite3 dependency
+          # can creep back in.
           jq '
             .build_params.base += [
+              "--no_telemetry",
               "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5",
               "--cmake_extra_defines=FLATBUFFERS_BUILD_FLATC=OFF",
               "--cmake_extra_defines=XROS_DEPLOYMENT_TARGET=1.0",

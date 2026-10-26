@@ -51,7 +51,10 @@ jobs:
       - name: Patch 1
         shell: bash
         run: |
-          jq '.build_params.base += ["--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
+          # --no_telemetry drops the 1DS telemetry SDK from the build. That SDK
+          # is the only reason the static xcframework used to need -lz -lsqlite3
+          # on the consumer side (_deflate / _sqlite3_*).
+          jq '.build_params.base += ["--no_telemetry", "--cmake_extra_defines=CMAKE_POLICY_VERSION_MINIMUM=3.5"]' \
             tools/ci_build/github/apple/default_full_ios_framework_build_settings.json > output.json
 
           mv output.json tools/ci_build/github/apple/default_full_ios_framework_build_settings.json

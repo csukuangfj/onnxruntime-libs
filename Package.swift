@@ -1,4 +1,9 @@
 // swift-tools-version: 5.9
+//
+// The xcframeworks are built with --no_telemetry (no 1DS telemetry SDK), so
+// they have no transitive libz / libsqlite3 dependency. Consumers need no
+// extra linkerSettings on their own executable targets.
+//
 import PackageDescription
 
 let package = Package(
@@ -70,11 +75,6 @@ let package = Package(
                 .linkedFramework("CoreML"),
                 .linkedFramework("Network"),
                 .linkedLibrary("c++"),
-                // Needed by the *static* xcframework: a static archive does not
-                // carry its transitive deps, so the consumer must link them.
-                // The dynamic one resolves them internally and ignores these.
-                .linkedLibrary("z"),
-                .linkedLibrary("sqlite3"),
             ]
         ),
 
@@ -93,11 +93,6 @@ let package = Package(
                 .linkedFramework("CoreML"),
                 .linkedFramework("Network"),
                 .linkedLibrary("c++"),
-                // Needed by the *static* xcframework: a static archive does not
-                // carry its transitive deps, so the consumer must link them.
-                // The dynamic one resolves them internally and ignores these.
-                .linkedLibrary("z"),
-                .linkedLibrary("sqlite3"),
             ]
         ),
 
@@ -105,14 +100,7 @@ let package = Package(
         .executableTarget(
             name: "VersionDemo",
             dependencies: ["OnnxRuntimeKit"],
-            path: "Examples/VersionDemo",
-            // linkerSettings on OnnxRuntimeKit do not reach this executable's
-            // link line, and the static xcframework needs z + sqlite3 or the
-            // link fails on _deflate / _sqlite3_*. Declare them here too.
-            linkerSettings: [
-                .linkedLibrary("z"),
-                .linkedLibrary("sqlite3"),
-            ]
+            path: "Examples/VersionDemo"
         ),
     ]
 )
