@@ -20,8 +20,6 @@ env:
 
 jobs:
   aarch64-shared-224:
-    outputs:
-      artifact: ${{ steps.emit.outputs.artifact }}
     name: ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -30,8 +28,8 @@ jobs:
         os: [ubuntu-22.04-arm]
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
-        # 0 the old gcc4-compatible COW one. See the check step below.
+        # 1 = the C++11 std::string ABI, 0 = the old gcc4-compatible COW one.
+        # Verified by tests/test-artifact.sh in the test job.
         cxx11_abi: [1]
         # config: ['MinSizeRel', 'Release']
         # config: ['Release']
@@ -224,14 +222,7 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
-      - name: Expose the artifact name
-        id: emit
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
-        shell: bash
-        run: echo "artifact=yes" >> "$GITHUB_OUTPUT"
-
       - name: Upload artifact
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
@@ -240,7 +231,6 @@ jobs:
   test:
     name: test ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
     needs: aarch64-shared-224
-    if: needs.aarch64-shared-224.outputs.artifact != ''
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -248,8 +238,8 @@ jobs:
         os: [ubuntu-22.04-arm]
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
-        # 0 the old gcc4-compatible COW one. See the check step below.
+        # 1 = the C++11 std::string ABI, 0 = the old gcc4-compatible COW one.
+        # Verified by tests/test-artifact.sh in the test job.
         cxx11_abi: [1]
         # config: ['MinSizeRel', 'Release']
         # config: ['Release']
