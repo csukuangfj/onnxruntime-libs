@@ -144,6 +144,7 @@ jobs:
               ls -lh build-shared/*
 
       - name: Collect results
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-shared
@@ -187,6 +188,24 @@ jobs:
           strings  ./$artifact/lib/libonnxruntime.so | grep "^GLIBC_"
 
           zip -r ${artifact}.zip ./$artifact
+
+      # The cache restores the artifact directory, but only Collect results makes
+      # the zip -- and that needs the checkout and the build tree, so it is
+      # skipped on a cache hit. Zip here so there is always something to upload.
+      # The cache restores the artifact directory, but only Collect results
+      # makes the zip -- and that needs the checkout and build tree, so it is
+      # skipped on a cache hit. Zip here so there is always something to upload.
+      - name: Zip the artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact=onnxruntime-linux-${{ matrix.arch }}-glibc2_28-$config-$version
+          if [ -f "$artifact.zip" ]; then
+            echo "already zipped: $artifact.zip"
+          else
+            zip -r "$artifact.zip" "./$artifact"
+          fi
+          ls -lh "$artifact.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
