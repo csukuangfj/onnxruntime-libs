@@ -177,7 +177,6 @@ jobs:
               ls -lh build-shared/*
 
       - name: Collect results
-        if: steps.cache-build-result.outputs.cache-hit != 'true'
         shell: bash
         run: |
           build_dir=./build-shared
@@ -226,7 +225,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
-          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}
+          path: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}.zip
 
   test:
     name: test ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
@@ -268,6 +267,7 @@ jobs:
             run: |
               set -euo pipefail
               cd /shared
+              unzip -q -o ./*.zip
               ./tests/test-artifact.sh
 
       - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
