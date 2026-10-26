@@ -20,6 +20,8 @@ env:
 
 jobs:
   linux-shared-217:
+    outputs:
+      artifact: ${{ steps.emit.outputs.artifact }}
     name: ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -138,9 +140,10 @@ jobs:
                 abi_flags="-D_GLIBCXX_USE_CXX11_ABI=0"
               fi
 
-              # Note: for the C++11 ABI nothing is passed at all -- the toolchain
-              # default is used. Only the old ABI needs -D_GLIBCXX_USE_CXX11_ABI=0,
-              # set in CXXFLAGS above.
+
+              # -static-libstdc++ so the .so carries its own libstdc++ (no
+              # GLIBCXX requirement on the target). The old ABI is asked for
+              # explicitly; the C++11 ABI relies on the toolchain default.
               python3 tools/ci_build/build.py \
                 --cmake_extra_defines onnxruntime_BUILD_UNIT_TESTS=OFF \
                 --cmake_extra_defines CMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc $abi_flags" \
@@ -207,9 +210,81 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
+      - name: Expose the artifact name
+        id: emit
+        if: steps.cache-build-result.outputs.cache-hit != 'true'
+        shell: bash
+        run: echo "artifact=yes" >> "$GITHUB_OUTPUT"
+
       - name: Upload artifact
         if: steps.cache-build-result.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
           path: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+
+  test:
+    name: test ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
+    needs: linux-shared-217
+    if: needs.linux-shared-217.outputs.artifact != ''
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86_64]
+        config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
+        # _GLIBCXX_USE_CXX11_ABI: 1 is the C++11 ABI (std::__cxx11),
+        # 0 the old gcc4-compatible COW one. See the check step below.
+        cxx11_abi: [0, 1]
+        # config: ['MinSizeRel', 'Release']
+    steps:
+      # This repo's tests/, unlike the build job which checks out
+      # microsoft/onnxruntime to compile it.
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Download the artifact the build job made
+        uses: actions/download-artifact@v4
+        with:
+          name: onnxruntime-linux-x64-glibc2_17-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}${{ matrix.cxx11_abi == 1 && '-cxx11-abi' || '' }}
+          path: .
+
+      - name: Test it
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./tests/test-artifact.sh
+
+      - name: Upload v${{ env.ONNXRUNTIME_VERSION }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file_glob: true
+          file: "./*.zip"
+          overwrite: true
+          tag: v${{ env.ONNXRUNTIME_VERSION }}
+
+      - name: Publish to huggingface
+        if: github.repository_owner == 'csukuangfj'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 20
+          timeout_seconds: 200
+          shell: bash
+          command: |
+            set -e
+            git config --global user.email "csukuangfj@gmail.com"
+            git config --global user.name "Fangjun Kuang"
+            export GIT_CLONE_PROTECTION_ACTIVE=false
+            rm -rf huggingface
+            GIT_LFS_SKIP_SMUDGE=1 git clone https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs huggingface
+            cd huggingface
+            mkdir -p ${{ env.ONNXRUNTIME_VERSION }}
+            cp -v ../*.zip ${{ env.ONNXRUNTIME_VERSION }}
+            git status
+            git lfs track "*.zip"
+            git add .
+            git commit -m "upload tested linux shared artifacts"
+            git push https://csukuangfj2:$HF_TOKEN@huggingface.co/csukuangfj2/onnxruntime-libs main
