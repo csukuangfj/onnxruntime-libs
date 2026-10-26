@@ -20,7 +20,7 @@ env:
 
 jobs:
   aarch64-shared-224:
-    name: ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
+    name: ${{ matrix.config }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -28,9 +28,6 @@ jobs:
         os: [ubuntu-22.04-arm]
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        # 1 = the C++11 std::string ABI, 0 = the old gcc4-compatible COW one.
-        # Verified by tests/test-artifact.sh in the test job.
-        cxx11_abi: [1]
         # config: ['MinSizeRel', 'Release']
         # config: ['Release']
 
@@ -222,9 +219,6 @@ jobs:
 
           zip -r ${artifact}.zip ./$artifact
 
-      # The cache restores the artifact directory, but only Collect results makes
-      # the zip -- and that needs the checkout and the build tree, so it is
-      # skipped on a cache hit. Zip here so there is always something to upload.
       # The cache restores the artifact directory, but only Collect results
       # makes the zip -- and that needs the checkout and build tree, so it is
       # skipped on a cache hit. Zip here so there is always something to upload.
@@ -247,7 +241,7 @@ jobs:
           path: onnxruntime-linux-${{ matrix.arch }}-glibc2_24-${{ matrix.config }}-${{ env.ONNXRUNTIME_VERSION }}.zip
 
   test:
-    name: test ${{ matrix.config }} cxx11-abi-${{ matrix.cxx11_abi }}
+    name: test ${{ matrix.config }}
     needs: aarch64-shared-224
     runs-on: ${{ matrix.os }}
     strategy:
@@ -256,9 +250,6 @@ jobs:
         os: [ubuntu-22.04-arm]
         arch: [aarch64]
         config: ['Debug', 'MinSizeRel', 'Release', 'RelWithDebInfo']
-        # 1 = the C++11 std::string ABI, 0 = the old gcc4-compatible COW one.
-        # Verified by tests/test-artifact.sh in the test job.
-        cxx11_abi: [1]
         # config: ['MinSizeRel', 'Release']
         # config: ['Release']
     steps:

@@ -13,40 +13,33 @@ Note:
 
 ## `_GLIBCXX_USE_CXX11_ABI` of the Linux libraries
 
-Linux static and shared libraries are published in two variants. A single binary must not
-mix them, so pick the one that matches the compiler you link against.
-
-| `_GLIBCXX_USE_CXX11_ABI` | artifact name |
+| `_GLIBCXX_USE_CXX11_ABI` | meaning |
 | --- | --- |
-| `1` — C++11 `std::string`, the default of every stock gcc >= 5 | see the table below |
-| `0` — old gcc4-compatible COW `std::string`, the default of Red Hat SCL devtoolset | see the table below |
+| `1` | C++11 `std::string` — the default of every stock gcc >= 5 |
+| `0` | old gcc4-compatible COW `std::string` — the default of Red Hat SCL devtoolset |
 
-Which ABI is available depends on the **toolchain**, not on the glibc tag:
+Whether it is observable depends on the product:
 
-| build | toolchain | available ABI |
+| product | does the ABI reach the consumer? | published |
 | --- | --- | --- |
-| x86_64 `glibc2_17` | stock gcc 11 (`manylinux2014-x86_64-gcc11`) | `1` and `0` |
-| x86_64 `glibc2_24` | stock gcc 11 (`manylinux_2_24-x86_64-gcc11`) | `1` and `0` |
-| x86_64 `glibc2_28` | stock gcc | `1` and `0` |
-| aarch64 `glibc2_17` | stock gcc 11 (`manylinux2014-aarch64-gcc11`) | `1` and `0` |
-| aarch64 `glibc2_24` | stock gcc 11 (`manylinux_2_24-aarch64-gcc11`) | `1` and `0` |
-| aarch64 `glibc2_28` | stock gcc | `1` and `0` |
+| shared (`onnxruntime-linux-*`) | **no** — the library links libstdc++ statically and the seam is the pure C API, so no `std::string` crosses | one variant, **no** marker |
+| static (`*_static_lib-*`) | **yes** — the archive lands in the consumer's binary and shares its libstdc++ | see below |
 
-Every build uses a stock gcc built from source, so both ABIs are available on
-every glibc base. Red Hat SCL devtoolset is deliberately not used: it is
-configured `--with-default-libstdcxx-abi=gcc4-compatible`, so its headers force
-`_GLIBCXX_USE_CXX11_ABI=0` and ignore `-D_GLIBCXX_USE_CXX11_ABI=1` — a toolchain
-that cannot produce the C++11 ABI at all.
+Static (`*_static_lib-*`) naming:
 
-Naming differs between the static and shared products:
+| build | toolchain | artifacts |
+| --- | --- | --- |
+| x86_64 `glibc2_17`, aarch64 `glibc2_17` | stock gcc 11 | `-cxx11-abi-0` and `-cxx11-abi-1` |
+| x86_64 `glibc2_24`/`glibc2_28`, aarch64 `glibc2_24`/`glibc2_28` | stock gcc | one variant, no marker |
 
-| product | naming |
-| --- | --- |
-| static (`*_static_lib-*`) x86_64/aarch64 `glibc2_17` | both variants published as `-cxx11-abi-0` and `-cxx11-abi-1` |
-| static (`*_static_lib-*`) x86_64/aarch64 `glibc2_24`/`glibc2_28` | one variant, **no** marker |
-| shared (`onnxruntime-linux-*`) | `-cxx11-abi` suffix iff built with `_GLIBCXX_USE_CXX11_ABI=1` |
+Every build uses a stock gcc built from source. Red Hat SCL devtoolset is
+deliberately not used: it is configured `--with-default-libstdcxx-abi=gcc4-compatible`,
+so its headers force `_GLIBCXX_USE_CXX11_ABI=0` and ignore
+`-D_GLIBCXX_USE_CXX11_ABI=1` — a toolchain that cannot produce the C++11 ABI at
+all.
 
-Mixing the two variants corrupts the heap at startup with
+For static libraries the two variants must not be mixed: doing so corrupts
+the heap at startup with
 `free(): invalid pointer`, because `std::filesystem::path`'s non-inline members
 (`_M_split_cmpts`, `operator=`) live in libstdc++ and are laid out according to
 this macro. Most projects want the C++11 ABI build.
